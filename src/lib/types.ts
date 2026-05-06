@@ -67,10 +67,7 @@ export type ProveedorCreate = z.infer<typeof proveedorCreateSchema>;
 export type ProveedorResponse = z.infer<typeof proveedorResponseSchema>;
 
 export const productoCreateSchema = z.object({
-  codigo_interno: z
-    .string()
-    .min(1, 'El código interno es obligatorio')
-    .max(50, 'Máximo 50 caracteres'),
+  codigo_interno: z.string().min(1, 'El código interno es obligatorio').max(50, 'Máximo 50 caracteres'),
   descripcion: z.string().min(1, 'La descripción es obligatoria'),
 
   categoria_id: z.number('La categoría es obligatoria'),
@@ -246,4 +243,24 @@ export type SucursalResponse = {
   nombre: string;
   direccion: string;
   activo: boolean;
+};
+
+export type DashboardData = {
+  stats: {
+    productos: number;
+    lotes: number;
+    categorias: number;
+    proveedores: number;
+    clientes: number;
+  };
+  categoriasChart: { nombre: string; cantidad: number }[];
+  salidasChart: { fecha_creado: string; total: number }[];
+  productosBajos: {
+    id: number;
+    descripcion: string;
+    categoria__nombre: string;
+    cantidad_disponible: number;
+    min_stock: number;
+  }[];
+  clientesChart: { tipo2: string; cantidad: number }[];
 };

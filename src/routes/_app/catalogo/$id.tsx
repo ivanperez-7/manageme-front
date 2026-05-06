@@ -17,6 +17,7 @@ import { AddMovementDialog } from '@/components/add-movement-dialog';
 import { AddProductDialog } from '@/components/add-product-dialog';
 import { DataTable } from '@/components/data-table';
 import { DeleteProductDialog } from '@/components/delete-product-dialog';
+import { RemainingProgress } from '@/components/remaining-progress';
 import { useHeader } from '@/components/site-header';
 import TipoMovimientoBadge from '@/components/tipo-movimiento-badge';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +35,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // OTRAS UTILIDADES
 import { fetchProductoById } from '@/api/catalogo';
@@ -45,7 +47,7 @@ import type {
 } from '@/lib/types';
 import { cn, humanDate, humanTime, plural } from '@/lib/utils';
 
-const columns: ColumnDef<MovimientoResponse & { cantidad: number }>[] = [
+const movementsColumns: ColumnDef<MovimientoResponse & { cantidad: number }>[] = [
   {
     accessorKey: 'id',
     header: 'Folio',
@@ -103,17 +105,13 @@ const columns: ColumnDef<MovimientoResponse & { cantidad: number }>[] = [
 const lotesColumns: ColumnDef<LoteResponse>[] = [
   { accessorKey: 'codigo_lote', header: 'Código' },
   {
-    accessorKey: 'cantidad_inicial',
-    header: 'Cantidad inicial',
-    cell: ({ row }) => plural('unidad', row.getValue('cantidad_inicial')),
-  },
-  {
     accessorKey: 'cantidad_restante',
     header: 'Cantidad restante',
     cell: ({ row }) => (
-      <span className={cn(row.original.cantidad_restante <= 0 && 'text-muted-foreground')}>
-        {plural('unidad', row.getValue('cantidad_restante'))}
-      </span>
+      <RemainingProgress
+        total={row.original.cantidad_inicial}
+        remaining={row.original.cantidad_restante}
+      />
     ),
   },
   {
@@ -126,6 +124,27 @@ const lotesColumns: ColumnDef<LoteResponse>[] = [
     accessorKey: 'fecha_entrada',
     header: 'Hora de entrada',
     cell: ({ row }) => humanTime(row.getValue('fecha_entrada')),
+  },
+  {
+    id: 'actions',
+    cell: ({ row }) => (
+      <Tooltip>
+        <AddMovementDialog
+          trigger={
+            <TooltipTrigger asChild>
+              <Button variant='secondary' size='sm'>
+                <ArrowUpFromDot />
+              </Button>
+            </TooltipTrigger>
+          }
+          initialData={{
+            tipo: 'salida',
+            items: [{ producto_id: row.original.producto.id, cantidad: 0, lote_id: row.original.id }],
+          }}
+        />
+        <TooltipContent>Registrar salida</TooltipContent>
+      </Tooltip>
+    ),
   },
 ];
 
@@ -339,14 +358,6 @@ const ProductMovementsCard = ({ movimientos }: { movimientos: MovimientoResponse
               </Button>
             }
           />
-          <AddMovementDialog
-            trigger={
-              <Button variant='secondary' size='sm'>
-                <ArrowUpFromDot />
-                Registrar salida
-              </Button>
-            }
-          />
         </div>
       </CardHeader>
       <CardContent>
@@ -357,7 +368,7 @@ const ProductMovementsCard = ({ movimientos }: { movimientos: MovimientoResponse
               .filter((item) => item.producto.id == producto.id)
               .map((item) => ({ cantidad: item.cantidad, ...mov }))
           )}
-          columns={columns}
+          columns={movementsColumns}
           transparent
           emptyComponent={
             <Empty className='my-0 py-0'>

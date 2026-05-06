@@ -144,10 +144,10 @@ function LoginForm() {
               label='Sucursal'
               placeholder='Pensiones'
               hideErrors
-              options={sucursales.map((sucursal) => ({
-                key: sucursal.id.toString(),
-                value: sucursal.id,
-                label: sucursal.nombre,
+              options={sucursales.map((suc) => ({
+                key: suc.id.toString(),
+                value: suc.id,
+                label: suc.nombre,
               }))}
               onValueChange={(v) => Cookies.set('branch', v, { path: '/' })}
             />

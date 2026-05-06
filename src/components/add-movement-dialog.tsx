@@ -28,6 +28,7 @@ import { withAuth } from '@/lib/auth';
 import {
   movimientoCreateSchema,
   type LoteResponse,
+  type MovimientoCreate,
   type MovimientoResponse,
   type ProductoResponse,
   type UsoEquipo,
@@ -36,11 +37,11 @@ import { userStore } from '@/stores/userStore';
 
 export function AddMovementDialog({
   trigger,
-  movimiento,
+  initialData,
   useShortcut,
 }: {
   trigger: React.ReactNode;
-  movimiento?: MovimientoResponse;
+  initialData?: Partial<MovimientoCreate>;
   useShortcut?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -74,7 +75,7 @@ export function AddMovementDialog({
         </DialogHeader>
         <Separator />
 
-        <MovementForm movimiento={movimiento} onSuccess={() => setOpen(false)} />
+        <MovementForm initialData={initialData} onSuccess={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );
@@ -86,10 +87,10 @@ type ProductosMap = Record<
 >;
 
 function MovementForm({
-  movimiento,
+  initialData,
   onSuccess,
 }: {
-  movimiento?: MovimientoResponse;
+  initialData?: Partial<MovimientoCreate>;
   onSuccess: () => void;
 }) {
   const [scanCode, setScanCode] = useState('');
@@ -108,8 +109,8 @@ function MovementForm({
 
   const form = useAppForm({
     defaultValues: {
-      tipo: movimiento?.tipo ?? 'entrada',
-      items: movimiento?.items ?? [],
+      tipo: initialData?.tipo ?? 'entrada',
+      items: initialData?.items ?? [],
       detalle_entrada: {
         numero_factura: '',
         recibido_por_id: currentUserId,
@@ -123,7 +124,7 @@ function MovementForm({
       await withAuth
         .post(ENDPOINTS.movimientos.list, value)
         .then((res) => {
-          toast.success(`¡Movimiento ${movimiento ? 'editado' : 'registrado'} correctamente!`, {
+          toast.success(`¡Movimiento ${initialData ? 'editado' : 'registrado'} correctamente!`, {
             action: {
               label: 'Ver',
               onClick: () =>
@@ -134,7 +135,7 @@ function MovementForm({
             },
           });
 
-          if (!movimiento) form.reset();
+          if (!initialData) form.reset();
           setScanCode('');
           router.invalidate();
           onSuccess();
@@ -425,6 +426,5 @@ function MovementForm({
 
 /*
 - id de prefactura
-- multi sucursal
 - ligar correo ????
 */

@@ -1,21 +1,8 @@
 import { toast } from 'sonner';
 
 import { withAuth } from '@/lib/auth';
+import type { DashboardData } from '@/lib/types';
 import { ENDPOINTS } from './endpoints';
-
-export type DashboardData = {
-  stats: {
-    productos: number;
-    lotes: number;
-    categorias: number;
-    proveedores: number;
-    clientes: number;
-  };
-  categoriasChart: { nombre: string; cantidad: number }[];
-  entradasChart: { fecha_creado: string; total: number }[];
-  productosBajos: { descripcion: string; categoria__nombre: string; stock: number }[];
-  clientesChart: any[];
-};
 
 export const getDashboardData = async () =>
   await withAuth
