@@ -123,14 +123,15 @@ function MovementForm({
 
       await withAuth
         .post(ENDPOINTS.movimientos.list, value)
-        .then((res) => {
+        .then((res) => res.data as MovimientoResponse)
+        .then((mov) => {
           toast.success(`¡Movimiento ${initialData ? 'editado' : 'registrado'} correctamente!`, {
             action: {
               label: 'Ver',
               onClick: () =>
                 router.navigate({
                   to: '/movements/$id',
-                  params: { id: (res.data as MovimientoResponse).id.toString() },
+                  params: { id: mov.id.toString() },
                 }),
             },
           });
@@ -140,7 +141,7 @@ function MovementForm({
           router.invalidate();
           onSuccess();
         })
-        .catch((error) => toast.error(error.response?.data + '' || error.message));
+        .catch((error) => toast.error(error.response?.data?.non_field_errors?.[0] || error.message));
     },
   });
 
@@ -238,7 +239,7 @@ function MovementForm({
                 </TableRow>
               );
 
-            return field.state.value.map(({ producto_id }, index) => (
+            return field.state.value.map(({ producto_id }, index) => productosMap[producto_id] && (
               <TableRow key={index}>
                 <TableCell>{productosMap[producto_id].codigo_interno}</TableCell>
                 <TableCell>{productosMap[producto_id].descripcion}</TableCell>
@@ -288,6 +289,28 @@ function MovementForm({
   useEffect(() => {
     scanInputRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    const loadInitialProducts = async () => {
+      if (!initialData?.items?.length) return;
+
+      const pendingIds = initialData.items.map((item) => item.producto_id);
+
+      if (!pendingIds.length) return;
+
+      try {
+        const responses = await Promise.all(
+          pendingIds.map((productoId) => withAuth.get(ENDPOINTS.products.detail(productoId)))
+        );
+        const products = responses.map((r) => r.data as ProductoResponse);
+
+        setProductosMap(Object.fromEntries(products.map((p) => [p.id, p])));
+      } catch (err) {
+        toast.error('Error loading initial products');
+      }
+    };
+    loadInitialProducts();
+  }, [initialData]);
 
   return (
     <form

@@ -10,12 +10,7 @@ import { DataTable } from '@/components/data-table';
 import { DeleteProductDialog } from '@/components/delete-product-dialog';
 import { ProductCard } from '@/components/product-card';
 import { useHeader } from '@/components/site-header';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from '@/components/ui/breadcrumb';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -70,8 +65,7 @@ const columns: ColumnDef<ProductoResponse>[] = [
           {statusFromStock(row.getValue('cantidad_disponible'), row.original.min_stock)}
         </TooltipTrigger>
         <TooltipContent>
-          <span className='font-medium'>Min requerido</span>:{' '}
-          {plural('unidad', row.original.min_stock)}
+          <span className='font-medium'>Min requerido</span>: {plural('unidad', row.original.min_stock)}
         </TooltipContent>
       </Tooltip>
     ),
@@ -111,7 +105,7 @@ const columns: ColumnDef<ProductoResponse>[] = [
   },
 ];
 
-type CatalogoSearch = { text?: string; categoria?: number; marca?: number; equipo?: number };
+type CatalogoSearch = { text?: string; categoria?: number; marca?: number; equipo?: number; page?: number };
 
 export const Route = createFileRoute('/_app/catalogo/')({
   validateSearch: (search): CatalogoSearch => ({
@@ -119,6 +113,7 @@ export const Route = createFileRoute('/_app/catalogo/')({
     categoria: Number(search.categoria) || undefined,
     marca: Number(search.marca) || undefined,
     equipo: Number(search.equipo) || undefined,
+    page: Number(search.page) || undefined,
   }),
   loader: fetchAllProductos,
   component: ProductListPage,
@@ -128,7 +123,7 @@ export const Route = createFileRoute('/_app/catalogo/')({
 
 function ProductListPage() {
   const productos = Route.useLoaderData();
-  const { text, categoria, marca, equipo } = Route.useSearch();
+  const { text, categoria, marca, equipo, page } = Route.useSearch();
   const navigate = Route.useNavigate();
 
   const { categorias, marcas, equipos } = useCatalogs();
@@ -193,13 +188,15 @@ function ProductListPage() {
     navigate({ search: (prev) => ({ ...prev, text: localText }), replace: true });
   }, [localText]);
 
+  console.log(text, categoria, marca, equipo, page);
+
   return (
     <div className='space-y-4'>
       <h1 className='text-2xl'>Buscar productos</h1>
       <div className='flex flex-col gap-2 items-stretch md:flex-row md:items-center'>
         <InputGroup>
           <InputGroupInput
-            placeholder='Buscar por código o descripción...'
+            placeholder='Buscar por código, descripción o SKU...'
             defaultValue={text}
             onChange={(e) => setLocalText(e.target.value)}
           />
@@ -283,7 +280,15 @@ function ProductListPage() {
       {isMobile ? (
         filtered.slice(0, 10).map((producto) => <ProductCard key={producto.id} producto={producto} />)
       ) : (
-        <DataTable columns={columns} data={filtered} emptyComponent={emptyComponent} />
+        <DataTable
+          columns={columns}
+          data={filtered}
+          emptyComponent={emptyComponent}
+          initialPage={page ?? 0}
+          onChangePage={(pageIndex) =>
+            navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true })
+          }
+        />
       )}
 
       <div className='fixed bottom-4 right-3 md:bottom-8 md:right-8'>

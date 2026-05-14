@@ -1,24 +1,17 @@
 import { createFileRoute, ErrorComponent, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
+import { format } from 'date-fns';
 import { CheckCircle, EllipsisVertical, Plus, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { AddMovementDialog } from '@/components/add-movement-dialog';
 import { DataTable } from '@/components/data-table';
+import { DateRangePicker } from '@/components/date-range-pickers';
 import { useHeader } from '@/components/site-header';
 import TipoMovimientoBadge from '@/components/tipo-movimiento-badge';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from '@/components/ui/breadcrumb';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { Label } from '@/components/ui/label';
-
-import { fetchMovimientos } from '@/api/movimientos';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,11 +19,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { Label } from '@/components/ui/label';
+
+import { fetchMovimientos } from '@/api/movimientos';
 import type { MovimientoResponse } from '@/lib/types';
 import { humanDate, humanTime } from '@/lib/utils';
 
+type MovimientoSearch = { fechaInicio?: string; fechaFin?: string };
+
 export const Route = createFileRoute('/_app/movements/')({
-  loader: fetchMovimientos,
+  validateSearch: ({ fechaInicio, fechaFin }): MovimientoSearch => ({
+    fechaInicio: (fechaInicio as string) || undefined,
+    fechaFin: (fechaFin as string) || undefined,
+  }),
+  loaderDeps: ({ search }) => search,
+  loader: async ({ deps }) =>
+    await fetchMovimientos(
+      deps.fechaInicio || format(new Date(), 'yyyy-MM-dd'),
+      deps.fechaFin || format(new Date(), 'yyyy-MM-dd')
+    ),
   component: MovementsListPage,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
@@ -112,7 +120,9 @@ const columns: ColumnDef<MovimientoResponse>[] = [
 
 function MovementsListPage() {
   const movimientos = Route.useLoaderData();
+  const { fechaInicio, fechaFin } = Route.useSearch();
   const { setContent } = useHeader();
+  const navigate = Route.useNavigate();
 
   const [search, setSearch] = useState('');
   const [filterEntrada, setFilterEntrada] = useState(true);
@@ -120,9 +130,10 @@ function MovementsListPage() {
 
   const filtered = useMemo(() => {
     return movimientos.filter((m) => {
+      if (search && !String(m.id).includes(search)) return false;
       if (!filterEntrada && m.tipo === 'entrada') return false;
       if (!filterSalida && m.tipo === 'salida') return false;
-      if (!search) return true;
+      return true;
     });
   }, [movimientos, search, filterEntrada, filterSalida]);
 
@@ -146,7 +157,7 @@ function MovementsListPage() {
         <div className='flex-1'>
           <InputGroup>
             <InputGroupInput
-              placeholder='Buscar...'
+              placeholder='Buscar por folio...'
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -165,6 +176,23 @@ function MovementsListPage() {
           <Label onClick={() => setFilterSalida((prev) => !prev)}>Salidas</Label>
         </div>
       </div>
+
+      <DateRangePicker
+        defaultStartDate={fechaInicio ? new Date(fechaInicio) : undefined}
+        defaultEndDate={fechaFin ? new Date(fechaFin) : undefined}
+        onStartDateChange={(date) =>
+          navigate({
+            search: (prev) => ({ ...prev, fechaInicio: format(date, 'yyyy-MM-dd') }),
+            replace: true,
+          })
+        }
+        onEndDateChange={(date) =>
+          navigate({
+            search: (prev) => ({ ...prev, fechaFin: format(date, 'yyyy-MM-dd') }),
+            replace: true,
+          })
+        }
+      />
 
       <DataTable columns={columns} data={filtered} />
 

@@ -6,13 +6,6 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { DataTable } from '@/components/data-table';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-
-import { fetchClientById } from '@/api/catalogo';
-import { ENDPOINTS } from '@/api/endpoints';
 import { useHeader } from '@/components/site-header';
 import {
   Breadcrumb,
@@ -22,12 +15,19 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
+
+import { fetchClientById } from '@/api/catalogo';
+import { ENDPOINTS } from '@/api/endpoints';
 import { useAppForm } from '@/hooks/use-app-form';
 import { useCatalogs } from '@/hooks/use-catalogs';
 import { withAuth } from '@/lib/auth';
 import { type ClienteResponse, type MovimientoResponse, type UsoEquipo } from '@/lib/types';
 import { humanDate, humanTime } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 
 const movementsColumns: ColumnDef<MovimientoResponse>[] = [
   {

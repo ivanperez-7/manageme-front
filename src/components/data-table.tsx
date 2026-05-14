@@ -28,6 +28,7 @@ interface DataTableProps<TData, TValue> {
   initialPage?: number;
   transparent?: boolean;
   emptyComponent?: React.ReactNode;
+  onChangePage?: (pageIndex: number) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -36,6 +37,7 @@ export function DataTable<TData, TValue>({
   initialPage,
   transparent,
   emptyComponent,
+  onChangePage
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -103,7 +105,10 @@ export function DataTable<TData, TValue>({
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                onClick={() => table.previousPage()}
+                onClick={() => {
+                  table.previousPage();
+                  onChangePage?.(table.getState().pagination.pageIndex);
+                }}
                 className={cn(!table.getCanPreviousPage() && 'pointer-events-none opacity-50')}
               />
             </PaginationItem>
@@ -123,7 +128,10 @@ export function DataTable<TData, TValue>({
                 <PaginationItem key={item}>
                   <PaginationLink
                     isActive={table.getState().pagination.pageIndex === item}
-                    onClick={() => table.setPageIndex(item)}
+                    onClick={() => {
+                      table.setPageIndex(item);
+                      onChangePage?.(table.getState().pagination.pageIndex);
+                    }}
                   >
                     {item + 1}
                   </PaginationLink>
@@ -133,7 +141,10 @@ export function DataTable<TData, TValue>({
 
             <PaginationItem>
               <PaginationNext
-                onClick={() => table.nextPage()}
+                onClick={() => {
+                  table.nextPage();
+                  onChangePage?.(table.getState().pagination.pageIndex);
+                }}
                 className={cn(!table.getCanNextPage() && 'pointer-events-none opacity-50')}
               />
             </PaginationItem>

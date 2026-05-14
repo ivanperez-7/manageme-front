@@ -254,7 +254,7 @@ export type DashboardData = {
     clientes: number;
   };
   categoriasChart: { nombre: string; cantidad: number }[];
-  salidasChart: { fecha_creado: string; total: number }[];
+  movimientosChart: { fecha_creado: string; entradas: number; salidas: number }[];
   productosBajos: {
     id: number;
     descripcion: string;
@@ -262,5 +262,5 @@ export type DashboardData = {
     cantidad_disponible: number;
     min_stock: number;
   }[];
-  clientesChart: { tipo2: string; cantidad: number }[];
+  topProductosChart: { id: number; codigo_interno: string; total_movimientos: number }[];
 };

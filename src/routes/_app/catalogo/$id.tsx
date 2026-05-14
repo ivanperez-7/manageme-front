@@ -39,12 +39,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 // OTRAS UTILIDADES
 import { fetchProductoById } from '@/api/catalogo';
-import type {
-  LoteResponse,
-  MovimientoResponse,
-  ProductoResponse,
-  ProveedorResponse,
-} from '@/lib/types';
+import type { LoteResponse, MovimientoResponse, ProductoResponse, ProveedorResponse } from '@/lib/types';
 import { cn, humanDate, humanTime, plural } from '@/lib/utils';
 
 const movementsColumns: ColumnDef<MovimientoResponse & { cantidad: number }>[] = [
@@ -108,10 +103,7 @@ const lotesColumns: ColumnDef<LoteResponse>[] = [
     accessorKey: 'cantidad_restante',
     header: 'Cantidad restante',
     cell: ({ row }) => (
-      <RemainingProgress
-        total={row.original.cantidad_inicial}
-        remaining={row.original.cantidad_restante}
-      />
+      <RemainingProgress total={row.original.cantidad_inicial} remaining={row.original.cantidad_restante} />
     ),
   },
   {
@@ -251,8 +243,7 @@ const ProductInfoCard = ({ producto }: { producto: ProductoResponse }) => (
               <div className='flex flex-wrap gap-2 mt-2'>
                 {producto.equipos.map((eq) => (
                   <Badge key={eq.id} variant='secondary' className='px-3 py-1 gap-2'>
-                    {eq.nombre}{' '}
-                    <span className='text-xs text-muted-foreground'>{eq.marca.nombre}</span>
+                    {eq.nombre} <span className='text-xs text-muted-foreground'>{eq.marca.nombre}</span>
                   </Badge>
                 ))}
               </div>
@@ -331,9 +322,7 @@ const ProductBatchesCard = ({ lotes }: { lotes: LoteResponse[] }) => {
                   <PackageOpen />
                 </EmptyMedia>
                 <EmptyTitle>No se ha registrado ningún lote</EmptyTitle>
-                <EmptyDescription>
-                  Comienza registrando un lote por medio de una entrada
-                </EmptyDescription>
+                <EmptyDescription>Comienza registrando un lote por medio de una entrada</EmptyDescription>
               </EmptyHeader>
             </Empty>
           }
@@ -357,6 +346,10 @@ const ProductMovementsCard = ({ movimientos }: { movimientos: MovimientoResponse
                 Registrar entrada
               </Button>
             }
+            initialData={{
+              tipo: 'entrada',
+              items: [{ producto_id: producto.id, cantidad: 0 }],
+            }}
           />
         </div>
       </CardHeader>

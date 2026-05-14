@@ -1,15 +1,13 @@
-import { createFileRoute, ErrorComponent, Link } from '@tanstack/react-router';
+import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/react-router';
+import type { ColumnDef } from '@tanstack/react-table';
 import { useEffect } from 'react';
 import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   Legend,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -20,11 +18,10 @@ import { DataTable } from '@/components/data-table';
 import { DeficitProgress } from '@/components/deficit-progress';
 import { useHeader } from '@/components/site-header';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { getDashboardData } from '@/api/dashboard';
 import type { DashboardData } from '@/lib/types';
-import type { ColumnDef } from '@tanstack/react-table';
 
 const lowStockColumns: ColumnDef<DashboardData['productosBajos'][0]>[] = [
   {
@@ -52,10 +49,10 @@ export const Route = createFileRoute('/_app/dashboard')({
 });
 
 function DashboardPage() {
-  const { stats, categoriasChart, salidasChart, productosBajos, clientesChart } = Route.useLoaderData();
+  const { stats, categoriasChart, movimientosChart, productosBajos, topProductosChart } =
+    Route.useLoaderData();
   const { setContent } = useHeader();
-
-  const colors = ['#3b82f6', '#10b981', '#f97316', '#ef4444', '#a855f7'];
+  const router = useRouter();
 
   useEffect(() => {
     setContent(
@@ -112,7 +109,13 @@ function DashboardPage() {
               <BarChart data={categoriasChart}>
                 <XAxis dataKey='nombre' />
                 <YAxis />
-                <Tooltip />
+                <Tooltip
+                  cursor={{ stroke: 'var(--color-border-2)' }}
+                  contentStyle={{
+                    backgroundColor: 'var(--color-surface-raised)',
+                    borderColor: 'var(--color-border-2)',
+                  }}
+                />
                 <Bar dataKey='cantidad' fill='#3b82f6' />
               </BarChart>
             </ResponsiveContainer>
@@ -121,13 +124,12 @@ function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Salidas en los últimos 30 días</CardTitle>
+            <CardTitle>Productos con más movimientos en los últimos 30 días</CardTitle>
           </CardHeader>
           <CardContent className='h-[300px]'>
             <ResponsiveContainer width='100%' height='100%'>
-              <LineChart data={salidasChart}>
-                <CartesianGrid strokeDasharray='3 3' stroke='var(--color-border-3)' />
-                <XAxis dataKey='fecha_creado' />
+              <BarChart data={topProductosChart}>
+                <XAxis dataKey='codigo_interno' />
                 <YAxis />
                 <Tooltip
                   cursor={{ stroke: 'var(--color-border-2)' }}
@@ -136,29 +138,47 @@ function DashboardPage() {
                     borderColor: 'var(--color-border-2)',
                   }}
                 />
-                <Line type='monotone' dataKey='total' stroke='#10b981' strokeWidth={2} />
-              </LineChart>
+                <Bar
+                  dataKey='total_movimientos'
+                  fill='#10b981'
+                  onClick={(data) => {
+                    const producto = data.payload as DashboardData['topProductosChart'][0];
+                    router.navigate({ to: '/catalogo/$id', params: { id: producto.id.toString() } });
+                  }}
+                />
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
+          <CardFooter>
+            <p className='text-sm text-muted-foreground'>
+              Haga clic en una barra para ver los detalles del producto.
+            </p>
+          </CardFooter>
         </Card>
       </div>
 
       <div className='grid lg:grid-cols-2 gap-6'>
         <Card>
           <CardHeader>
-            <CardTitle>Clientes por tipo (física vs moral)</CardTitle>
+            <CardTitle>Movimientos en los últimos 30 días</CardTitle>
           </CardHeader>
-          <CardContent className='h-[300px] flex justify-center'>
+          <CardContent className='h-[300px]'>
             <ResponsiveContainer width='100%' height='100%'>
-              <PieChart>
-                <Pie data={clientesChart} dataKey='cantidad' nameKey='tipo2' outerRadius={110} label>
-                  {clientesChart.map((_, i) => (
-                    <Cell key={i} fill={colors[i % colors.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
+              <LineChart data={movimientosChart}>
+                <CartesianGrid strokeDasharray='3 3' stroke='var(--color-border-3)' />
+                <XAxis dataKey='fecha_creado' />
+                <YAxis />
                 <Legend />
-              </PieChart>
+                <Tooltip
+                  cursor={{ stroke: 'var(--color-border-2)' }}
+                  contentStyle={{
+                    backgroundColor: 'var(--color-surface-raised)',
+                    borderColor: 'var(--color-border-2)',
+                  }}
+                />
+                <Line type='monotone' dataKey='entradas' stroke='#3b82f6' strokeWidth={2} />
+                <Line type='monotone' dataKey='salidas' stroke='#10b981' strokeWidth={2} />
+              </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -170,6 +190,11 @@ function DashboardPage() {
           <CardContent>
             <DataTable transparent data={productosBajos} columns={lowStockColumns} />
           </CardContent>
+          <CardFooter>
+            <p className='text-sm text-muted-foreground'>
+              Haga clic en un producto para ver los detalles de este.
+            </p>
+          </CardFooter>
         </Card>
       </div>
     </div>

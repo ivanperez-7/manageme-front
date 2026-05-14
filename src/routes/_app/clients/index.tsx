@@ -1,18 +1,15 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
+import Cookies from 'js-cookie';
 import { EllipsisVertical, PackageOpen, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { DataTable } from '@/components/data-table';
 import { useHeader } from '@/components/site-header';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from '@/components/ui/breadcrumb';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,13 +19,12 @@ import {
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import { ENDPOINTS } from '@/api/endpoints';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useCatalogs } from '@/hooks/use-catalogs';
 import { withAuth } from '@/lib/auth';
 import type { ClienteResponse } from '@/lib/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const prettierTypes: Record<ClienteResponse['tipo'], string> = { fisica: 'Física', moral: 'Moral' };
 
@@ -117,7 +113,7 @@ function CreateClientePopover({ onSuccess }: { onSuccess: () => void }) {
     if (!nombre.trim()) return;
 
     toast.promise(
-      withAuth.post(ENDPOINTS.clientes.list, { nombre, tipo }).then(() => {
+      withAuth.post(ENDPOINTS.clientes.list, { nombre, tipo, sucursal: Cookies.get('branch') }).then(() => {
         setNombre('');
         setOpen(false);
         onSuccess();
@@ -135,12 +131,7 @@ function CreateClientePopover({ onSuccess }: { onSuccess: () => void }) {
       </PopoverTrigger>
 
       <PopoverContent className='w-72 space-y-3'>
-        <Input
-          placeholder='Nombre'
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          autoFocus
-        />
+        <Input placeholder='Nombre' value={nombre} onChange={(e) => setNombre(e.target.value)} autoFocus />
 
         <Select value={tipo} onValueChange={setTipo}>
           <SelectTrigger className='w-full'>

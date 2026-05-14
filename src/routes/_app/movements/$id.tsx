@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { DataTable } from '@/components/data-table';
 import { useHeader } from '@/components/site-header';
 import TipoMovimientoBadge from '@/components/tipo-movimiento-badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -19,25 +20,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Separator } from '@/components/ui/separator';
+import { Spinner } from '@/components/ui/spinner';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { fetchMovimientoById } from '@/api/movimientos';
 import { withAuth } from '@/lib/auth';
 import type { MovimientoItemResponse } from '@/lib/types';
 import { firstUpperCase, humanDate, humanTime } from '@/lib/utils';
-import { Spinner } from '@/components/ui/spinner';
 import { userStore } from '@/stores/userStore';
 
 const itemsColumns: ColumnDef<MovimientoItemResponse>[] = [
   {
-    accessorKey: 'producto.id',
     header: 'Producto',
     cell: ({ row }) => (
-      <Link
-        to='/catalogo/$id'
-        params={{ id: String(row.original.producto.id) }}
-        className='font-medium'
-      >
+      <Link to='/catalogo/$id' params={{ id: String(row.original.producto.id) }} className='font-medium'>
         {row.original.producto.codigo_interno}
       </Link>
     ),
@@ -45,7 +41,6 @@ const itemsColumns: ColumnDef<MovimientoItemResponse>[] = [
   { accessorKey: 'lote.codigo_lote', header: 'Código de lote' },
   { accessorKey: 'producto.descripcion', header: 'Descripción' },
   {
-    accessorKey: 'cantidad',
     header: 'Cantidad',
     cell: ({ row }) => row.original.cantidad.toLocaleString('es-MX'),
   },
@@ -151,9 +146,11 @@ function MovementDetailPage() {
                 <p className='text-sm text-muted-foreground'>Creado por</p>
                 {movimiento.creado_por ? (
                   <div className='flex gap-2.5 items-center'>
-                    {/* <Avatar>
-                      <AvatarFallback>{movimiento.creado_por[0].toUpperCase()}</AvatarFallback>
-                    </Avatar> */}
+                    <Avatar>
+                      <AvatarFallback>
+                        {movimiento.creado_por.full_name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                     {movimiento.creado_por.full_name}
                   </div>
                 ) : (

@@ -63,7 +63,7 @@ export function AddProductDialog({
           toast.success(`¡Producto ${producto ? 'editado' : 'registrado'} correctamente!`);
           if (!producto) form.reset();
           setOpen(false);
-          router.invalidate();
+          await router.invalidate({ sync: true });
         }
       } catch (error: any) {
         toast.error(error.response?.data?.codigo_interno || error.message);
@@ -169,10 +169,7 @@ export function AddProductDialog({
             {(field) => (
               <Field className='space-y-1'>
                 <FieldLabel className='text-xl'>Equipos compatibles</FieldLabel>
-                <EquipoSelector
-                  selectedEquipos={field.state.value}
-                  onEquiposChange={field.handleChange}
-                />
+                <EquipoSelector selectedEquipos={field.state.value} onEquiposChange={field.handleChange} />
                 <FieldError errors={field.state.meta.errors} />
               </Field>
             )}
@@ -257,9 +254,7 @@ function EquipoSelector({
                 }}
               />
               {eq.nombre}{' '}
-              {!selectedMarca && (
-                <span className='text-xs text-muted-foreground'>{eq.marca.nombre}</span>
-              )}
+              {!selectedMarca && <span className='text-xs text-muted-foreground'>{eq.marca.nombre}</span>}
             </label>
           ))}
         </div>
