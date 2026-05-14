@@ -41,6 +41,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { fetchProductoById } from '@/api/catalogo';
 import type { LoteResponse, MovimientoResponse, ProductoResponse, ProveedorResponse } from '@/lib/types';
 import { cn, humanDate, humanTime, plural } from '@/lib/utils';
+import { DateRangePicker } from '@/components/date-range-pickers';
 
 const movementsColumns: ColumnDef<MovimientoResponse & { cantidad: number }>[] = [
   {
@@ -354,6 +355,7 @@ const ProductMovementsCard = ({ movimientos }: { movimientos: MovimientoResponse
         </div>
       </CardHeader>
       <CardContent>
+        <DateRangePicker onStartDateChange={() => {}} onEndDateChange={() => {}} className='mb-3' />
         <DataTable
           // hacemos básicamente un cross product de cada movimiento con su array de items
           data={movimientos.flatMap((mov) =>
