@@ -16,6 +16,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AddMovementDialog } from '@/components/add-movement-dialog';
 import { AddProductDialog } from '@/components/add-product-dialog';
 import { DataTable } from '@/components/data-table';
+import { DateRangePicker } from '@/components/date-range-pickers';
 import { DeleteProductDialog } from '@/components/delete-product-dialog';
 import { RemainingProgress } from '@/components/remaining-progress';
 import { useHeader } from '@/components/site-header';
@@ -41,7 +42,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { fetchProductoById } from '@/api/catalogo';
 import type { LoteResponse, MovimientoResponse, ProductoResponse, ProveedorResponse } from '@/lib/types';
 import { cn, humanDate, humanTime, plural } from '@/lib/utils';
-import { DateRangePicker } from '@/components/date-range-pickers';
 
 const movementsColumns: ColumnDef<MovimientoResponse & { cantidad: number }>[] = [
   {
@@ -141,7 +141,14 @@ const lotesColumns: ColumnDef<LoteResponse>[] = [
   },
 ];
 
+type MovimientoSearch = { fechaInicio?: string; fechaFin?: string };
+
 export const Route = createFileRoute('/_app/catalogo/$id')({
+  validateSearch: ({ fechaInicio, fechaFin }): MovimientoSearch => ({
+    fechaInicio: (fechaInicio as string) || undefined,
+    fechaFin: (fechaFin as string) || undefined,
+  }),
+  loaderDeps: ({ search }) => search,
   loader: async ({ params }) => await fetchProductoById(params.id),
   component: ProductDetailPage,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
