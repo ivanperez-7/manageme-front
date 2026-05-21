@@ -318,7 +318,7 @@ function EquipoCard({ equipo, onDeleted }: { equipo: EquipoResponse; onDeleted: 
           </EditEquipoPopover>
 
           <DropdownMenuContent align='end'>
-            <DropdownMenuItem onClick={() => setTimeout(() => setEditOpen(true), 0)}>
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
               <Pencil className='mr-2 h-4 w-4' />
               Editar
             </DropdownMenuItem>
