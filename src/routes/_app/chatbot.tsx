@@ -1,4 +1,5 @@
 import { createFileRoute, ErrorComponent } from '@tanstack/react-router';
+import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, ChevronDown, ChevronUp, Send } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -105,11 +106,17 @@ function ChatbotPage() {
                   Escribe un mensaje para comenzar.
                 </p>
               )}
-              {messages.map((message, i) => (
-                <MessageBubble key={i} message={message} />
-              ))}
+              <AnimatePresence initial={false}>
+                {messages.map((message, i) => (
+                  <MessageBubble key={i} message={message} />
+                ))}
+              </AnimatePresence>
               {loading && (
-                <div className='flex justify-start'>
+                <motion.div
+                  className='flex justify-start'
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
                   <div className='bg-muted text-muted-foreground max-w-[80%] rounded-xl px-4 py-2 text-sm'>
                     <span className='inline-flex gap-1'>
                       <span className='animate-bounce'>.</span>
@@ -117,7 +124,7 @@ function ChatbotPage() {
                       <span className='animate-bounce [animation-delay:0.2s]'>.</span>
                     </span>
                   </div>
-                </div>
+                </motion.div>
               )}
             </div>
           </ScrollArea>
@@ -149,7 +156,12 @@ function ChatbotPage() {
 
 function MessageBubble({ message }: { message: Message }) {
   return (
-    <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+    <motion.div
+      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+      initial={{ opacity: 0, y: 12, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+    >
       {message.role === 'user' ? (
         <div className='bg-primary text-primary-foreground max-w-[80%] rounded-xl px-4 py-2 text-sm'>
           {message.content}
@@ -161,7 +173,7 @@ function MessageBubble({ message }: { message: Message }) {
           {message.content}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

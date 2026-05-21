@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { EllipsisVertical } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 
@@ -25,6 +26,10 @@ import { plural, statusFromStock } from '@/lib/utils';
 
 export function ProductCard({ producto }: { producto: ProductoResponse }) {
   return (
+    <motion.div
+      whileHover={{ y: -4, boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+    >
     <Card className='w-full max-w-md rounded-xl shadow-sm border'>
       <CardHeader>
         <CardTitle className='text-lg font-semibold'>
@@ -96,5 +101,6 @@ export function ProductCard({ producto }: { producto: ProductoResponse }) {
         </DropdownMenu>
       </CardFooter>
     </Card>
+    </motion.div>
   );
 }

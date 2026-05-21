@@ -6,6 +6,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import { motion } from 'framer-motion';
 
 import {
   Pagination,
@@ -73,14 +74,21 @@ export function DataTable<TData, TValue>({
 
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+              table.getRowModel().rows.map((row, index) => (
+                <motion.tr
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: index * 0.03, ease: 'easeOut' }}
+                  className='border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted'
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className='py-2.5'>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
-                </TableRow>
+                </motion.tr>
               ))
             ) : (
               <TableRow>

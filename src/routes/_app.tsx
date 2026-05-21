@@ -1,4 +1,5 @@
 import { Outlet, createFileRoute, useRouter } from '@tanstack/react-router';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -46,7 +47,17 @@ function AppLayout() {
           <HeaderProvider>
             <SiteHeader />
             <div className='p-4 md:pt-7 md:px-11'>
-              <Outlet />
+              <AnimatePresence mode='wait'>
+                <motion.div
+                  key={router.state.location.pathname}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                >
+                  <Outlet />
+                </motion.div>
+              </AnimatePresence>
             </div>
           </HeaderProvider>
         </SidebarInset>
