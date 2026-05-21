@@ -53,4 +53,5 @@ export const ENDPOINTS = {
     list: '/organizacion/sucursales/',
     detail: (id: IdLike) => `/organizacion/sucursales/${id}/`,
   },
+  chat: '/chat/',
 } as const;
