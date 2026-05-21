@@ -188,8 +188,6 @@ function ProductListPage() {
     navigate({ search: (prev) => ({ ...prev, text: localText }), replace: true });
   }, [localText]);
 
-  console.log(text, categoria, marca, equipo, page);
-
   return (
     <div className='space-y-4'>
       <div className='space-y-1'>

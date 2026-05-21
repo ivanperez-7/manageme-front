@@ -61,7 +61,7 @@ export async function authGuardSilent() {
 export const withAuth = axios.create({
   baseURL: API_BASE,
   withCredentials: true,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
 });
 
 withAuth.interceptors.request.use((config) => {

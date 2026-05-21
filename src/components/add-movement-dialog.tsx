@@ -1,23 +1,26 @@
 import { useStore } from '@tanstack/react-form';
 import { useRouter } from '@tanstack/react-router';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowDownToDot, ArrowUpFromDot, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import type z from 'zod';
+import { z } from 'zod';
 
 import { Button } from './ui/button';
 import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog';
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from './ui/empty';
 import { Field, FieldGroup, FieldLabel, FieldSet } from './ui/field';
 import { Input } from './ui/input';
-import { Separator } from './ui/separator';
+import { Skeleton } from './ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import UsoEquipoDisplay from './uso-equipo-display';
 
@@ -33,7 +36,13 @@ import {
   type ProductoResponse,
   type UsoEquipo,
 } from '@/lib/types';
+import { cn } from '@/lib/utils';
 import { userStore } from '@/stores/userStore';
+
+const tipoOptions = [
+  { value: 'entrada' as const, label: 'Entrada', Icon: ArrowDownToDot },
+  { value: 'salida' as const, label: 'Salida', Icon: ArrowUpFromDot },
+];
 
 export function AddMovementDialog({
   trigger,
@@ -46,7 +55,6 @@ export function AddMovementDialog({
 }) {
   const [open, setOpen] = useState(false);
 
-  // añade atajo de teclado ctrl + enter para abrir modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !open && useShortcut) {
@@ -72,8 +80,8 @@ export function AddMovementDialog({
       >
         <DialogHeader>
           <DialogTitle>Registrar movimiento</DialogTitle>
+          <DialogDescription>Escanea productos para agregarlos al movimiento.</DialogDescription>
         </DialogHeader>
-        <Separator />
 
         <MovementForm initialData={initialData} onSuccess={() => setOpen(false)} />
       </DialogContent>
@@ -97,7 +105,7 @@ function MovementForm({
   const [searching, setSearching] = useState(false);
   const [productosMap, setProductosMap] = useState<ProductosMap>({});
 
-  const [clientEquipos, setClientEquipos] = useState<UsoEquipo[]>([]); // info de los equipos ligados al cliente selecc.
+  const [clientEquipos, setClientEquipos] = useState<UsoEquipo[]>([]);
   const [loadingClientEquipos, setLoadingClientEquipos] = useState(false);
 
   const { users, clientes } = useCatalogs();
@@ -111,10 +119,9 @@ function MovementForm({
     defaultValues: {
       tipo: initialData?.tipo ?? 'entrada',
       items: initialData?.items ?? [],
-      detalle_entrada: {
-        numero_factura: '',
-        recibido_por_id: currentUserId,
-      },
+      detalle_entrada:
+        initialData?.tipo == 'salida' ? null : { numero_factura: '', recibido_por_id: currentUserId },
+      detalle_salida: initialData?.tipo == 'entrada' ? null : { cliente_id: 0, tecnico: '' },
       comentarios: '',
     } as z.input<typeof movimientoCreateSchema>,
     validators: { onSubmit: movimientoCreateSchema },
@@ -215,80 +222,6 @@ function MovementForm({
       );
     });
 
-  const itemsTable = (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Código</TableHead>
-          <TableHead>Descripción</TableHead>
-          <TableHead>Cantidad</TableHead>
-          <TableHead hidden={!hasSelectedCliente}>Equipo</TableHead>
-          <TableHead className='w-10'></TableHead>
-        </TableRow>
-      </TableHeader>
-
-      <TableBody>
-        <form.Field name='items' mode='array'>
-          {(field) => {
-            if (field.state.value.length <= 0)
-              return (
-                <TableRow>
-                  <TableCell colSpan={4} className='text-muted-foreground'>
-                    No hay productos
-                  </TableCell>
-                </TableRow>
-              );
-
-            return field.state.value.map(
-              ({ producto_id }, index) =>
-                productosMap[producto_id] && (
-                  <TableRow key={index}>
-                    <TableCell>{productosMap[producto_id].codigo_interno}</TableCell>
-                    <TableCell>{productosMap[producto_id].descripcion}</TableCell>
-                    <TableCell>
-                      <form.Field name={`items[${index}].cantidad`}>
-                        {(subfield) => (
-                          <Input
-                            className='h-8 w-20'
-                            ghost
-                            value={subfield.state.value}
-                            onChange={(e) => subfield.handleChange(Number(e.target.value))}
-                          />
-                        )}
-                      </form.Field>
-                    </TableCell>
-                    <TableCell hidden={!hasSelectedCliente}>
-                      {loadingClientEquipos ? (
-                        <span className='text-muted-foreground'>...</span>
-                      ) : (
-                        <form.AppField name={`items[${index}].equipo_cliente_id`}>
-                          {(subfield) => (
-                            <UsoEquipoDisplay
-                              matchingEquipos={clientEquipos.filter(({ equipo__id }) =>
-                                productosMap[producto_id].equipos.map((eq) => eq.id).includes(equipo__id)
-                              )}
-                              value={subfield.state.value}
-                              onChange={subfield.handleChange}
-                              NumberSelectField={subfield.NumberSelectField}
-                            />
-                          )}
-                        </form.AppField>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant='ghost' size='icon-sm' onClick={() => field.removeValue(index)}>
-                        <X />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                )
-            );
-          }}
-        </form.Field>
-      </TableBody>
-    </Table>
-  );
-
   useEffect(() => {
     scanInputRef.current?.focus();
   }, []);
@@ -324,119 +257,259 @@ function MovementForm({
       }}
       className='space-y-6'
     >
+      {/* Selector de tipo de movimiento */}
       <FieldSet>
-        <FieldGroup className='grid grid-cols-2 gap-4'>
+        <FieldGroup>
           <form.Field name='tipo'>
             {(field) => (
               <Field>
-                <FieldLabel>Tipo</FieldLabel>
+                <FieldLabel>Tipo de movimiento</FieldLabel>
+                <div className='relative flex bg-muted rounded-lg p-1'>
+                  {tipoOptions.map(({ value, label, Icon }) => (
+                    <button
+                      key={value}
+                      type='button'
+                      className={cn(
+                        'relative z-10 flex flex-1 items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                        tipo === value
+                          ? 'text-primary-foreground'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                      onClick={() => field.handleChange(value)}
+                    >
+                      <Icon className='size-4' />
+                      {label}
+                    </button>
+                  ))}
+
+                  <motion.div
+                    layoutId='tipo-active'
+                    className='absolute inset-y-1 z-0 rounded-md bg-primary shadow-sm'
+                    style={{
+                      left: tipo === 'entrada' ? '4px' : 'calc(50% + 2px)',
+                      width: 'calc(50% - 6px)',
+                    }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                </div>
+              </Field>
+            )}
+          </form.Field>
+        </FieldGroup>
+      </FieldSet>
+
+      {/* Input para escanear SKU o lote */}
+      <FieldSet>
+        <FieldGroup>
+          <form.Field name='tipo'>
+            {(field) => (
+              <Field>
+                <FieldLabel htmlFor='scan-input'>
+                  {field.state.value === 'entrada' ? 'SKU del producto' : 'Código de lote'}
+                </FieldLabel>
                 <div className='flex gap-2'>
-                  <Button
-                    type='button'
-                    variant={field.state.value === 'entrada' ? 'default' : 'outline'}
-                    onClick={() => {
-                      field.handleChange('entrada');
-                      form.setFieldValue('detalle_salida', undefined);
-                      form.setFieldValue('detalle_entrada.recibido_por_id', currentUserId);
+                  <Input
+                    id='scan-input'
+                    ref={scanInputRef}
+                    value={scanCode}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleScanSubmit(e);
+                      }
                     }}
-                  >
-                    <ArrowDownToDot /> Entrada
-                  </Button>
-                  <Button
-                    type='button'
-                    variant={field.state.value === 'salida' ? 'default' : 'outline'}
-                    onClick={() => {
-                      field.handleChange('salida');
-                      form.setFieldValue('detalle_entrada', undefined);
-                    }}
-                  >
-                    <ArrowUpFromDot /> Salida
+                    onChange={(e) => setScanCode(e.target.value)}
+                    placeholder={
+                      field.state.value === 'entrada'
+                        ? 'Escanee o escriba el SKU...'
+                        : 'Escanee o escriba el código de lote...'
+                    }
+                  />
+                  <Button type='button' disabled={searching || !scanCode.trim()} onClick={handleScanSubmit}>
+                    {searching ? (
+                      <motion.span
+                        className='flex items-center gap-2'
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        Buscando...
+                      </motion.span>
+                    ) : (
+                      'Agregar'
+                    )}
                   </Button>
                 </div>
               </Field>
             )}
           </form.Field>
-
-          <div className='space-y-4'>
-            <Field>
-              <FieldLabel htmlFor='sku'>{tipo == 'entrada' ? 'SKU' : 'Código de lote'}</FieldLabel>
-              <Input
-                id='sku'
-                ref={scanInputRef}
-                value={scanCode}
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleScanSubmit(e);
-                  }
-                }}
-                onChange={(e) => setScanCode(e.target.value)}
-                placeholder='Escanee el código...'
-              />
-            </Field>
-            <Button
-              type='button'
-              variant='secondary'
-              className='w-full'
-              disabled={searching}
-              onClick={handleScanSubmit}
-            >
-              Agregar
-            </Button>
-          </div>
         </FieldGroup>
       </FieldSet>
 
-      {itemsTable}
+      <div className='overflow-hidden rounded-lg border'>
+        <Table>
+          <TableHeader className='bg-muted sticky top-0 z-10'>
+            <TableRow>
+              <TableHead>Código</TableHead>
+              <TableHead>Descripción</TableHead>
+              <TableHead>Cantidad</TableHead>
+              <TableHead hidden={!hasSelectedCliente}>Equipo</TableHead>
+              <TableHead className='w-10' />
+            </TableRow>
+          </TableHeader>
 
-      {tipo === 'entrada' && (
-        <div className='grid grid-cols-3 gap-4 mt-4'>
-          <form.AppField name='detalle_entrada.numero_factura'>
-            {(field) => <field.InputField label='ID de prefactura' placeholder='XXX-00110011-RKO' />}
-          </form.AppField>
-          <form.AppField name='detalle_entrada.numero_factura'>
-            {(field) => <field.InputField label='Número de factura' placeholder='XXX-00110011-RKO' />}
-          </form.AppField>
-          <form.AppField name='detalle_entrada.recibido_por_id'>
-            {(field) => (
-              <field.NumberSelectField
-                label='Recibido por'
-                placeholder='Seleccione un usuario'
-                options={users.map((user) => ({
-                  key: user.id,
-                  value: user.id,
-                  label: user.full_name,
-                }))}
-                disabled
-              />
-            )}
-          </form.AppField>
-        </div>
-      )}
+          <TableBody>
+            <form.Field name='items' mode='array'>
+              {(field) => {
+                if (field.state.value.length <= 0)
+                  return (
+                    <TableRow>
+                      <TableCell colSpan={5} className='p-6'>
+                        <Empty>
+                          <EmptyHeader>
+                            <EmptyTitle>No hay productos</EmptyTitle>
+                            <EmptyDescription>
+                              Escanea un producto para agregarlo al movimiento.
+                            </EmptyDescription>
+                          </EmptyHeader>
+                        </Empty>
+                      </TableCell>
+                    </TableRow>
+                  );
 
-      {tipo === 'salida' && (
-        <div className='grid grid-cols-2 gap-4 mt-4'>
-          <form.AppField name='detalle_salida.cliente_id'>
-            {(field) => (
-              <field.NumberSelectField
-                label='Cliente'
-                placeholder='Seleccione un cliente'
-                options={clientes.map((cli) => ({
-                  key: cli.id,
-                  value: cli.id,
-                  label: cli.nombre,
-                }))}
-                onValueChange={checkClientEquipos}
-              />
-            )}
-          </form.AppField>
+                return (
+                  <AnimatePresence initial={false}>
+                    {field.state.value.map(
+                      ({ producto_id }, index) =>
+                        productosMap[producto_id] && (
+                          <motion.tr
+                            key={`${producto_id}-${index}`}
+                            initial={{ opacity: 0, x: -12 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 12, height: 0, padding: 0 }}
+                            transition={{ duration: 0.2, delay: index * 0.03, ease: 'easeOut' }}
+                            className='border-b transition-colors hover:bg-muted/50'
+                          >
+                            <TableCell>{productosMap[producto_id].codigo_interno}</TableCell>
+                            <TableCell>{productosMap[producto_id].descripcion}</TableCell>
+                            <TableCell>
+                              <form.Field name={`items[${index}].cantidad`}>
+                                {(subfield) => (
+                                  <Input
+                                    className='h-8 w-20'
+                                    ghost
+                                    value={subfield.state.value}
+                                    onChange={(e) => subfield.handleChange(Number(e.target.value))}
+                                  />
+                                )}
+                              </form.Field>
+                            </TableCell>
+                            <TableCell hidden={!hasSelectedCliente}>
+                              {loadingClientEquipos ? (
+                                <Skeleton className='h-5 w-24' />
+                              ) : (
+                                <form.AppField name={`items[${index}].equipo_cliente_id`}>
+                                  {(subfield) => (
+                                    <UsoEquipoDisplay
+                                      matchingEquipos={clientEquipos.filter(({ equipo__id }) =>
+                                        productosMap[producto_id].equipos
+                                          .map((eq) => eq.id)
+                                          .includes(equipo__id)
+                                      )}
+                                      value={subfield.state.value}
+                                      onChange={subfield.handleChange}
+                                      NumberSelectField={subfield.NumberSelectField}
+                                    />
+                                  )}
+                                </form.AppField>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant='ghost'
+                                size='icon-sm'
+                                onClick={() => field.removeValue(index)}
+                              >
+                                <X />
+                              </Button>
+                            </TableCell>
+                          </motion.tr>
+                        )
+                    )}
+                  </AnimatePresence>
+                );
+              }}
+            </form.Field>
+          </TableBody>
+        </Table>
+      </div>
 
-          <form.AppField name='detalle_salida.tecnico'>
-            {(field) => <field.InputField label='Técnico' placeholder='Nombre del técnico' />}
-          </form.AppField>
-        </div>
-      )}
+      <AnimatePresence mode='wait'>
+        {tipo === 'entrada' && (
+          <motion.div
+            key='entrada-details'
+            initial={{ opacity: 0, y: -8, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -8, height: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            <FieldSet>
+              <FieldGroup className='grid grid-cols-3 gap-4'>
+                <form.AppField name='detalle_entrada.numero_factura'>
+                  {(field) => <field.InputField label='Número de factura' placeholder='XXX-00110011-RKO' />}
+                </form.AppField>
+                <form.AppField name='detalle_entrada.recibido_por_id'>
+                  {(field) => (
+                    <field.NumberSelectField
+                      label='Recibido por'
+                      placeholder='Seleccione un usuario'
+                      options={users.map((user) => ({
+                        key: user.id,
+                        value: user.id,
+                        label: user.full_name,
+                      }))}
+                      disabled
+                    />
+                  )}
+                </form.AppField>
+              </FieldGroup>
+            </FieldSet>
+          </motion.div>
+        )}
+
+        {tipo === 'salida' && (
+          <motion.div
+            key='salida-details'
+            initial={{ opacity: 0, y: -8, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -8, height: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            <FieldSet>
+              <FieldGroup className='grid grid-cols-2 gap-4'>
+                <form.AppField name='detalle_salida.cliente_id'>
+                  {(field) => (
+                    <field.NumberSelectField
+                      label='Cliente'
+                      placeholder='Seleccione un cliente'
+                      options={clientes.map((cli) => ({
+                        key: cli.id,
+                        value: cli.id,
+                        label: cli.nombre,
+                      }))}
+                      onValueChange={checkClientEquipos}
+                    />
+                  )}
+                </form.AppField>
+
+                <form.AppField name='detalle_salida.tecnico'>
+                  {(field) => <field.InputField label='Técnico' placeholder='Nombre del técnico' />}
+                </form.AppField>
+              </FieldGroup>
+            </FieldSet>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <DialogFooter>
         <DialogClose asChild>
