@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CreateEquipoPopover } from '@/components/create-equipo-popover';
+import { EditEquipoPopover } from '@/components/edit-equipo-popover';
 import { CreateMarcaPopover } from '@/components/create-marca-popover';
 import { DeleteMarcaDialog } from '@/components/delete-marca-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -271,7 +272,9 @@ function EditableMarcaNombre({ marca, onRename }: { marca: MarcaResponse; onRena
 }
 
 function EquipoCard({ equipo, onDeleted }: { equipo: EquipoResponse; onDeleted: () => void }) {
-  async function remove() {
+  const [editOpen, setEditOpen] = useState(false);
+
+  const remove = async () =>
     toast.promise(
       withAuth
         .patch(ENDPOINTS.equipos.detail(equipo.id), {
@@ -284,7 +287,6 @@ function EquipoCard({ equipo, onDeleted }: { equipo: EquipoResponse; onDeleted: 
         error: 'No se pudo eliminar',
       }
     );
-  }
 
   return (
     <Card className='transition-colors hover:bg-accent/40'>
@@ -302,14 +304,21 @@ function EquipoCard({ equipo, onDeleted }: { equipo: EquipoResponse; onDeleted: 
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant='ghost' size='icon'>
-              <MoreVertical className='h-5 w-5' />
-            </Button>
-          </DropdownMenuTrigger>
+          <EditEquipoPopover
+            equipo={equipo}
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            onSuccess={onDeleted}
+          >
+            <DropdownMenuTrigger asChild>
+              <Button variant='ghost' size='icon'>
+                <MoreVertical className='h-5 w-5' />
+              </Button>
+            </DropdownMenuTrigger>
+          </EditEquipoPopover>
 
           <DropdownMenuContent align='end'>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTimeout(() => setEditOpen(true), 0)}>
               <Pencil className='mr-2 h-4 w-4' />
               Editar
             </DropdownMenuItem>

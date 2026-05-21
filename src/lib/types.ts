@@ -1,16 +1,22 @@
 import * as z from 'zod';
 
 // ── Cliente ──
-export type ClienteResponse = {
-  nombre: string;
-  tipo: 'fisica' | 'moral';
-  rfc: string | null | undefined;
-  telefono: string | null | undefined;
-  email: string | null | undefined;
-  direccion: string | null | undefined;
-  activo: boolean;
-  id: number;
-};
+export const clienteCreateSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es obligatorio').max(200),
+  tipo: z.enum(['fisica', 'moral']).default('fisica'),
+  rfc: z.string().max(13).optional().nullable(),
+  telefono: z.string().max(20).optional().nullable(),
+  email: z.email('Email inválido').optional().nullable(),
+  direccion: z.string().optional().nullable(),
+  activo: z.boolean().default(true),
+});
+
+export const clienteResponseSchema = clienteCreateSchema.extend({
+  id: z.number(),
+});
+
+export type ClienteCreate = z.infer<typeof clienteCreateSchema>;
+export type ClienteResponse = z.infer<typeof clienteResponseSchema>;
 
 // ── Categoria ──
 export type CategoriaResponse = {

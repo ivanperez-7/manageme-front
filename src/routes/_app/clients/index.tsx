@@ -1,9 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import Cookies from 'js-cookie';
-import { EllipsisVertical, PackageOpen, Plus } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { EllipsisVertical, PackageOpen } from 'lucide-react';
+import { useEffect } from 'react';
 
 import { DataTable } from '@/components/data-table';
 import { useHeader } from '@/components/site-header';
@@ -17,14 +15,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { useCatalogs } from '@/hooks/use-catalogs';
 import { withAuth } from '@/lib/auth';
 import type { ClienteResponse } from '@/lib/types';
+import { CreateClienteDialog } from '@/components/create-client-dialog';
 
 const prettierTypes: Record<ClienteResponse['tipo'], string> = { fisica: 'Física', moral: 'Moral' };
 
@@ -86,7 +82,7 @@ function ClientesPage() {
           <p className='text-muted-foreground'>Administra los clientes registrados en el sistema.</p>
         </div>
 
-        <CreateClientePopover onSuccess={reloadCatalogs} />
+        <CreateClienteDialog onSuccess={reloadCatalogs} />
       </div>
 
       <DataTable
@@ -104,53 +100,6 @@ function ClientesPage() {
         }
       />
     </div>
-  );
-}
-
-function CreateClientePopover({ onSuccess }: { onSuccess: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [nombre, setNombre] = useState('');
-  const [tipo, setTipo] = useState('fisica');
-
-  const handleSave = () => {
-    if (!nombre.trim()) return;
-
-    toast.promise(
-      withAuth.post(ENDPOINTS.clientes.list, { nombre, tipo, sucursal: Cookies.get('branch') }).then(() => {
-        setNombre('');
-        setOpen(false);
-        onSuccess();
-      }),
-      { loading: 'Creando cliente...' }
-    );
-  };
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button>
-          <Plus /> Nuevo cliente
-        </Button>
-      </PopoverTrigger>
-
-      <PopoverContent className='w-72 space-y-3'>
-        <Input placeholder='Nombre' value={nombre} onChange={(e) => setNombre(e.target.value)} autoFocus />
-
-        <Select value={tipo} onValueChange={setTipo}>
-          <SelectTrigger className='w-full'>
-            <SelectValue placeholder='Tipo de cliente' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='fisica'>Persona Física</SelectItem>
-            <SelectItem value='moral'>Persona Moral</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Button className='w-full' onClick={handleSave}>
-          Guardar
-        </Button>
-      </PopoverContent>
-    </Popover>
   );
 }
 

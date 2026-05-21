@@ -1,10 +1,11 @@
 import { useMask } from '@react-input/mask';
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { ArrowLeft, ArrowUpFromDot, CheckCircle, Plus, Printer, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpFromDot, CheckCircle, Gauge, Printer, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import { AssignEquipoDialog } from '@/components/assign-equipo-dialog';
 import { DataTable } from '@/components/data-table';
 import { useHeader } from '@/components/site-header';
 import {
@@ -17,15 +18,22 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import UserTag from '@/components/user-tag';
 
 import { fetchClientById } from '@/api/catalogo';
 import { ENDPOINTS } from '@/api/endpoints';
 import { useAppForm } from '@/hooks/use-app-form';
-import { useCatalogs } from '@/hooks/use-catalogs';
 import { withAuth } from '@/lib/auth';
 import { type ClienteResponse, type MovimientoResponse, type UsoEquipo } from '@/lib/types';
 import { humanDate, humanTime } from '@/lib/utils';
@@ -54,7 +62,14 @@ const movementsColumns: ColumnDef<MovimientoResponse>[] = [
   {
     accessorKey: 'creado_por.username',
     header: 'Usuario',
-    cell: ({ row }) => <UserTag username={row.original.creado_por.full_name} />,
+    cell: ({ row }) => {
+      const name = row.original.creado_por.full_name;
+      return (
+        <span className='inline-flex items-center justify-center size-7 rounded-full bg-primary/10 text-primary text-xs font-medium'>
+          {name.charAt(0).toUpperCase()}
+        </span>
+      );
+    },
   },
   { accessorKey: 'comentarios', header: 'Comentarios' },
   {
@@ -63,32 +78,10 @@ const movementsColumns: ColumnDef<MovimientoResponse>[] = [
     cell: ({ row }) =>
       row.getValue('aprobado') && (
         <div className='flex gap-1.5 items-center'>
-          <CheckCircle className='size-4 text-green-700 dark:text-green-400' />{' '}
+          <CheckCircle className='size-4 text-green-700 dark:text-green-400' />
           <span className='text-muted-foreground'>{row.original.user_aprueba?.full_name}</span>
         </div>
       ),
-  },
-];
-
-const equiposColumns: ColumnDef<UsoEquipo>[] = [
-  { header: 'Alias', accessorKey: 'alias' },
-  { header: 'Equipo', accessorKey: 'equipo__nombre' },
-  {
-    header: 'Contador',
-    accessorKey: 'contador_uso',
-    cell: ({ row }) => row.original.contador_uso.toLocaleString('es-MX'),
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => (
-      <Button
-        variant='ghost'
-        size='icon'
-        onClick={() => withAuth.delete(ENDPOINTS.clientes.detail(row.original.id) + 'del_equipo/')}
-      >
-        <X />
-      </Button>
-    ),
   },
 ];
 
@@ -135,29 +128,32 @@ function ClienteDetailPage() {
         <ClienteForm cliente={cliente} onSuccess={router.invalidate} />
 
         <Card>
-          <CardHeader className='flex justify-between items-center'>
-            <CardTitle>Equipos asignados</CardTitle>
-
-            <AssignEquipoPopover clienteId={cliente.id} onSuccess={router.invalidate} />
+          <CardHeader>
+            <div className='flex justify-between items-center'>
+              <CardTitle>Equipos asignados</CardTitle>
+              <AssignEquipoDialog clienteId={cliente.id} onSuccess={router.invalidate} />
+            </div>
+            <Separator />
           </CardHeader>
 
           <CardContent>
-            <DataTable
-              data={equiposCliente}
-              columns={equiposColumns}
-              transparent
-              emptyComponent={
-                <Empty className='my-0 py-0'>
-                  <EmptyHeader>
-                    <EmptyMedia variant='icon'>
-                      <Printer />
-                    </EmptyMedia>
-                    <EmptyTitle>No se ha asignado ningún equipo</EmptyTitle>
-                    <EmptyDescription>Comienza registrando un equipo de este cliente</EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              }
-            />
+            {equiposCliente.length === 0 ? (
+              <Empty className='my-0 py-0'>
+                <EmptyHeader>
+                  <EmptyMedia variant='icon'>
+                    <Printer />
+                  </EmptyMedia>
+                  <EmptyTitle>No se ha asignado ningún equipo</EmptyTitle>
+                  <EmptyDescription>Comienza registrando un equipo de este cliente</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            ) : (
+              <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3'>
+                {equiposCliente.map((eq) => (
+                  <EquipoCard key={eq.id} equipo={eq} onDelete={router.invalidate} />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -263,82 +259,64 @@ function ClienteForm({ cliente, onSuccess }: { cliente: ClienteResponse; onSucce
   );
 }
 
-function AssignEquipoPopover({ clienteId, onSuccess }: { clienteId: number; onSuccess: () => void }) {
-  const { equipos } = useCatalogs();
+function EquipoCard({ equipo, onDelete }: { equipo: UsoEquipo; onDelete: () => void }) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const form = useAppForm({
-    defaultValues: {
-      alias: '',
-      equipoId: 0,
-      contadorUso: 0,
-    },
-    onSubmit: async ({ value }) =>
-      toast.promise(
-        withAuth.post(ENDPOINTS.clientes.detail(clienteId) + 'equipos/', value).then(onSuccess),
-        { loading: 'Asignando equipo...', error: (data) => 'Error: ' + data.message }
-      ),
-  });
+  const handleDelete = () =>
+    toast.promise(
+      withAuth.delete(ENDPOINTS.clientes.detail(equipo.id) + 'del_equipo/').then(() => {
+        setConfirmOpen(false);
+        onDelete();
+      }),
+      { loading: 'Eliminando equipo...', error: (data) => 'Error: ' + data.message }
+    );
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button size='sm'>
-          <Plus /> Asignar equipo
-        </Button>
-      </PopoverTrigger>
+    <div className='relative rounded-lg border bg-card p-4 space-y-3 shadow-sm hover:shadow-md transition-shadow'>
+      <div className='flex items-start justify-between gap-2'>
+        <div className='flex items-center gap-2 min-w-0'>
+          <div className='flex items-center justify-center size-9 rounded-lg bg-primary/10 text-primary shrink-0'>
+            <Printer className='size-4' />
+          </div>
+          <div className='min-w-0'>
+            <p className='text-sm font-medium truncate'>{equipo.alias}</p>
+            <p className='text-xs text-muted-foreground truncate'>{equipo.equipo__nombre}</p>
+          </div>
+        </div>
 
-      <PopoverContent className='w-72 space-y-3'>
-        <form
-          id='uso-equipo-form'
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit();
-          }}
-          className='space-y-6'
-        >
-          <form.AppField
-            name='equipoId'
-            validators={{
-              onChange: ({ value }) => (value <= 0 ? 'Equipo no seleccionado' : undefined),
-            }}
-          >
-            {(field) => (
-              <field.NumberSelectField
-                label='Equipo'
-                placeholder='Seleccione un equipo'
-                options={equipos.map((eq) => ({
-                  key: eq.id,
-                  value: eq.id,
-                  label: eq.nombre,
-                }))}
-              />
-            )}
-          </form.AppField>
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogTrigger asChild>
+            <Button variant='ghost' size='icon' className='size-7 shrink-0 -mr-1 -mt-1'>
+              <Trash2 className='size-3.5 text-muted-foreground hover:text-destructive transition-colors' />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className='sm:max-w-sm'>
+            <DialogHeader>
+              <DialogTitle>¿Eliminar equipo asignado?</DialogTitle>
+              <DialogDescription>
+                Se eliminará la asignación del equipo <strong>{equipo.equipo__nombre}</strong> con alias{' '}
+                <strong>{equipo.alias}</strong>.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant='ghost'>Cancelar</Button>
+              </DialogClose>
+              <Button variant='destructive' onClick={handleDelete}>
+                Eliminar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
 
-          <form.AppField
-            name='contadorUso'
-            validators={{
-              onChange: ({ value }) => (value <= 0 ? 'Contador no válido' : undefined),
-            }}
-          >
-            {(field) => <field.InputField label='Contador de uso' placeholder='1500' />}
-          </form.AppField>
-
-          <form.AppField
-            name='alias'
-            validators={{
-              onChange: ({ value }) => value.trim().length <= 0,
-              onSubmit: ({ value }) => value.trim().length <= 0,
-            }}
-          >
-            {(field) => <field.InputField label='Alias' placeholder='Alias del equipo' />}
-          </form.AppField>
-
-          <form.AppForm>
-            <form.SaveButton className='w-full' />
-          </form.AppForm>
-        </form>
-      </PopoverContent>
-    </Popover>
+      <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+        <Gauge className='size-3.5' />
+        <span>
+          Contador de uso:{' '}
+          <strong className='text-foreground'>{equipo.contador_uso.toLocaleString('es-MX')}</strong>
+        </span>
+      </div>
+    </div>
   );
 }
