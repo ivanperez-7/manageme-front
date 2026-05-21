@@ -89,7 +89,10 @@ function ChatbotPage() {
 
   return (
     <div className='space-y-4'>
-      <h1 className='text-3xl font-semibold tracking-tight'>Chatbot</h1>
+      <div className='space-y-1'>
+        <h1 className='text-3xl font-semibold tracking-tight'>Chatbot</h1>
+        <p className='text-muted-foreground'>Consulta tus dudas con el asistente.</p>
+      </div>
       <Card className='flex h-[calc(100vh-14rem)] flex-col'>
         <CardHeader>
           <CardTitle>Asistente</CardTitle>

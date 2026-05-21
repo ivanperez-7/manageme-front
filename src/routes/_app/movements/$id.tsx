@@ -112,7 +112,7 @@ function MovementDetailPage() {
             <ArrowLeft className='h-4 w-4' />
           </Button>
 
-          <h1 className='text-2xl'>
+          <h1 className='text-3xl font-semibold tracking-tight'>
             {movimiento.tipo === 'entrada' ? 'Entrada' : 'Salida'} #{movimiento.id}
           </h1>
         </div>

@@ -81,7 +81,10 @@ function ClientesPage() {
   return (
     <div className='space-y-4'>
       <div className='flex justify-between items-center'>
-        <h1 className='text-2xl'>Clientes registrados</h1>
+        <div className='space-y-1'>
+          <h1 className='text-3xl font-semibold tracking-tight'>Clientes registrados</h1>
+          <p className='text-muted-foreground'>Administra los clientes registrados en el sistema.</p>
+        </div>
 
         <CreateClientePopover onSuccess={reloadCatalogs} />
       </div>

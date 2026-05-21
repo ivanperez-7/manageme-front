@@ -186,7 +186,7 @@ function ProductDetailPage() {
           <Button variant='ghost' size='icon' onClick={() => router.history.back()}>
             <ArrowLeft className='h-4 w-4' />
           </Button>
-          <h1 className='text-2xl'>{producto.descripcion}</h1>
+          <h1 className='text-3xl font-semibold tracking-tight'>{producto.descripcion}</h1>
         </div>
 
         <div className='space-x-2'>

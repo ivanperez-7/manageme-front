@@ -54,10 +54,10 @@ function EquiposPage() {
   }, [marcas, selectedMarca]);
 
   return (
-    <div className='flex flex-col gap-6'>
+    <div className='flex flex-col gap-4'>
       {/* HEADER */}
       <div className='flex items-start justify-between'>
-        <div>
+        <div className='space-y-1'>
           <h1 className='text-3xl font-semibold tracking-tight'>Equipos</h1>
           <p className='text-muted-foreground'>Administra marcas y equipos registrados.</p>
         </div>

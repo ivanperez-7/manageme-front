@@ -128,7 +128,7 @@ function ClienteDetailPage() {
         <Button variant='ghost' size='icon' onClick={() => router.history.back()}>
           <ArrowLeft className='h-4 w-4' />
         </Button>
-        <h1 className='text-2xl'>{cliente.nombre}</h1>
+        <h1 className='text-3xl font-semibold tracking-tight'>{cliente.nombre}</h1>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-[400px_1fr] gap-6'>

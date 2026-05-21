@@ -153,7 +153,10 @@ function MovementsListPage() {
 
   return (
     <div className='space-y-4'>
-      <h1 className='text-2xl'>Movimientos del almacén</h1>
+      <div className='space-y-1'>
+        <h1 className='text-3xl font-semibold tracking-tight'>Movimientos del almacén</h1>
+        <p className='text-muted-foreground'>Consulta entradas y salidas registradas.</p>
+      </div>
       <div className='flex gap-4 items-center'>
         <div className='flex-1'>
           <InputGroup>
