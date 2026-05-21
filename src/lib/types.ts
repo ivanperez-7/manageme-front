@@ -157,7 +157,7 @@ export const movimientoItemCreateSchema = z.object({
   producto_id: z.number(),
   cantidad: z.number().min(1),
   lote_id: z.number().optional(),
-  equipo_id: z.number().optional(),
+  equipo_cliente_id: z.number().optional(),
 });
 export const movimientoItemResponseSchema = movimientoItemCreateSchema.extend({
   id: z.number(),

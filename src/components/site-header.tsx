@@ -6,8 +6,8 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { NotificationPopup } from './notification-popup';
 
 type SiteHeaderProps = {
-  content: React.ReactNode | null;
-  setContent: (content: React.ReactNode | null) => void;
+  content: React.ReactNode;
+  setContent: (content: React.ReactNode) => void;
 };
 
 const SiteHeaderContext = createContext<SiteHeaderProps>({

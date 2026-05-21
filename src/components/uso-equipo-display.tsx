@@ -17,14 +17,14 @@ export default function UsoEquipoDisplay({
 }) {
   // MULTIPLE
   if (matchingEquipos.length > 1) {
-    const selectedEquipo = matchingEquipos.find((eq) => eq.equipo__id === value);
+    const selectedEquipo = matchingEquipos.find((eq) => eq.id === value);
     return (
       <div className='space-y-1'>
         <NumberSelectField
           placeholder='Seleccione equipo'
           options={matchingEquipos.map((eq) => ({
-            key: eq.equipo__id,
-            value: eq.equipo__id,
+            key: eq.id,
+            value: eq.id,
             label: eq.equipo__nombre,
           }))}
         />
@@ -40,7 +40,7 @@ export default function UsoEquipoDisplay({
   if (matchingEquipos.length === 1) {
     const [onlyEquipo] = matchingEquipos;
 
-    if (value !== onlyEquipo.equipo__id) onChange(onlyEquipo.equipo__id);
+    if (value !== onlyEquipo.id) onChange(onlyEquipo.id);
     return (
       <div className='space-y-1 text-sm'>
         <span>{onlyEquipo.equipo__nombre}</span>

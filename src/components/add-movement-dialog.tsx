@@ -125,7 +125,7 @@ function MovementForm({
         .post(ENDPOINTS.movimientos.list, value)
         .then((res) => res.data as MovimientoResponse)
         .then((mov) => {
-          toast.success(`¡Movimiento ${initialData ? 'editado' : 'registrado'} correctamente!`, {
+          toast.success('¡Movimiento registrado correctamente!', {
             action: {
               label: 'Ver',
               onClick: () =>
@@ -239,47 +239,50 @@ function MovementForm({
                 </TableRow>
               );
 
-            return field.state.value.map(({ producto_id }, index) => productosMap[producto_id] && (
-              <TableRow key={index}>
-                <TableCell>{productosMap[producto_id].codigo_interno}</TableCell>
-                <TableCell>{productosMap[producto_id].descripcion}</TableCell>
-                <TableCell>
-                  <form.Field name={`items[${index}].cantidad`}>
-                    {(subfield) => (
-                      <Input
-                        className='h-8 w-20'
-                        ghost
-                        value={subfield.state.value}
-                        onChange={(e) => subfield.handleChange(Number(e.target.value))}
-                      />
-                    )}
-                  </form.Field>
-                </TableCell>
-                <TableCell hidden={!hasSelectedCliente}>
-                  {loadingClientEquipos ? (
-                    <span className='text-muted-foreground'>...</span>
-                  ) : (
-                    <form.AppField name={`items[${index}].equipo_id`}>
-                      {(subfield) => (
-                        <UsoEquipoDisplay
-                          matchingEquipos={clientEquipos.filter(({ equipo__id }) =>
-                            productosMap[producto_id].equipos.map((eq) => eq.id).includes(equipo__id)
+            return field.state.value.map(
+              ({ producto_id }, index) =>
+                productosMap[producto_id] && (
+                  <TableRow key={index}>
+                    <TableCell>{productosMap[producto_id].codigo_interno}</TableCell>
+                    <TableCell>{productosMap[producto_id].descripcion}</TableCell>
+                    <TableCell>
+                      <form.Field name={`items[${index}].cantidad`}>
+                        {(subfield) => (
+                          <Input
+                            className='h-8 w-20'
+                            ghost
+                            value={subfield.state.value}
+                            onChange={(e) => subfield.handleChange(Number(e.target.value))}
+                          />
+                        )}
+                      </form.Field>
+                    </TableCell>
+                    <TableCell hidden={!hasSelectedCliente}>
+                      {loadingClientEquipos ? (
+                        <span className='text-muted-foreground'>...</span>
+                      ) : (
+                        <form.AppField name={`items[${index}].equipo_cliente_id`}>
+                          {(subfield) => (
+                            <UsoEquipoDisplay
+                              matchingEquipos={clientEquipos.filter(({ equipo__id }) =>
+                                productosMap[producto_id].equipos.map((eq) => eq.id).includes(equipo__id)
+                              )}
+                              value={subfield.state.value}
+                              onChange={subfield.handleChange}
+                              NumberSelectField={subfield.NumberSelectField}
+                            />
                           )}
-                          value={subfield.state.value}
-                          onChange={subfield.handleChange}
-                          NumberSelectField={subfield.NumberSelectField}
-                        />
+                        </form.AppField>
                       )}
-                    </form.AppField>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Button variant='ghost' size='icon-sm' onClick={() => field.removeValue(index)}>
-                    <X />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ));
+                    </TableCell>
+                    <TableCell>
+                      <Button variant='ghost' size='icon-sm' onClick={() => field.removeValue(index)}>
+                        <X />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+            );
           }}
         </form.Field>
       </TableBody>
@@ -446,8 +449,3 @@ function MovementForm({
     </form>
   );
 }
-
-/*
-- id de prefactura
-- ligar correo ????
-*/

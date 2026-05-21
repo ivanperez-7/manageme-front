@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
+import UserTag from '@/components/user-tag';
 
 import { fetchMovimientos } from '@/api/movimientos';
 import type { MovimientoResponse } from '@/lib/types';
@@ -77,7 +78,7 @@ const columns: ColumnDef<MovimientoResponse>[] = [
   {
     accessorKey: 'creado_por.username',
     header: 'Usuario',
-    cell: ({ row }) => <span>{row.original.creado_por.full_name}</span>,
+    cell: ({ row }) => <UserTag username={row.original.creado_por.full_name} />,
   },
   { accessorKey: 'comentarios', header: 'Comentarios' },
   {
@@ -119,7 +120,7 @@ const columns: ColumnDef<MovimientoResponse>[] = [
 ];
 
 function MovementsListPage() {
-  const movimientos = Route.useLoaderData();
+  const { movimientos, oldestDate } = Route.useLoaderData();
   const { fechaInicio, fechaFin } = Route.useSearch();
   const { setContent } = useHeader();
   const navigate = Route.useNavigate();
@@ -178,6 +179,7 @@ function MovementsListPage() {
       </div>
 
       <DateRangePicker
+        minDate={oldestDate ? new Date(oldestDate) : undefined}
         defaultStartDate={fechaInicio ? new Date(fechaInicio) : undefined}
         defaultEndDate={fechaFin ? new Date(fechaFin) : undefined}
         onStartDateChange={(date) =>

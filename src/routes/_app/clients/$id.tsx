@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import UserTag from '@/components/user-tag';
 
 import { fetchClientById } from '@/api/catalogo';
 import { ENDPOINTS } from '@/api/endpoints';
@@ -53,7 +54,7 @@ const movementsColumns: ColumnDef<MovimientoResponse>[] = [
   {
     accessorKey: 'creado_por.username',
     header: 'Usuario',
-    cell: ({ row }) => <span>{row.original.creado_por.full_name}</span>,
+    cell: ({ row }) => <UserTag username={row.original.creado_por.full_name} />,
   },
   { accessorKey: 'comentarios', header: 'Comentarios' },
   {
@@ -323,7 +324,13 @@ function AssignEquipoPopover({ clienteId, onSuccess }: { clienteId: number; onSu
             {(field) => <field.InputField label='Contador de uso' placeholder='1500' />}
           </form.AppField>
 
-          <form.AppField name='alias'>
+          <form.AppField
+            name='alias'
+            validators={{
+              onChange: ({ value }) => value.trim().length <= 0,
+              onSubmit: ({ value }) => value.trim().length <= 0,
+            }}
+          >
             {(field) => <field.InputField label='Alias' placeholder='Alias del equipo' />}
           </form.AppField>
 

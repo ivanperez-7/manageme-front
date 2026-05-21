@@ -1,22 +1,24 @@
 import { createFileRoute, ErrorComponent } from '@tanstack/react-router';
-import { EllipsisVertical, X } from 'lucide-react';
-import { useState } from 'react';
+import { Check, ChevronsUpDown, Laptop, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CreateEquipoPopover } from '@/components/create-equipo-popover';
 import { CreateMarcaPopover } from '@/components/create-marca-popover';
 import { DeleteMarcaDialog } from '@/components/delete-marca-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Item, ItemActions, ItemContent, ItemTitle } from '@/components/ui/item';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { useCatalogs } from '@/hooks/use-catalogs';
@@ -30,155 +32,297 @@ export const Route = createFileRoute('/_app/equipos')({
 
 function EquiposPage() {
   const { marcas, equipos, reloadCatalogs } = useCatalogs();
-  const [selectedMarca, setSelectedMarca] = useState<number | null>(null);
 
-  const equiposFiltrados = selectedMarca ? equipos.filter((e) => e.marca.id === selectedMarca) : [];
+  const [selectedMarca, setSelectedMarca] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
+
+  const marcasFiltradas = useMemo(() => {
+    return marcas.filter((marca) => marca.nombre.toLowerCase().includes(search.toLowerCase()));
+  }, [marcas, search]);
+
+  const equiposFiltrados = useMemo(() => {
+    if (!selectedMarca) return [];
+    return equipos.filter((e) => e.marca.id === selectedMarca);
+  }, [equipos, selectedMarca]);
+
+  const selectedMarcaData = marcas.find((m) => m.id === selectedMarca);
+
+  useEffect(() => {
+    if (!selectedMarca && marcas.length > 0) {
+      setSelectedMarca(marcas[0].id);
+    }
+  }, [marcas, selectedMarca]);
 
   return (
-    <div className='space-y-4'>
-      <h1 className='text-2xl'>Administrar marcas y equipos</h1>
+    <div className='flex flex-col gap-6'>
+      {/* HEADER */}
+      <div className='flex items-start justify-between'>
+        <div>
+          <h1 className='text-3xl font-semibold tracking-tight'>Equipos</h1>
+          <p className='text-muted-foreground'>Administra marcas y equipos registrados.</p>
+        </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6'>
-        {/* LISTA DE MARCAS */}
-        <Card className='h-fit'>
-          <CardHeader className='flex justify-between items-center'>
-            <CardTitle>Marcas</CardTitle>
-            <CreateMarcaPopover onSuccess={reloadCatalogs} />
-          </CardHeader>
+        <CreateMarcaPopover onSuccess={reloadCatalogs} />
+      </div>
 
-          <CardContent>
-            <div className='space-y-1'>
-              {marcas.map((marca) => (
-                <Item
-                  key={marca.id}
-                  size='sm'
-                  onClick={() => setSelectedMarca(marca.id)}
-                  className={selectedMarca === marca.id ? 'bg-muted' : 'hover:bg-muted/50'}
-                >
-                  <ItemContent>
-                    <ItemTitle>{marca.nombre}</ItemTitle>
-                  </ItemContent>
+      {/* CONTENT */}
+      <div className='grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-2xl border bg-background md:grid-cols-[300px_1fr]'>
+        {/* SIDEBAR */}
+        <aside className='flex min-h-0 flex-col border-r'>
+          <div className='space-y-3 p-4'>
+            <Input
+              placeholder='Buscar marca...'
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-                  <ItemActions>
+          <Separator />
+
+          <ScrollArea className='flex-1'>
+            <div className='space-y-1 p-2'>
+              {marcasFiltradas.map((marca) => {
+                const count = equipos.filter((e) => e.marca.id === marca.id).length;
+
+                const active = selectedMarca === marca.id;
+
+                return (
+                  <div
+                    key={marca.id}
+                    className={`
+                      group flex items-center gap-2 rounded-xl border px-2 py-2 transition-all
+                      ${active ? 'border-primary/20 bg-accent' : 'border-transparent hover:bg-accent/50'}
+                    `}
+                  >
+                    <button
+                      onClick={() => setSelectedMarca(marca.id)}
+                      className='flex flex-1 items-center justify-between text-left'
+                    >
+                      <div className='flex min-w-0 items-center gap-2'>
+                        {active && <Check className='h-4 w-4 text-primary' />}
+
+                        {!active && (
+                          <ChevronsUpDown className='h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100' />
+                        )}
+
+                        <span className='truncate font-medium'>{marca.nombre}</span>
+                      </div>
+
+                      <Badge variant='secondary'>{count}</Badge>
+                    </button>
+
                     <DeleteMarcaDialog
                       trigger={
-                        <Button variant='ghost' size='icon-sm'>
-                          <X />
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          className='h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100'
+                        >
+                          <Trash2 className='h-4 w-4 text-destructive' />
                         </Button>
                       }
                       marcaId={marca.id}
-                      onSuccess={reloadCatalogs}
-                    />
-                  </ItemActions>
-                </Item>
-              ))}
+                      onSuccess={() => {
+                        if (selectedMarca === marca.id) {
+                          setSelectedMarca(null);
+                        }
 
-              {marcas.length === 0 && (
-                <p className='text-sm text-muted-foreground py-6 text-center'>
-                  No hay marcas registradas.
-                </p>
+                        reloadCatalogs();
+                      }}
+                    />
+                  </div>
+                );
+              })}
+
+              {marcasFiltradas.length === 0 && (
+                <div className='flex flex-col items-center justify-center py-16 text-center'>
+                  <Laptop className='mb-4 h-10 w-10 text-muted-foreground' />
+
+                  <h3 className='font-medium'>No hay marcas</h3>
+
+                  <p className='text-sm text-muted-foreground'>Intenta con otra búsqueda.</p>
+                </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </ScrollArea>
+        </aside>
 
-        {/* EQUIPOS POR MARCA */}
-        {selectedMarca ? (
-          <Card>
-            <CardHeader className='flex justify-between items-center'>
-              <CardTitle>
-                <MarcaNombre
-                  key={selectedMarca}
-                  marca={marcas.find((m) => m.id === selectedMarca) || ({} as MarcaResponse)}
-                  onRename={reloadCatalogs}
-                />
-              </CardTitle>
+        {/* MAIN */}
+        <main className='flex min-h-0 flex-col'>
+          {selectedMarcaData ? (
+            <>
+              {/* HEADER */}
+              <div className='flex items-start justify-between border-b p-6'>
+                <div className='space-y-2'>
+                  <EditableMarcaNombre marca={selectedMarcaData} onRename={reloadCatalogs} />
 
-              <CreateEquipoPopover marcaId={selectedMarca} onSuccess={reloadCatalogs} />
-            </CardHeader>
+                  <p className='text-sm text-muted-foreground'>
+                    {equiposFiltrados.length} equipos registrados
+                  </p>
+                </div>
 
-            <CardContent>
-              <EquiposTable equipos={equiposFiltrados} />
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent>
-              <div className='py-6 text-center text-muted-foreground'>
-                Selecciona una marca para ver sus equipos.
+                <CreateEquipoPopover marcaId={selectedMarcaData.id} onSuccess={reloadCatalogs} />
               </div>
-            </CardContent>
-          </Card>
-        )}
+
+              {/* EQUIPOS */}
+              <ScrollArea className='flex-1'>
+                <div className='space-y-3 p-6'>
+                  {equiposFiltrados.map((equipo) => (
+                    <EquipoCard key={equipo.id} equipo={equipo} onDeleted={reloadCatalogs} />
+                  ))}
+
+                  {equiposFiltrados.length === 0 && (
+                    <Card className='border-dashed'>
+                      <CardContent className='flex flex-col items-center justify-center py-16 text-center'>
+                        <Laptop className='mb-4 h-10 w-10 text-muted-foreground' />
+
+                        <h3 className='font-medium'>No hay equipos</h3>
+
+                        <p className='text-sm text-muted-foreground'>
+                          Agrega el primer equipo para esta marca.
+                        </p>
+
+                        <div className='mt-4'>
+                          <CreateEquipoPopover marcaId={selectedMarcaData.id} onSuccess={reloadCatalogs} />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </ScrollArea>
+            </>
+          ) : (
+            <div className='flex flex-1 items-center justify-center'>
+              <div className='text-center'>
+                <Laptop className='mx-auto mb-4 h-10 w-10 text-muted-foreground' />
+
+                <h3 className='font-medium'>Selecciona una marca</h3>
+
+                <p className='text-sm text-muted-foreground'>Elige una marca para ver sus equipos.</p>
+              </div>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );
 }
 
-function MarcaNombre({ marca, onRename }: { marca: MarcaResponse; onRename: () => void }) {
+function EditableMarcaNombre({ marca, onRename }: { marca: MarcaResponse; onRename: () => void }) {
+  const [editing, setEditing] = useState(false);
   const [name, setName] = useState(marca.nombre);
-  const isDirty = marca.nombre !== name;
+
+  useEffect(() => {
+    setName(marca.nombre);
+  }, [marca.nombre]);
+
+  async function save() {
+    if (name.trim() === '' || name === marca.nombre) {
+      setEditing(false);
+      return;
+    }
+
+    toast.promise(
+      withAuth
+        .patch(ENDPOINTS.marcas.detail(marca.id), {
+          nombre: name,
+        })
+        .then(() => {
+          onRename();
+          setEditing(false);
+        }),
+      {
+        loading: 'Guardando cambios...',
+        success: 'Marca actualizada',
+        error: 'No se pudo actualizar',
+      }
+    );
+  }
+
+  if (editing) {
+    return (
+      <Input
+        autoFocus
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            save();
+          }
+
+          if (e.key === 'Escape') {
+            setName(marca.nombre);
+            setEditing(false);
+          }
+        }}
+        className='h-auto border-none p-0 text-3xl font-semibold shadow-none focus-visible:ring-0'
+      />
+    );
+  }
 
   return (
-    <Input
-      ghost
-      value={name}
-      onChange={(e) => setName(e.target.value)}
-      onBlur={(e) =>
-        !isDirty ||
-        toast.promise(
-          withAuth.patch(ENDPOINTS.marcas.detail(marca.id), { nombre: e.target.value }).then(onRename),
-          { loading: 'Guardando cambios...' },
-        )
-      }
-    />
+    <button onClick={() => setEditing(true)} className='group flex items-center gap-2'>
+      <h2 className='text-3xl font-semibold tracking-tight'>{marca.nombre}</h2>
+
+      <Pencil className='h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100' />
+    </button>
   );
 }
 
-const EquiposTable = ({ equipos }: { equipos: EquipoResponse[] }) => (
-  <Table>
-    <TableHeader>
-      <TableRow>
-        <TableHead>Nombre</TableHead>
-        <TableHead className='w-10'></TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      {equipos.map((eq) => (
-        <TableRow key={eq.id}>
-          <TableCell>{eq.nombre}</TableCell>
-          <TableCell>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant='ghost' size='icon'>
-                  <EllipsisVertical className='w-5 h-5' />
-                </Button>
-              </DropdownMenuTrigger>
+function EquipoCard({ equipo, onDeleted }: { equipo: EquipoResponse; onDeleted: () => void }) {
+  async function remove() {
+    toast.promise(
+      withAuth
+        .patch(ENDPOINTS.equipos.detail(equipo.id), {
+          activo: false,
+        })
+        .then(onDeleted),
+      {
+        loading: 'Eliminando equipo...',
+        success: 'Equipo eliminado',
+        error: 'No se pudo eliminar',
+      }
+    );
+  }
 
-              <DropdownMenuContent align='end'>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Editar</DropdownMenuItem>
+  return (
+    <Card className='transition-colors hover:bg-accent/40'>
+      <CardContent className='flex items-center justify-between '>
+        <div className='flex items-center gap-3'>
+          <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10'>
+            <Laptop className='h-5 w-5 text-primary' />
+          </div>
 
-                <DropdownMenuItem
-                  variant='destructive'
-                  onClick={() =>
-                    withAuth.patch(ENDPOINTS.equipos.detail(eq.id), { activo: false }).then(() => {})
-                  }
-                >
-                  Eliminar
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </TableCell>
-        </TableRow>
-      ))}
+          <div>
+            <p className='font-medium'>{equipo.nombre}</p>
 
-      {equipos.length === 0 && (
-        <TableRow>
-          <TableCell colSpan={3} className='py-6 text-center text-muted-foreground'>
-            No hay equipos para esta marca
-          </TableCell>
-        </TableRow>
-      )}
-    </TableBody>
-  </Table>
-);
+            <p className='text-sm text-muted-foreground'>Equipo registrado</p>
+          </div>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant='ghost' size='icon'>
+              <MoreVertical className='h-5 w-5' />
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align='end'>
+            <DropdownMenuItem>
+              <Pencil className='mr-2 h-4 w-4' />
+              Editar
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem variant='destructive' onClick={remove}>
+              <Trash2 className='mr-2 h-4 w-4' />
+              Eliminar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </CardContent>
+    </Card>
+  );
+}

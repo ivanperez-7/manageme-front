@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 
 export function DateRangePicker({
+  minDate,
   defaultStartDate,
   defaultEndDate,
   onStartDateChange,
@@ -18,6 +19,7 @@ export function DateRangePicker({
   startLabel = 'Fecha de inicio',
   endLabel = 'Fecha de fin',
 }: {
+  minDate?: Date;
   defaultStartDate?: Date;
   defaultEndDate?: Date;
   onStartDateChange: (date: Date) => void;
@@ -107,7 +109,9 @@ export function DateRangePicker({
                 selected={startDate}
                 month={startMonth}
                 onMonthChange={setStartMonth}
-                disabled={(date) => (endDate ? date > endDate : false)}
+                disabled={(date) =>
+                  (endDate ? date > endDate : false) || (minDate ? date < minDate : false)
+                }
                 onSelect={(date) => {
                   if (!date) return;
 
@@ -154,7 +158,10 @@ export function DateRangePicker({
                 selected={endDate}
                 month={endMonth}
                 onMonthChange={setEndMonth}
-                disabled={(date) => (startDate ? date < startDate || date > new Date() : false)}
+                disabled={(date) =>
+                  (startDate ? date < startDate || date > new Date() : false) ||
+                  (minDate ? date < minDate : false)
+                }
                 onSelect={(date) => {
                   if (!date) return;
 

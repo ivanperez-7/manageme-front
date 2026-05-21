@@ -1,5 +1,6 @@
 import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
+import { formatDate } from 'date-fns';
 import { ArrowLeft, CheckCircle, PackageOpen, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -7,7 +8,6 @@ import { toast } from 'sonner';
 import { DataTable } from '@/components/data-table';
 import { useHeader } from '@/components/site-header';
 import TipoMovimientoBadge from '@/components/tipo-movimiento-badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
+import UserTag from '@/components/user-tag';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { fetchMovimientoById } from '@/api/movimientos';
@@ -144,18 +145,7 @@ function MovementDetailPage() {
               {/* Creador */}
               <div>
                 <p className='text-sm text-muted-foreground'>Creado por</p>
-                {movimiento.creado_por ? (
-                  <div className='flex gap-2.5 items-center'>
-                    <Avatar>
-                      <AvatarFallback>
-                        {movimiento.creado_por.full_name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    {movimiento.creado_por.full_name}
-                  </div>
-                ) : (
-                  '—'
-                )}
+                <UserTag username={movimiento.creado_por.full_name} />
               </div>
             </div>
 
@@ -164,9 +154,15 @@ function MovementDetailPage() {
               <div>
                 <p className='text-sm text-muted-foreground'>¿Aprobado?</p>
                 {movimiento.aprobado ? (
-                  <span className='flex items-center gap-2 text-green-600 dark:text-green-400'>
-                    <CheckCircle className='h-4 w-4' /> Sí
-                  </span>
+                  <div className='flex items-end'>
+                    <span className='flex items-center gap-2 text-green-600 dark:text-green-400'>
+                      <CheckCircle className='h-4 w-4' /> Sí
+                    </span>
+                    <span className='ml-4 text-sm text-muted-foreground'>
+                      {formatDate(new Date(movimiento.aprobado_fecha as string), 'dd/MM/yyyy HH:mm')} por{' '}
+                      {movimiento.user_aprueba?.full_name || '—'}
+                    </span>
+                  </div>
                 ) : (
                   <span className='flex items-center gap-2 text-red-600 dark:text-red-400'>
                     <XCircle className='h-4 w-4' /> No aprobado
@@ -211,7 +207,7 @@ function MovementDetailPage() {
               </span>
               <span>
                 <p className='text-sm text-muted-foreground'>Recibido por</p>{' '}
-                {detalleEntrada.recibido_por.full_name}
+                <UserTag username={detalleEntrada.recibido_por.full_name} />
               </span>
             </div>
           </CardContent>
