@@ -134,10 +134,10 @@ function DashboardPage() {
                   <XAxis dataKey='nombre' />
                   <YAxis />
                   <Tooltip
-                    cursor={{ stroke: 'var(--color-border-2)' }}
+                    cursor={{ fill: 'var(--muted)', stroke: 'var(--border)' }}
                     contentStyle={{
-                      backgroundColor: 'var(--color-surface-raised)',
-                      borderColor: 'var(--color-border-2)',
+                      backgroundColor: 'var(--card)',
+                      borderColor: 'var(--border)',
                     }}
                   />
                   <Bar dataKey='cantidad' fill='#3b82f6' />
@@ -145,7 +145,6 @@ function DashboardPage() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
-
         </motion.div>
         <motion.div variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } }}>
           <Card>
@@ -158,10 +157,10 @@ function DashboardPage() {
                   <XAxis dataKey='codigo_interno' />
                   <YAxis />
                   <Tooltip
-                    cursor={{ stroke: 'var(--color-border-2)' }}
+                    cursor={{ fill: 'var(--muted)', stroke: 'var(--border)' }}
                     contentStyle={{
-                      backgroundColor: 'var(--color-surface-raised)',
-                      borderColor: 'var(--color-border-2)',
+                      backgroundColor: 'var(--card)',
+                      borderColor: 'var(--border)',
                     }}
                   />
                   <Bar
@@ -198,15 +197,15 @@ function DashboardPage() {
             <CardContent className='h-[300px]'>
               <ResponsiveContainer width='100%' height='100%'>
                 <LineChart data={movimientosChart}>
-                  <CartesianGrid strokeDasharray='3 3' stroke='var(--color-border-3)' />
+                  <CartesianGrid strokeDasharray='3 3' stroke='var(--border)' />
                   <XAxis dataKey='fecha_creado' />
                   <YAxis />
                   <Legend />
                   <Tooltip
-                    cursor={{ stroke: 'var(--color-border-2)' }}
+                    cursor={{ stroke: 'var(--border)' }}
                     contentStyle={{
-                      backgroundColor: 'var(--color-surface-raised)',
-                      borderColor: 'var(--color-border-2)',
+                      backgroundColor: 'var(--card)',
+                      borderColor: 'var(--border)',
                     }}
                   />
                   <Line type='monotone' dataKey='entradas' stroke='#3b82f6' strokeWidth={2} />
@@ -215,7 +214,6 @@ function DashboardPage() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
-
         </motion.div>
         <motion.div variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } }}>
           <Card>
