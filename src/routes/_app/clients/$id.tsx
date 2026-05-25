@@ -29,6 +29,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 
 import { fetchClientById } from '@/api/catalogo';
@@ -261,6 +263,27 @@ function ClienteForm({ cliente, onSuccess }: { cliente: ClienteResponse; onSucce
 
 function EquipoCard({ equipo, onDelete }: { equipo: UsoEquipo; onDelete: () => void }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [incremento, setIncremento] = useState(0);
+
+  const handleUpdateContador = () =>
+    toast.promise(
+      withAuth
+        .patch(
+          // TODO: replace with real endpoint
+          `${ENDPOINTS.clientes.detail(equipo.id)}update_contador/`,
+          { incremento }
+        )
+        .then(() => {
+          setPopoverOpen(false);
+          setIncremento(0);
+          onDelete();
+        }),
+      {
+        loading: 'Actualizando contador...',
+        error: (data) => 'Error: ' + data.message,
+      }
+    );
 
   const handleDelete = () =>
     toast.promise(
@@ -310,13 +333,40 @@ function EquipoCard({ equipo, onDelete }: { equipo: UsoEquipo; onDelete: () => v
         </Dialog>
       </div>
 
-      <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-        <Gauge className='size-3.5' />
-        <span>
-          Contador de uso:{' '}
-          <strong className='text-foreground'>{equipo.contador_uso.toLocaleString('es-MX')}</strong>
-        </span>
-      </div>
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+        <PopoverTrigger asChild>
+          <div className='flex items-center gap-2 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors'>
+            <Gauge className='size-3.5' />
+            <span>
+              Contador de uso:{' '}
+              <strong className='text-foreground'>{equipo.contador_uso.toLocaleString('es-MX')}</strong>
+            </span>
+          </div>
+        </PopoverTrigger>
+        <PopoverContent className='w-64' side='bottom' align='start'>
+          <div className='space-y-3'>
+            <p className='text-sm font-medium'>Incrementar contador</p>
+            <div className='space-y-1'>
+              <label className='text-xs text-muted-foreground'>Cantidad a incrementar</label>
+              <Input
+                type='number'
+                min={0}
+                value={incremento}
+                onChange={(e) => setIncremento(Number(e.target.value))}
+              />
+            </div>
+            <p className='text-xs text-muted-foreground'>
+              Nuevo contador:{' '}
+              <strong className='text-foreground'>
+                {(equipo.contador_uso + incremento).toLocaleString('es-MX')}
+              </strong>
+            </p>
+            <Button size='sm' className='w-full' onClick={handleUpdateContador}>
+              Guardar
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
