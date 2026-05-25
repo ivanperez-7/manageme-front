@@ -15,7 +15,6 @@ export const clienteResponseSchema = clienteCreateSchema.extend({
   id: z.number(),
 });
 
-export type ClienteCreate = z.infer<typeof clienteCreateSchema>;
 export type ClienteResponse = z.infer<typeof clienteResponseSchema>;
 
 // ── Categoria ──
@@ -231,4 +230,25 @@ export type DashboardData = {
     min_stock: number;
   }[];
   topProductosChart: { id: number; codigo_interno: string; total_movimientos: number }[];
+};
+
+export type AlertaInventario = {
+  id: number;
+  producto: Pick<ProductoResponse, 'id' | 'codigo_interno' | 'descripcion'>;
+  tipo_alerta: 'low_stock' | 'old_product' | 'unusual_movement' | 'high_rotation';
+  mensaje: string;
+  creado: string; // ISO datetime
+  resuelto: boolean;
+};
+
+export type AlertasListResponse = {
+  count: number;
+  no_leidas: number;
+  results: AlertaInventario[];
+};
+
+export type AlertasRefrescarResponse = {
+  creadas: number;
+  resueltas: number;
+  no_leidas: number;
 };
