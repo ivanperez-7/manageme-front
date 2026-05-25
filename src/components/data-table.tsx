@@ -7,6 +7,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
 import {
   Pagination,
@@ -38,21 +39,38 @@ export function DataTable<TData, TValue>({
   initialPage,
   transparent,
   emptyComponent,
-  onChangePage
+  onChangePage,
 }: DataTableProps<TData, TValue>) {
+  const [pagination, setPagination] = useState({
+    pageIndex: initialPage ?? 0,
+    pageSize: 10,
+  });
+
   const table = useReactTable({
     data,
     columns,
+    state: { pagination },
+    onPaginationChange: (updater) => {
+      setPagination((prev) => {
+        const next = typeof updater === 'function' ? updater(prev) : updater;
+        onChangePage?.(next.pageIndex);
+        return next;
+      });
+    },
+    autoResetPageIndex: false,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageIndex: initialPage ?? 0,
-        pageSize: 10,
-      },
-    },
     getFilteredRowModel: getFilteredRowModel(),
   });
+
+  useEffect(() => {
+    const pageCount = table.getPageCount();
+    if (pageCount > 0 && pagination.pageIndex >= pageCount) {
+      const clamped = Math.max(0, pageCount - 1);
+      setPagination((prev) => ({ ...prev, pageIndex: clamped }));
+      onChangePage?.(clamped);
+    }
+  }, [data]);
 
   return (
     <>
@@ -113,10 +131,7 @@ export function DataTable<TData, TValue>({
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                onClick={() => {
-                  table.previousPage();
-                  onChangePage?.(table.getState().pagination.pageIndex);
-                }}
+                onClick={() => table.previousPage()}
                 className={cn(!table.getCanPreviousPage() && 'pointer-events-none opacity-50')}
               />
             </PaginationItem>
@@ -136,10 +151,7 @@ export function DataTable<TData, TValue>({
                 <PaginationItem key={item}>
                   <PaginationLink
                     isActive={table.getState().pagination.pageIndex === item}
-                    onClick={() => {
-                      table.setPageIndex(item);
-                      onChangePage?.(table.getState().pagination.pageIndex);
-                    }}
+                    onClick={() => table.setPageIndex(item)}
                   >
                     {item + 1}
                   </PaginationLink>
@@ -149,10 +161,7 @@ export function DataTable<TData, TValue>({
 
             <PaginationItem>
               <PaginationNext
-                onClick={() => {
-                  table.nextPage();
-                  onChangePage?.(table.getState().pagination.pageIndex);
-                }}
+                onClick={() => table.nextPage()}
                 className={cn(!table.getCanNextPage() && 'pointer-events-none opacity-50')}
               />
             </PaginationItem>

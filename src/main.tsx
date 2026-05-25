@@ -17,7 +17,7 @@ const movimientosMask = createRouteMask({
   routeTree,
   from: '/movements',
   to: '/movements',
-  search: { fechaInicio: undefined, fechaFin: undefined },
+  search: { fechaInicio: undefined, fechaFin: undefined, page: undefined },
 });
 
 // Create a new router instance

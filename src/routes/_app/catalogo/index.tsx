@@ -113,7 +113,7 @@ export const Route = createFileRoute('/_app/catalogo/')({
     categoria: Number(search.categoria) || undefined,
     marca: Number(search.marca) || undefined,
     equipo: Number(search.equipo) || undefined,
-    page: Number(search.page) || undefined,
+    page: search.page != null ? Number(search.page) : undefined,
   }),
   loader: fetchAllProductos,
   component: ProductListPage,
@@ -267,12 +267,7 @@ function ProductListPage() {
           variant='ghost'
           size='icon-sm'
           className='-mx-1.5'
-          onClick={() =>
-            navigate({
-              search: { text: undefined, categoria: undefined, marca: undefined, equipo: undefined },
-              replace: true,
-            })
-          }
+          onClick={() => navigate({ search: {}, replace: true })}
         >
           <FunnelX />
         </Button>

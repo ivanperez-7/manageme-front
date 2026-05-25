@@ -27,19 +27,21 @@ import { fetchMovimientos } from '@/api/movimientos';
 import type { MovimientoResponse } from '@/lib/types';
 import { humanDate, humanTime } from '@/lib/utils';
 
-type MovimientoSearch = { fechaInicio?: string; fechaFin?: string };
+type MovimientoSearch = { fechaInicio?: string; fechaFin?: string; page?: number };
 
 export const Route = createFileRoute('/_app/movements/')({
-  validateSearch: ({ fechaInicio, fechaFin }): MovimientoSearch => ({
+  validateSearch: ({ fechaInicio, fechaFin, page }): MovimientoSearch => ({
     fechaInicio: (fechaInicio as string) || undefined,
     fechaFin: (fechaFin as string) || undefined,
+    page: page != null ? Number(page) : undefined,
   }),
-  loaderDeps: ({ search }) => search,
+  loaderDeps: ({ search }) => ({ fechaInicio: search.fechaInicio, fechaFin: search.fechaFin }),
   loader: async ({ deps }) =>
     await fetchMovimientos(
       deps.fechaInicio || format(new Date(), 'yyyy-MM-dd'),
       deps.fechaFin || format(new Date(), 'yyyy-MM-dd')
     ),
+  staleTime: 30_000,
   component: MovementsListPage,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
@@ -121,7 +123,7 @@ const columns: ColumnDef<MovimientoResponse>[] = [
 
 function MovementsListPage() {
   const { movimientos, oldestDate } = Route.useLoaderData();
-  const { fechaInicio, fechaFin } = Route.useSearch();
+  const { fechaInicio, fechaFin, page } = Route.useSearch();
   const { setContent } = useHeader();
   const navigate = Route.useNavigate();
 
@@ -199,7 +201,14 @@ function MovementsListPage() {
         }
       />
 
-      <DataTable columns={columns} data={filtered} />
+      <DataTable
+        columns={columns}
+        data={filtered}
+        initialPage={page ?? 0}
+        onChangePage={(pageIndex) =>
+          navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true })
+        }
+      />
 
       <div className='fixed bottom-4 right-3 md:bottom-8 md:right-8'>
         <AddMovementDialog

@@ -103,15 +103,7 @@ function MovementForm({
 }) {
   const [scanCode, setScanCode] = useState('');
   const [searching, setSearching] = useState(false);
-  const [productosMap, setProductosMap] = useState<ProductosMap>(() => {
-    if (!initialData?.items?.length) return {};
-    return Object.fromEntries(
-      initialData.items.map((item) => [
-        item.producto_id,
-        { id: item.producto_id, codigo_interno: '', descripcion: '', equipos: [] },
-      ]),
-    );
-  });
+  const [productosMap, setProductosMap] = useState<ProductosMap>({});
   const [initialProductsLoading, setInitialProductsLoading] = useState(() =>
     Boolean(initialData?.items?.length),
   );
