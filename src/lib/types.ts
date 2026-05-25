@@ -61,6 +61,7 @@ export const productoCreateSchema = z.object({
   proveedor_id: z.number().nullable(),
   sku: z.string().min(1, 'El SKU es obligatorio'),
   status: z.enum(['activo', 'inactivo']),
+  vida_util: z.number().int('Debe ser un número entero'),
 });
 type ProductoCreate = z.infer<typeof productoCreateSchema>;
 

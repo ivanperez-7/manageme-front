@@ -1,7 +1,7 @@
 import { useStore } from '@tanstack/react-form';
 import { useRouter } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowDownToDot, ArrowUpFromDot, X } from 'lucide-react';
+import { ArrowDownToDot, ArrowUpFromDot, Loader2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -103,7 +103,18 @@ function MovementForm({
 }) {
   const [scanCode, setScanCode] = useState('');
   const [searching, setSearching] = useState(false);
-  const [productosMap, setProductosMap] = useState<ProductosMap>({});
+  const [productosMap, setProductosMap] = useState<ProductosMap>(() => {
+    if (!initialData?.items?.length) return {};
+    return Object.fromEntries(
+      initialData.items.map((item) => [
+        item.producto_id,
+        { id: item.producto_id, codigo_interno: '', descripcion: '', equipos: [] },
+      ]),
+    );
+  });
+  const [initialProductsLoading, setInitialProductsLoading] = useState(() =>
+    Boolean(initialData?.items?.length),
+  );
 
   const [clientEquipos, setClientEquipos] = useState<UsoEquipo[]>([]);
   const [loadingClientEquipos, setLoadingClientEquipos] = useState(false);
@@ -157,34 +168,34 @@ function MovementForm({
     if (!scanCode.trim()) return;
     setSearching(true);
 
-    (tipo === 'entrada'
-      ? withAuth
-          .get(ENDPOINTS.products.list, { params: { sku: scanCode } })
-          .then((res) => res.data as ProductoResponse[])
-          .then((data) => {
-            if (!data.length) throw new Error('No se encontró ningún producto con este código');
+    (tipo === 'entrada' ?
+      withAuth
+        .get(ENDPOINTS.products.list, { params: { sku: scanCode } })
+        .then((res) => res.data as ProductoResponse[])
+        .then((data) => {
+          if (!data.length) throw new Error('No se encontró ningún producto con este código');
 
-            const [producto] = data;
-            setProductosMap((prev) => ({ ...prev, [producto.id]: producto }));
-            form.pushFieldValue('items', { producto_id: producto.id, cantidad: 1 });
-          })
-      : withAuth
-          .get(ENDPOINTS.lotes.list, { params: { codigo_lote: scanCode } })
-          .then((res) => res.data as LoteResponse[])
-          .then((data) => {
-            if (!data.length) throw new Error('No se encontró ningún lote con este código');
+          const [producto] = data;
+          setProductosMap((prev) => ({ ...prev, [producto.id]: producto }));
+          form.pushFieldValue('items', { producto_id: producto.id, cantidad: 1 });
+        })
+    : withAuth
+        .get(ENDPOINTS.lotes.list, { params: { codigo_lote: scanCode } })
+        .then((res) => res.data as LoteResponse[])
+        .then((data) => {
+          if (!data.length) throw new Error('No se encontró ningún lote con este código');
 
-            const [lote] = data;
-            if (lote.cantidad_restante <= 0)
-              throw new Error('Este lote no tiene cantidad disponible para salida');
+          const [lote] = data;
+          if (lote.cantidad_restante <= 0)
+            throw new Error('Este lote no tiene cantidad disponible para salida');
 
-            setProductosMap((prev) => ({ ...prev, [lote.producto.id]: lote.producto }));
-            form.pushFieldValue('items', {
-              producto_id: lote.producto.id,
-              cantidad: 1,
-              lote_id: lote.id,
-            });
-          })
+          setProductosMap((prev) => ({ ...prev, [lote.producto.id]: lote.producto }));
+          form.pushFieldValue('items', {
+            producto_id: lote.producto.id,
+            cantidad: 1,
+            lote_id: lote.id,
+          });
+        })
     )
       .catch((error) => toast.error(error.message))
       .finally(() => {
@@ -207,18 +218,19 @@ function MovementForm({
 
   const tipo = useStore(form.store, ({ values }) => values.tipo);
   const hasSelectedCliente = useStore(form.store, ({ values }) =>
-    Boolean(tipo == 'salida' && values.detalle_salida?.cliente_id)
+    Boolean(tipo == 'salida' && values.detalle_salida?.cliente_id),
   );
   const items = useStore(form.store, (state) => state.values.items);
 
   const hasClientWarnings =
+    !initialProductsLoading &&
     hasSelectedCliente &&
     items.some(({ producto_id }) => {
       const producto = productosMap[producto_id];
       if (!producto) return false;
 
       return !clientEquipos.some(({ equipo__id }) =>
-        producto.equipos.map((eq) => eq.id).includes(equipo__id)
+        producto.equipos.map((eq) => eq.id).includes(equipo__id),
       );
     });
 
@@ -230,19 +242,24 @@ function MovementForm({
     const loadInitialProducts = async () => {
       if (!initialData?.items?.length) return;
 
+      setInitialProductsLoading(true);
       const pendingIds = initialData.items.map((item) => item.producto_id);
-
-      if (!pendingIds.length) return;
+      if (!pendingIds.length) {
+        setInitialProductsLoading(false);
+        return;
+      }
 
       try {
         const responses = await Promise.all(
-          pendingIds.map((productoId) => withAuth.get(ENDPOINTS.products.detail(productoId)))
+          pendingIds.map((productoId) => withAuth.get(ENDPOINTS.products.detail(productoId))),
         );
         const products = responses.map((r) => r.data as ProductoResponse);
 
-        setProductosMap(Object.fromEntries(products.map((p) => [p.id, p])));
+        setProductosMap((prev) => ({ ...prev, ...Object.fromEntries(products.map((p) => [p.id, p])) }));
       } catch (err) {
-        toast.error('Error loading initial products');
+        toast.error('Error al cargar la información de los productos iniciales');
+      } finally {
+        setInitialProductsLoading(false);
       }
     };
     loadInitialProducts();
@@ -271,9 +288,9 @@ function MovementForm({
                       type='button'
                       className={cn(
                         'relative z-10 flex flex-1 items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors',
-                        tipo === value
-                          ? 'text-primary-foreground'
-                          : 'text-muted-foreground hover:text-foreground'
+                        tipo === value ? 'text-primary-foreground' : (
+                          'text-muted-foreground hover:text-foreground'
+                        ),
                       )}
                       onClick={() => field.handleChange(value)}
                     >
@@ -321,13 +338,13 @@ function MovementForm({
                     }}
                     onChange={(e) => setScanCode(e.target.value)}
                     placeholder={
-                      field.state.value === 'entrada'
-                        ? 'Escanee o escriba el SKU...'
-                        : 'Escanee o escriba el código de lote...'
+                      field.state.value === 'entrada' ?
+                        'Escanee o escriba el SKU...'
+                      : 'Escanee o escriba el código de lote...'
                     }
                   />
                   <Button type='button' disabled={searching || !scanCode.trim()} onClick={handleScanSubmit}>
-                    {searching ? (
+                    {searching ?
                       <motion.span
                         className='flex items-center gap-2'
                         initial={{ opacity: 0 }}
@@ -335,9 +352,7 @@ function MovementForm({
                       >
                         Buscando...
                       </motion.span>
-                    ) : (
-                      'Agregar'
-                    )}
+                    : 'Agregar'}
                   </Button>
                 </div>
               </Field>
@@ -345,6 +360,13 @@ function MovementForm({
           </form.Field>
         </FieldGroup>
       </FieldSet>
+
+      {initialProductsLoading && (
+        <div className='flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400'>
+          <Loader2 className='size-4 animate-spin' />
+          <span>Recuperando información de los productos iniciales...</span>
+        </div>
+      )}
 
       <div className='overflow-hidden rounded-lg border'>
         <Table>
@@ -379,63 +401,66 @@ function MovementForm({
 
                 return (
                   <AnimatePresence initial={false}>
-                    {field.state.value.map(
-                      ({ producto_id }, index) =>
-                        productosMap[producto_id] && (
-                          <motion.tr
-                            key={`${producto_id}-${index}`}
-                            initial={{ opacity: 0, x: -12 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 12, height: 0, padding: 0 }}
-                            transition={{ duration: 0.2, delay: index * 0.03, ease: 'easeOut' }}
-                            className='border-b transition-colors hover:bg-muted/50'
-                          >
-                            <TableCell>{productosMap[producto_id].codigo_interno}</TableCell>
-                            <TableCell>{productosMap[producto_id].descripcion}</TableCell>
-                            <TableCell>
-                              <form.Field name={`items[${index}].cantidad`}>
+                    {field.state.value.map(({ producto_id }, index) => {
+                      const producto = productosMap[producto_id];
+                      const isLoading = initialProductsLoading && !producto?.codigo_interno;
+
+                      return (
+                        <motion.tr
+                          key={`${producto_id}-${index}`}
+                          initial={{ opacity: 0, x: -12 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 12, height: 0, padding: 0 }}
+                          transition={{ duration: 0.2, delay: index * 0.03, ease: 'easeOut' }}
+                          className='border-b transition-colors hover:bg-muted/50'
+                        >
+                          <TableCell>
+                            {isLoading ?
+                              <Skeleton className='h-5 w-20' />
+                            : producto?.codigo_interno}
+                          </TableCell>
+                          <TableCell>
+                            {isLoading ?
+                              <Skeleton className='h-5 w-48' />
+                            : producto?.descripcion}
+                          </TableCell>
+                          <TableCell>
+                            <form.Field name={`items[${index}].cantidad`}>
+                              {(subfield) => (
+                                <Input
+                                  className='h-8 w-20'
+                                  ghost
+                                  value={subfield.state.value}
+                                  onChange={(e) => subfield.handleChange(Number(e.target.value))}
+                                />
+                              )}
+                            </form.Field>
+                          </TableCell>
+                          <TableCell hidden={!hasSelectedCliente}>
+                            {loadingClientEquipos ?
+                              <Skeleton className='h-5 w-24' />
+                            : <form.AppField name={`items[${index}].equipo_cliente_id`}>
                                 {(subfield) => (
-                                  <Input
-                                    className='h-8 w-20'
-                                    ghost
+                                  <UsoEquipoDisplay
+                                    matchingEquipos={clientEquipos.filter(({ equipo__id }) =>
+                                      (producto?.equipos ?? []).map((eq) => eq.id).includes(equipo__id),
+                                    )}
                                     value={subfield.state.value}
-                                    onChange={(e) => subfield.handleChange(Number(e.target.value))}
+                                    onChange={subfield.handleChange}
+                                    NumberSelectField={subfield.NumberSelectField}
                                   />
                                 )}
-                              </form.Field>
-                            </TableCell>
-                            <TableCell hidden={!hasSelectedCliente}>
-                              {loadingClientEquipos ? (
-                                <Skeleton className='h-5 w-24' />
-                              ) : (
-                                <form.AppField name={`items[${index}].equipo_cliente_id`}>
-                                  {(subfield) => (
-                                    <UsoEquipoDisplay
-                                      matchingEquipos={clientEquipos.filter(({ equipo__id }) =>
-                                        productosMap[producto_id].equipos
-                                          .map((eq) => eq.id)
-                                          .includes(equipo__id)
-                                      )}
-                                      value={subfield.state.value}
-                                      onChange={subfield.handleChange}
-                                      NumberSelectField={subfield.NumberSelectField}
-                                    />
-                                  )}
-                                </form.AppField>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant='ghost'
-                                size='icon-sm'
-                                onClick={() => field.removeValue(index)}
-                              >
-                                <X />
-                              </Button>
-                            </TableCell>
-                          </motion.tr>
-                        )
-                    )}
+                              </form.AppField>
+                            }
+                          </TableCell>
+                          <TableCell>
+                            <Button variant='ghost' size='icon-sm' onClick={() => field.removeValue(index)}>
+                              <X />
+                            </Button>
+                          </TableCell>
+                        </motion.tr>
+                      );
+                    })}
                   </AnimatePresence>
                 );
               }}
@@ -516,7 +541,10 @@ function MovementForm({
           <Button variant='ghost'>Cerrar</Button>
         </DialogClose>
         <form.AppForm>
-          <form.SaveButton label='Guardar movimiento' disabled={hasClientWarnings} />
+          <form.SaveButton
+            label='Guardar movimiento'
+            disabled={hasClientWarnings || initialProductsLoading}
+          />
         </form.AppForm>
       </DialogFooter>
     </form>

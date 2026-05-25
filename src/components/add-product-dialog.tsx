@@ -51,6 +51,7 @@ export function AddProductDialog({
       sku: producto?.sku ?? '',
       min_stock: producto?.min_stock ?? 0,
       status: producto?.status ?? 'activo',
+      vida_util: producto?.vida_util ?? 0,
     },
     validators: { onSubmit: productoCreateSchema },
     onSubmit: async ({ value }) => {
@@ -101,7 +102,7 @@ export function AddProductDialog({
           </div>
 
           {/* Marca / Categoría */}
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
             {/* Categoría */}
             <form.AppField name='categoria_id'>
               {(field) => (
@@ -116,6 +117,23 @@ export function AddProductDialog({
                 />
               )}
             </form.AppField>
+
+            <form.Field name='vida_util'>
+              {(field) => (
+                <Field className='space-y-1'>
+                  <FieldLabel htmlFor={field.name}>Vida útil</FieldLabel>
+                  <InputGroup>
+                    <InputGroupInput
+                      id={field.name}
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(Number(e.target.value))}
+                    />
+                    <InputGroupAddon align='inline-end'>unidades</InputGroupAddon>
+                  </InputGroup>
+                  <FieldError errors={field.state.meta.errors} />
+                </Field>
+              )}
+            </form.Field>
 
             <form.Field name='min_stock'>
               {(field) => (

@@ -246,6 +246,10 @@ const ProductInfoCard = ({ producto }: { producto: ProductoResponse }) => (
             <p>{plural('unidad', producto.cantidad_disponible)}</p>
           </div>
           <div>
+            <p className='text-sm text-muted-foreground'>Vida útil</p>
+            <p>{plural('unidad', producto.vida_util)}</p>
+          </div>
+          <div>
             <p className='text-sm text-muted-foreground '>Equipos compatibles</p>
             {producto.equipos?.length > 0 ? (
               <div className='flex flex-wrap gap-2 mt-2'>
