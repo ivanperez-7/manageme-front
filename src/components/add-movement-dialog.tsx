@@ -6,6 +6,17 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { MovementScanInput } from './movement/movement-scan-input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 import { Button } from './ui/button';
 import {
   Dialog,
@@ -27,14 +38,14 @@ import UsoEquipoDisplay from './uso-equipo-display';
 import { ENDPOINTS } from '@/api/endpoints';
 import { useAppForm } from '@/hooks/use-app-form';
 import { useCatalogs } from '@/hooks/use-catalogs';
+import { useClientEquipos } from '@/hooks/use-client-equipos';
+import { useMovementScan } from '@/hooks/use-movement-scan';
 import { withAuth } from '@/lib/auth';
 import {
   movimientoCreateSchema,
-  type LoteResponse,
   type MovimientoCreate,
   type MovimientoResponse,
   type ProductoResponse,
-  type UsoEquipo,
 } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { userStore } from '@/stores/userStore';
@@ -54,6 +65,8 @@ export function AddMovementDialog({
   useShortcut?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const formHasItemsRef = useRef(false); // para advertencia al cerrar si hay productos escaneados
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -71,21 +84,57 @@ export function AddMovementDialog({
   }, []);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-
-      <DialogContent
-        className='max-w-full md:max-w-4xl lg:max-w-5xl'
-        onInteractOutside={(e) => e.preventDefault()}
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(open) => {
+          if (!open && formHasItemsRef.current) setAlertOpen(true);
+          else setOpen(open);
+        }}
       >
-        <DialogHeader>
-          <DialogTitle>Registrar movimiento</DialogTitle>
-          <DialogDescription>Escanea productos para agregarlos al movimiento.</DialogDescription>
-        </DialogHeader>
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogContent className='max-w-full md:max-w-4xl lg:max-w-5xl'>
+          <DialogHeader>
+            <DialogTitle>Registrar movimiento</DialogTitle>
+            <DialogDescription>Escanea productos para agregarlos al movimiento.</DialogDescription>
+          </DialogHeader>
 
-        <MovementForm initialData={initialData} onSuccess={() => setOpen(false)} />
-      </DialogContent>
-    </Dialog>
+          <MovementForm
+            initialData={initialData}
+            onSuccess={() => {
+              formHasItemsRef.current = false;
+              setOpen(false);
+            }}
+            onItemsChange={(hasItems) => {
+              formHasItemsRef.current = hasItems;
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Descartar movimiento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Los productos escaneados se perderán si cierras este formulario.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                formHasItemsRef.current = false;
+                setAlertOpen(false);
+                setOpen(false);
+              }}
+            >
+              Descartar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
@@ -97,24 +146,21 @@ type ProductosMap = Record<
 function MovementForm({
   initialData,
   onSuccess,
+  onItemsChange,
 }: {
   initialData?: Partial<MovimientoCreate>;
   onSuccess: () => void;
+  onItemsChange?: (hasItems: boolean) => void;
 }) {
-  const [scanCode, setScanCode] = useState('');
-  const [searching, setSearching] = useState(false);
-  const [productosMap, setProductosMap] = useState<ProductosMap>({});
-  const [initialProductsLoading, setInitialProductsLoading] = useState(() =>
-    Boolean(initialData?.items?.length),
-  );
-
-  const [clientEquipos, setClientEquipos] = useState<UsoEquipo[]>([]);
-  const [loadingClientEquipos, setLoadingClientEquipos] = useState(false);
-
-  const { users, clientes } = useCatalogs();
+  const scan = useMovementScan();
+  const clientEquipos = useClientEquipos();
+  const { clientes } = useCatalogs();
   const router = useRouter();
 
-  const scanInputRef = useRef<HTMLInputElement>(null);
+  const [productosMap, setProductosMap] = useState<ProductosMap>({});
+  const [initialProductsLoading, setInitialProductsLoading] = useState(() =>
+    Boolean(initialData?.items?.length)
+  );
 
   const currentUserId = userStore.state.id;
 
@@ -123,14 +169,11 @@ function MovementForm({
       tipo: initialData?.tipo ?? 'entrada',
       items: initialData?.items ?? [],
       detalle_entrada:
-        initialData?.tipo == 'salida' ? null : { numero_factura: '', recibido_por_id: currentUserId },
-      detalle_salida: initialData?.tipo == 'entrada' ? null : { cliente_id: 0, tecnico: '' },
+        (initialData?.tipo ?? 'entrada') === 'entrada' ? { recibido_por_id: currentUserId } : null,
       comentarios: '',
     } as z.input<typeof movimientoCreateSchema>,
     validators: { onSubmit: movimientoCreateSchema },
-    onSubmit: async ({ value }) => {
-      if (!value.detalle_entrada && !value.detalle_salida) return;
-
+    onSubmit: async ({ value }) =>
       await withAuth
         .post(ENDPOINTS.movimientos.list, value)
         .then((res) => res.data as MovimientoResponse)
@@ -147,88 +190,28 @@ function MovementForm({
           });
 
           if (!initialData) form.reset();
-          setScanCode('');
+          scan.setScanCode('');
           router.invalidate();
           onSuccess();
         })
-        .catch((error) => toast.error(error.response?.data?.non_field_errors?.[0] || error.message));
-    },
+        .catch((error) => toast.error(error.response?.data?.non_field_errors?.[0] || error.message)),
   });
 
-  const handleScanSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!scanCode.trim()) return;
-    setSearching(true);
-
-    (tipo === 'entrada' ?
-      withAuth
-        .get(ENDPOINTS.products.list, { params: { sku: scanCode } })
-        .then((res) => res.data as ProductoResponse[])
-        .then((data) => {
-          if (!data.length) throw new Error('No se encontró ningún producto con este código');
-
-          const [producto] = data;
-          setProductosMap((prev) => ({ ...prev, [producto.id]: producto }));
-          form.pushFieldValue('items', { producto_id: producto.id, cantidad: 1 });
-        })
-    : withAuth
-        .get(ENDPOINTS.lotes.list, { params: { codigo_lote: scanCode } })
-        .then((res) => res.data as LoteResponse[])
-        .then((data) => {
-          if (!data.length) throw new Error('No se encontró ningún lote con este código');
-
-          const [lote] = data;
-          if (lote.cantidad_restante <= 0)
-            throw new Error('Este lote no tiene cantidad disponible para salida');
-
-          setProductosMap((prev) => ({ ...prev, [lote.producto.id]: lote.producto }));
-          form.pushFieldValue('items', {
-            producto_id: lote.producto.id,
-            cantidad: 1,
-            lote_id: lote.id,
-          });
-        })
-    )
-      .catch((error) => toast.error(error.message))
-      .finally(() => {
-        setSearching(false);
-        setScanCode('');
-        scanInputRef.current?.focus();
-      });
-  };
-
-  const checkClientEquipos = async (v: string) => {
-    const selectedProductos = form.getFieldValue('items').map((item) => item.producto_id);
-    if (selectedProductos.length === 0) return;
-    setLoadingClientEquipos(true);
-
-    withAuth
-      .get(ENDPOINTS.clientes.detail(v) + 'equipos/', { params: { productos: selectedProductos } })
-      .then((res) => setClientEquipos(res.data))
-      .finally(() => setLoadingClientEquipos(false));
-  };
-
   const tipo = useStore(form.store, ({ values }) => values.tipo);
-  const hasSelectedCliente = useStore(form.store, ({ values }) =>
-    Boolean(tipo == 'salida' && values.detalle_salida?.cliente_id),
+  const items = useStore(form.store, ({ values }) => values.items);
+  const clienteId = useStore(form.store, ({ values }) =>
+    tipo === 'salida' ? values.detalle_salida?.cliente_id : undefined
   );
-  const items = useStore(form.store, (state) => state.values.items);
-
-  const hasClientWarnings =
-    !initialProductsLoading &&
-    hasSelectedCliente &&
-    items.some(({ producto_id }) => {
-      const producto = productosMap[producto_id];
-      if (!producto) return false;
-
-      return !clientEquipos.some(({ equipo__id }) =>
-        producto.equipos.map((eq) => eq.id).includes(equipo__id),
-      );
-    });
 
   useEffect(() => {
-    scanInputRef.current?.focus();
-  }, []);
+    if (!clienteId) return;
+    const ids = items.map((item) => item.producto_id);
+    if (ids.length > 0) clientEquipos.check(clienteId, ids);
+  }, [clienteId, items.length]);
+
+  useEffect(() => {
+    onItemsChange?.(items.length > 0);
+  }, [items.length, onItemsChange]);
 
   useEffect(() => {
     const loadInitialProducts = async () => {
@@ -243,7 +226,7 @@ function MovementForm({
 
       try {
         const responses = await Promise.all(
-          pendingIds.map((productoId) => withAuth.get(ENDPOINTS.products.detail(productoId))),
+          pendingIds.map((productoId) => withAuth.get(ENDPOINTS.products.detail(productoId)))
         );
         const products = responses.map((r) => r.data as ProductoResponse);
 
@@ -257,6 +240,251 @@ function MovementForm({
     loadInitialProducts();
   }, [initialData]);
 
+  useEffect(() => {
+    scan.scanInputRef.current?.focus();
+  }, []);
+
+  const handleScanSubmit = (e: React.FormEvent) => {
+    scan.handleScanSubmit(e, tipo, {
+      onProductoScanned: (producto) => {
+        setProductosMap((prev) => ({ ...prev, [producto.id]: producto }));
+        form.pushFieldValue('items', { producto_id: producto.id, cantidad: 1 });
+      },
+      onLoteScanned: (lote) => {
+        setProductosMap((prev) => ({ ...prev, [lote.producto.id]: lote.producto }));
+        form.pushFieldValue('items', {
+          producto_id: lote.producto.id,
+          cantidad: 1,
+          lote_id: lote.id,
+        });
+      },
+    });
+  };
+
+  const handleTipoChange = (value: 'entrada' | 'salida') => {
+    if (value === 'entrada') {
+      form.setFieldValue('detalle_salida', null);
+      form.setFieldValue('detalle_entrada', {
+        numero_factura: '',
+        recibido_por_id: currentUserId,
+      });
+    } else {
+      form.setFieldValue('detalle_entrada', null);
+      form.setFieldValue('detalle_salida', {
+        cliente_id: 0,
+        tecnico: '',
+      });
+    }
+    form.setFieldValue('items', []);
+    if (items.length > 0) toast.info('Productos eliminados al cambiar el tipo de movimiento');
+  };
+
+  const getMatchingEquipos = (productoId: number) =>
+    clientEquipos.clientEquipos.filter(({ equipo__id }) =>
+      (productosMap[productoId]?.equipos ?? []).some((eq) => eq.id === equipo__id)
+    );
+
+  const hasClientWarnings =
+    !!clienteId && items.some(({ producto_id }) => getMatchingEquipos(producto_id).length === 0);
+
+  const renderTipoSelector = () => (
+    <FieldSet>
+      <FieldGroup>
+        <form.Field name='tipo'>
+          {(field) => (
+            <Field>
+              <FieldLabel>Tipo de movimiento</FieldLabel>
+              <div className='relative flex bg-muted rounded-lg p-1'>
+                {tipoOptions.map(({ value, label, Icon }) => (
+                  <button
+                    key={value}
+                    type='button'
+                    className={cn(
+                      'relative z-10 flex flex-1 items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                      tipo === value
+                        ? 'text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                    onClick={() => {
+                      field.handleChange(value);
+                      handleTipoChange(value);
+                    }}
+                  >
+                    <Icon className='size-4' />
+                    {label}
+                  </button>
+                ))}
+
+                <motion.div
+                  layoutId='tipo-active'
+                  className='absolute inset-y-1 z-0 rounded-md bg-primary shadow-sm'
+                  style={{
+                    left: tipo === 'entrada' ? '4px' : 'calc(50% + 2px)',
+                    width: 'calc(50% - 6px)',
+                  }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                />
+              </div>
+            </Field>
+          )}
+        </form.Field>
+      </FieldGroup>
+    </FieldSet>
+  );
+
+  const renderProductItemsTable = () => (
+    <Table>
+      <TableHeader className='bg-muted sticky top-0 z-10'>
+        <TableRow>
+          <TableHead>Código</TableHead>
+          <TableHead>Descripción</TableHead>
+          <TableHead>Cantidad</TableHead>
+          <TableHead hidden={!!!clienteId}>Equipo</TableHead>
+          <TableHead className='w-10' />
+        </TableRow>
+      </TableHeader>
+
+      <TableBody>
+        <form.Field name='items' mode='array'>
+          {(field) => {
+            if (field.state.value.length <= 0)
+              return (
+                <TableRow>
+                  <TableCell colSpan={5} className='p-6'>
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyTitle>No hay productos</EmptyTitle>
+                        <EmptyDescription>
+                          Escanea un producto para agregarlo al movimiento.
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  </TableCell>
+                </TableRow>
+              );
+
+            return (
+              <AnimatePresence initial={false}>
+                {field.state.value.map(({ producto_id }, index) => {
+                  const producto = productosMap[producto_id];
+                  const isLoading = initialProductsLoading && !producto?.codigo_interno;
+                  const noMatching = !!clienteId && getMatchingEquipos(producto_id).length === 0;
+
+                  return (
+                    <motion.tr
+                      key={`${producto_id}-${index}`}
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 12, height: 0, padding: 0 }}
+                      transition={{ duration: 0.2, delay: index * 0.03, ease: 'easeOut' }}
+                      className={cn(
+                        'border-b transition-colors hover:bg-muted/50',
+                        noMatching && 'bg-destructive/10 hover:bg-destructive/15'
+                      )}
+                    >
+                      <TableCell>
+                        {isLoading ? <Skeleton className='h-5 w-20' /> : producto?.codigo_interno}
+                      </TableCell>
+                      <TableCell>
+                        {isLoading ? <Skeleton className='h-5 w-48' /> : producto?.descripcion}
+                      </TableCell>
+                      <TableCell>
+                        <form.Field name={`items[${index}].cantidad`}>
+                          {(subfield) => (
+                            <Input
+                              className='h-8 w-20'
+                              ghost
+                              value={subfield.state.value}
+                              onChange={(e) => subfield.handleChange(Number(e.target.value))}
+                            />
+                          )}
+                        </form.Field>
+                      </TableCell>
+                      <TableCell hidden={!!!clienteId}>
+                        {clientEquipos.loadingClientEquipos ? (
+                          <Skeleton className='h-5 w-24' />
+                        ) : (
+                          <form.AppField name={`items[${index}].equipo_cliente_id`}>
+                            {(subfield) => (
+                              <UsoEquipoDisplay
+                                matchingEquipos={getMatchingEquipos(producto_id)}
+                                value={subfield.state.value}
+                                onChange={subfield.handleChange}
+                              />
+                            )}
+                          </form.AppField>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant='ghost' size='icon-sm' onClick={() => field.removeValue(index)}>
+                          <X />
+                        </Button>
+                      </TableCell>
+                    </motion.tr>
+                  );
+                })}
+              </AnimatePresence>
+            );
+          }}
+        </form.Field>
+      </TableBody>
+    </Table>
+  );
+
+  const renderEntryDetails = () => (
+    <motion.div
+      key='entrada-details'
+      initial={{ opacity: 0, y: -8, height: 0 }}
+      animate={{ opacity: 1, y: 0, height: 'auto' }}
+      exit={{ opacity: 0, y: -8, height: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+    >
+      <FieldSet>
+        <FieldGroup className='grid grid-cols-3 gap-4'>
+          <form.AppField name='detalle_entrada.numero_factura'>
+            {(field) => <field.InputField label='Número de factura' placeholder='XXX-00110011-RKO' />}
+          </form.AppField>
+          <Field>
+            <FieldLabel>Recibido por</FieldLabel>
+            <span className='text-sm text-muted-foreground'>{userStore.state?.full_name || '—'}</span>
+          </Field>
+        </FieldGroup>
+      </FieldSet>
+    </motion.div>
+  );
+
+  const renderExitDetails = () => (
+    <motion.div
+      key='salida-details'
+      initial={{ opacity: 0, y: -8, height: 0 }}
+      animate={{ opacity: 1, y: 0, height: 'auto' }}
+      exit={{ opacity: 0, y: -8, height: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+    >
+      <FieldSet>
+        <FieldGroup className='grid grid-cols-2 gap-4'>
+          <form.AppField name='detalle_salida.cliente_id'>
+            {(field) => (
+              <field.NumberSelectField
+                label='Cliente'
+                placeholder='Seleccione un cliente'
+                options={clientes.map((cli) => ({
+                  key: cli.id,
+                  value: cli.id,
+                  label: cli.nombre,
+                }))}
+              />
+            )}
+          </form.AppField>
+
+          <form.AppField name='detalle_salida.tecnico'>
+            {(field) => <field.InputField label='Técnico' placeholder='Nombre del técnico' />}
+          </form.AppField>
+        </FieldGroup>
+      </FieldSet>
+    </motion.div>
+  );
+
   return (
     <form
       id='movement-form'
@@ -266,92 +494,16 @@ function MovementForm({
       }}
       className='space-y-6'
     >
-      {/* Selector de tipo de movimiento */}
-      <FieldSet>
-        <FieldGroup>
-          <form.Field name='tipo'>
-            {(field) => (
-              <Field>
-                <FieldLabel>Tipo de movimiento</FieldLabel>
-                <div className='relative flex bg-muted rounded-lg p-1'>
-                  {tipoOptions.map(({ value, label, Icon }) => (
-                    <button
-                      key={value}
-                      type='button'
-                      className={cn(
-                        'relative z-10 flex flex-1 items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors',
-                        tipo === value ? 'text-primary-foreground' : (
-                          'text-muted-foreground hover:text-foreground'
-                        ),
-                      )}
-                      onClick={() => field.handleChange(value)}
-                    >
-                      <Icon className='size-4' />
-                      {label}
-                    </button>
-                  ))}
+      {renderTipoSelector()}
 
-                  <motion.div
-                    layoutId='tipo-active'
-                    className='absolute inset-y-1 z-0 rounded-md bg-primary shadow-sm'
-                    style={{
-                      left: tipo === 'entrada' ? '4px' : 'calc(50% + 2px)',
-                      width: 'calc(50% - 6px)',
-                    }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                </div>
-              </Field>
-            )}
-          </form.Field>
-        </FieldGroup>
-      </FieldSet>
-
-      {/* Input para escanear SKU o lote */}
-      <FieldSet>
-        <FieldGroup>
-          <form.Field name='tipo'>
-            {(field) => (
-              <Field>
-                <FieldLabel htmlFor='scan-input'>
-                  {field.state.value === 'entrada' ? 'SKU del producto' : 'Código de lote'}
-                </FieldLabel>
-                <div className='flex gap-2'>
-                  <Input
-                    id='scan-input'
-                    ref={scanInputRef}
-                    value={scanCode}
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleScanSubmit(e);
-                      }
-                    }}
-                    onChange={(e) => setScanCode(e.target.value)}
-                    placeholder={
-                      field.state.value === 'entrada' ?
-                        'Escanee o escriba el SKU...'
-                      : 'Escanee o escriba el código de lote...'
-                    }
-                  />
-                  <Button type='button' disabled={searching || !scanCode.trim()} onClick={handleScanSubmit}>
-                    {searching ?
-                      <motion.span
-                        className='flex items-center gap-2'
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        Buscando...
-                      </motion.span>
-                    : 'Agregar'}
-                  </Button>
-                </div>
-              </Field>
-            )}
-          </form.Field>
-        </FieldGroup>
-      </FieldSet>
+      <MovementScanInput
+        tipo={tipo}
+        scanCode={scan.scanCode}
+        onScanCodeChange={scan.setScanCode}
+        searching={scan.searching}
+        onSubmit={handleScanSubmit}
+        scanInputRef={scan.scanInputRef}
+      />
 
       {initialProductsLoading && (
         <div className='flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400'>
@@ -360,172 +512,11 @@ function MovementForm({
         </div>
       )}
 
-      <div className='overflow-hidden rounded-lg border'>
-        <Table>
-          <TableHeader className='bg-muted sticky top-0 z-10'>
-            <TableRow>
-              <TableHead>Código</TableHead>
-              <TableHead>Descripción</TableHead>
-              <TableHead>Cantidad</TableHead>
-              <TableHead hidden={!hasSelectedCliente}>Equipo</TableHead>
-              <TableHead className='w-10' />
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
-            <form.Field name='items' mode='array'>
-              {(field) => {
-                if (field.state.value.length <= 0)
-                  return (
-                    <TableRow>
-                      <TableCell colSpan={5} className='p-6'>
-                        <Empty>
-                          <EmptyHeader>
-                            <EmptyTitle>No hay productos</EmptyTitle>
-                            <EmptyDescription>
-                              Escanea un producto para agregarlo al movimiento.
-                            </EmptyDescription>
-                          </EmptyHeader>
-                        </Empty>
-                      </TableCell>
-                    </TableRow>
-                  );
-
-                return (
-                  <AnimatePresence initial={false}>
-                    {field.state.value.map(({ producto_id }, index) => {
-                      const producto = productosMap[producto_id];
-                      const isLoading = initialProductsLoading && !producto?.codigo_interno;
-
-                      return (
-                        <motion.tr
-                          key={`${producto_id}-${index}`}
-                          initial={{ opacity: 0, x: -12 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 12, height: 0, padding: 0 }}
-                          transition={{ duration: 0.2, delay: index * 0.03, ease: 'easeOut' }}
-                          className='border-b transition-colors hover:bg-muted/50'
-                        >
-                          <TableCell>
-                            {isLoading ?
-                              <Skeleton className='h-5 w-20' />
-                            : producto?.codigo_interno}
-                          </TableCell>
-                          <TableCell>
-                            {isLoading ?
-                              <Skeleton className='h-5 w-48' />
-                            : producto?.descripcion}
-                          </TableCell>
-                          <TableCell>
-                            <form.Field name={`items[${index}].cantidad`}>
-                              {(subfield) => (
-                                <Input
-                                  className='h-8 w-20'
-                                  ghost
-                                  value={subfield.state.value}
-                                  onChange={(e) => subfield.handleChange(Number(e.target.value))}
-                                />
-                              )}
-                            </form.Field>
-                          </TableCell>
-                          <TableCell hidden={!hasSelectedCliente}>
-                            {loadingClientEquipos ?
-                              <Skeleton className='h-5 w-24' />
-                            : <form.AppField name={`items[${index}].equipo_cliente_id`}>
-                                {(subfield) => (
-                                  <UsoEquipoDisplay
-                                    matchingEquipos={clientEquipos.filter(({ equipo__id }) =>
-                                      (producto?.equipos ?? []).map((eq) => eq.id).includes(equipo__id),
-                                    )}
-                                    value={subfield.state.value}
-                                    onChange={subfield.handleChange}
-                                    NumberSelectField={subfield.NumberSelectField}
-                                  />
-                                )}
-                              </form.AppField>
-                            }
-                          </TableCell>
-                          <TableCell>
-                            <Button variant='ghost' size='icon-sm' onClick={() => field.removeValue(index)}>
-                              <X />
-                            </Button>
-                          </TableCell>
-                        </motion.tr>
-                      );
-                    })}
-                  </AnimatePresence>
-                );
-              }}
-            </form.Field>
-          </TableBody>
-        </Table>
-      </div>
+      <div className='overflow-hidden rounded-lg border'>{renderProductItemsTable()}</div>
 
       <AnimatePresence mode='wait'>
-        {tipo === 'entrada' && (
-          <motion.div
-            key='entrada-details'
-            initial={{ opacity: 0, y: -8, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: 'auto' }}
-            exit={{ opacity: 0, y: -8, height: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-          >
-            <FieldSet>
-              <FieldGroup className='grid grid-cols-3 gap-4'>
-                <form.AppField name='detalle_entrada.numero_factura'>
-                  {(field) => <field.InputField label='Número de factura' placeholder='XXX-00110011-RKO' />}
-                </form.AppField>
-                <form.AppField name='detalle_entrada.recibido_por_id'>
-                  {(field) => (
-                    <field.NumberSelectField
-                      label='Recibido por'
-                      placeholder='Seleccione un usuario'
-                      options={users.map((user) => ({
-                        key: user.id,
-                        value: user.id,
-                        label: user.full_name,
-                      }))}
-                      disabled
-                    />
-                  )}
-                </form.AppField>
-              </FieldGroup>
-            </FieldSet>
-          </motion.div>
-        )}
-
-        {tipo === 'salida' && (
-          <motion.div
-            key='salida-details'
-            initial={{ opacity: 0, y: -8, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: 'auto' }}
-            exit={{ opacity: 0, y: -8, height: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-          >
-            <FieldSet>
-              <FieldGroup className='grid grid-cols-2 gap-4'>
-                <form.AppField name='detalle_salida.cliente_id'>
-                  {(field) => (
-                    <field.NumberSelectField
-                      label='Cliente'
-                      placeholder='Seleccione un cliente'
-                      options={clientes.map((cli) => ({
-                        key: cli.id,
-                        value: cli.id,
-                        label: cli.nombre,
-                      }))}
-                      onValueChange={checkClientEquipos}
-                    />
-                  )}
-                </form.AppField>
-
-                <form.AppField name='detalle_salida.tecnico'>
-                  {(field) => <field.InputField label='Técnico' placeholder='Nombre del técnico' />}
-                </form.AppField>
-              </FieldGroup>
-            </FieldSet>
-          </motion.div>
-        )}
+        {tipo === 'entrada' && renderEntryDetails()}
+        {tipo === 'salida' && renderExitDetails()}
       </AnimatePresence>
 
       <DialogFooter>

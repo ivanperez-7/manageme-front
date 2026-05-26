@@ -16,7 +16,7 @@ export const { useAppForm, withForm } = createFormHook({
   formComponents: { SaveButton },
 });
 
-function InputField({
+export function InputField({
   label,
   readOnly,
   ...props
@@ -40,13 +40,13 @@ function InputField({
   );
 }
 
-function NumberSelectField({
+export function NumberSelectField({
   label,
   placeholder,
   options,
   onValueChange,
   disabled,
-  hideErrors
+  hideErrors,
 }: {
   label?: string;
   placeholder: string;
@@ -87,7 +87,7 @@ function NumberSelectField({
   );
 }
 
-function SaveButton({ label, ...props }: React.ComponentProps<'button'> & { label?: string }) {
+export function SaveButton({ label, ...props }: React.ComponentProps<'button'> & { label?: string }) {
   const form = useFormContext();
   return (
     <form.Subscribe selector={(state) => state.isSubmitting}>
