@@ -1,12 +1,23 @@
 import { createFileRoute, ErrorComponent } from '@tanstack/react-router';
-import { Check, ChevronsUpDown, Laptop, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Check, ChevronsUpDown, MoreVertical, Pencil, Printer, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CreateEquipoPopover } from '@/components/create-equipo-popover';
-import { EditEquipoPopover } from '@/components/edit-equipo-popover';
 import { CreateMarcaPopover } from '@/components/create-marca-popover';
 import { DeleteMarcaDialog } from '@/components/delete-marca-dialog';
+import { EditEquipoPopover } from '@/components/edit-equipo-popover';
+import { EquipoProductosDialog } from '@/components/equipo-productos-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -137,10 +148,8 @@ function EquiposPage() {
 
               {marcasFiltradas.length === 0 && (
                 <div className='flex flex-col items-center justify-center py-16 text-center'>
-                  <Laptop className='mb-4 h-10 w-10 text-muted-foreground' />
-
+                  <Printer className='mb-4 h-10 w-10 text-muted-foreground' />
                   <h3 className='font-medium'>No hay marcas</h3>
-
                   <p className='text-sm text-muted-foreground'>Intenta con otra búsqueda.</p>
                 </div>
               )}
@@ -175,7 +184,7 @@ function EquiposPage() {
                   {equiposFiltrados.length === 0 && (
                     <Card className='border-dashed'>
                       <CardContent className='flex flex-col items-center justify-center py-16 text-center'>
-                        <Laptop className='mb-4 h-10 w-10 text-muted-foreground' />
+                        <Printer className='mb-4 h-10 w-10 text-muted-foreground' />
 
                         <h3 className='font-medium'>No hay equipos</h3>
 
@@ -195,7 +204,7 @@ function EquiposPage() {
           ) : (
             <div className='flex flex-1 items-center justify-center'>
               <div className='text-center'>
-                <Laptop className='mx-auto mb-4 h-10 w-10 text-muted-foreground' />
+                <Printer className='mx-auto mb-4 h-10 w-10 text-muted-foreground' />
 
                 <h3 className='font-medium'>Selecciona una marca</h3>
 
@@ -273,6 +282,8 @@ function EditableMarcaNombre({ marca, onRename }: { marca: MarcaResponse; onRena
 
 function EquipoCard({ equipo, onDeleted }: { equipo: EquipoResponse; onDeleted: () => void }) {
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [productosOpen, setProductosOpen] = useState(false);
 
   const remove = async () =>
     toast.promise(
@@ -291,17 +302,20 @@ function EquipoCard({ equipo, onDeleted }: { equipo: EquipoResponse; onDeleted: 
   return (
     <Card className='transition-colors hover:bg-accent/40'>
       <CardContent className='flex items-center justify-between '>
-        <div className='flex items-center gap-3'>
+        <button
+          type='button'
+          onClick={() => setProductosOpen(true)}
+          className='flex flex-1 items-center gap-3 text-left'
+        >
           <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10'>
-            <Laptop className='h-5 w-5 text-primary' />
+            <Printer className='h-5 w-5 text-primary' />
           </div>
 
           <div>
             <p className='font-medium'>{equipo.nombre}</p>
-
-            <p className='text-sm text-muted-foreground'>Equipo registrado</p>
+            <p className='text-sm text-muted-foreground'>Ver detalle del equipo</p>
           </div>
-        </div>
+        </button>
 
         <DropdownMenu>
           <EditEquipoPopover
@@ -325,13 +339,38 @@ function EquipoCard({ equipo, onDeleted }: { equipo: EquipoResponse; onDeleted: 
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem variant='destructive' onClick={remove}>
+            <DropdownMenuItem variant='destructive' onClick={() => setDeleteConfirmOpen(true)}>
               <Trash2 className='mr-2 h-4 w-4' />
               Eliminar
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </CardContent>
+
+      <EquipoProductosDialog equipo={equipo} open={productosOpen} onOpenChange={setProductosOpen} />
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar equipo</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de eliminar <strong>{equipo.nombre}</strong>? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                remove();
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

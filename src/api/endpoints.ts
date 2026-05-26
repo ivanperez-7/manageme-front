@@ -36,6 +36,8 @@ export const ENDPOINTS = {
   equipos: {
     list: '/productos/equipos/',
     detail: (id: IdLike) => `/productos/equipos/${id}/`,
+    clientes: (id: IdLike) => `/productos/equipos/${id}/clientes/`,
+    stats: (id: IdLike) => `/productos/equipos/${id}/stats/`,
   },
   proveedores: {
     list: '/productos/proveedores/',

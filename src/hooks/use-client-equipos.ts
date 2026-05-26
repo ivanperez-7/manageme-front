@@ -2,10 +2,10 @@ import { useState } from 'react';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { withAuth } from '@/lib/auth';
-import type { UsoEquipo } from '@/lib/types';
+import type { EquipoClienteResponse } from '@/lib/types';
 
 export function useClientEquipos() {
-  const [clientEquipos, setClientEquipos] = useState<UsoEquipo[]>([]);
+  const [clientEquipos, setClientEquipos] = useState<EquipoClienteResponse[]>([]);
   const [loadingClientEquipos, setLoadingClientEquipos] = useState(false);
 
   const check = async (clienteId: string|number, selectedProductos: number[]) => {
@@ -16,7 +16,7 @@ export function useClientEquipos() {
       const { data } = await withAuth.get(ENDPOINTS.clientes.detail(clienteId) + 'equipos/', {
         params: { productos: selectedProductos },
       });
-      setClientEquipos(data as UsoEquipo[]);
+      setClientEquipos(data as EquipoClienteResponse[]);
     } finally {
       setLoadingClientEquipos(false);
     }

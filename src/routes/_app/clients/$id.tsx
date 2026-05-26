@@ -37,7 +37,7 @@ import { fetchClientById } from '@/api/catalogo';
 import { ENDPOINTS } from '@/api/endpoints';
 import { useAppForm } from '@/hooks/use-app-form';
 import { withAuth } from '@/lib/auth';
-import { type ClienteResponse, type MovimientoResponse, type UsoEquipo } from '@/lib/types';
+import { type ClienteResponse, type EquipoClienteResponse, type MovimientoResponse } from '@/lib/types';
 import { humanDate, humanTime } from '@/lib/utils';
 
 const movementsColumns: ColumnDef<MovimientoResponse>[] = [
@@ -261,7 +261,7 @@ function ClienteForm({ cliente, onSuccess }: { cliente: ClienteResponse; onSucce
   );
 }
 
-function EquipoCard({ equipo, onDelete }: { equipo: UsoEquipo; onDelete: () => void }) {
+function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDelete: () => void }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [incremento, setIncremento] = useState(0);
@@ -303,7 +303,7 @@ function EquipoCard({ equipo, onDelete }: { equipo: UsoEquipo; onDelete: () => v
           </div>
           <div className='min-w-0'>
             <p className='text-sm font-medium truncate'>{equipo.alias}</p>
-            <p className='text-xs text-muted-foreground truncate'>{equipo.equipo__nombre}</p>
+            <p className='text-xs text-muted-foreground truncate'>{equipo.equipo_nombre}</p>
           </div>
         </div>
 
@@ -317,7 +317,7 @@ function EquipoCard({ equipo, onDelete }: { equipo: UsoEquipo; onDelete: () => v
             <DialogHeader>
               <DialogTitle>¿Eliminar equipo asignado?</DialogTitle>
               <DialogDescription>
-                Se eliminará la asignación del equipo <strong>{equipo.equipo__nombre}</strong> con alias{' '}
+                Se eliminará la asignación del equipo <strong>{equipo.equipo_nombre}</strong> con alias{' '}
                 <strong>{equipo.alias}</strong>.
               </DialogDescription>
             </DialogHeader>

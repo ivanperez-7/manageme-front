@@ -280,8 +280,8 @@ function MovementForm({
   };
 
   const getMatchingEquipos = (productoId: number) =>
-    clientEquipos.clientEquipos.filter(({ equipo__id }) =>
-      (productosMap[productoId]?.equipos ?? []).some((eq) => eq.id === equipo__id)
+    clientEquipos.clientEquipos.filter(({ equipo_id }) =>
+      (productosMap[productoId]?.equipos ?? []).some((eq) => eq.id === equipo_id)
     );
 
   const hasClientWarnings =

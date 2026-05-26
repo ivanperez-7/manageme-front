@@ -50,6 +50,9 @@ export function plural(word: string, count: number) {
   else if (/[bcdfghjklmnñpqrstvwxyz]$/i.test(word)) pluralWord = word + 'es';
   else pluralWord = word + 's';
 
+  // Spanish accent rules: replace -ón/-án with -ones/-anes
+  pluralWord = pluralWord.replace(/ónes$/, 'ones').replace(/ánes$/, 'anes');
+
   return `${count.toLocaleString('es-MX')} ${pluralWord}`;
 }
 

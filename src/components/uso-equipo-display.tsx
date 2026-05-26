@@ -4,14 +4,14 @@ import React from 'react';
 import { ClientWarning } from './client-warning';
 
 import { NumberSelectField } from '@/hooks/use-app-form';
-import type { UsoEquipo } from '@/lib/types';
+import type { EquipoClienteResponse } from '@/lib/types';
 
 export default function UsoEquipoDisplay({
   matchingEquipos,
   value,
   onChange,
 }: {
-  matchingEquipos: UsoEquipo[];
+  matchingEquipos: EquipoClienteResponse[];
   value: number | undefined;
   onChange: (value: number | undefined) => void;
 }) {
@@ -35,7 +35,7 @@ export default function UsoEquipoDisplay({
           options={matchingEquipos.map((eq) => ({
             key: eq.id,
             value: eq.id,
-            label: eq.equipo__nombre,
+            label: eq.equipo_nombre,
           }))}
         />
 
@@ -57,7 +57,7 @@ export default function UsoEquipoDisplay({
         transition={{ duration: 0.15 }}
         className='space-y-1 text-sm'
       >
-        <span>{onlyEquipo.equipo__nombre}</span>
+        <span>{onlyEquipo.equipo_nombre}</span>
         <div className='text-xs text-muted-foreground'>Uso: {onlyEquipo.contador_uso}</div>
       </motion.div>
     );

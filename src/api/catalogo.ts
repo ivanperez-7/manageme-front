@@ -96,7 +96,7 @@ export const fetchClientById = async (id: string | number) => {
 
   const equiposCliente = await withAuth
     .get(ENDPOINTS.clientes.detail(id) + 'equipos/')
-    .then((res) => res.data as Types.UsoEquipo[])
+    .then((res) => res.data as Types.EquipoClienteResponse[])
     .catch((error) => {
       throw new Error(error.message);
     });

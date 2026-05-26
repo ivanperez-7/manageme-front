@@ -197,12 +197,22 @@ export type VariableSistemaResponse = {
 };
 
 // ── Other ──
-export type UsoEquipo = {
+export type EquipoStatsResponse = {
+  total_productos: number;
+  total_instalaciones: number;
+  uso_total: number;
+  uso_promedio: number;
+  total_movimientos: number;
+};
+
+export type EquipoClienteResponse = {
   id: number;
-  contador_uso: number;
-  equipo__id: number;
-  equipo__nombre: string;
+  cliente_id: number;
+  cliente_nombre: string;
+  equipo_id: number;
+  equipo_nombre: string;
   alias: string;
+  contador_uso: number;
 };
 
 export type SucursalResponse = {
