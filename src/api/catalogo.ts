@@ -21,14 +21,6 @@ export const fetchProductoById = async (id: string | number) => {
       throw redirect({ to: '/catalogo' });
     });
 
-  const movimientos = await withAuth
-    .get(ENDPOINTS.movimientos.list, { params: { items__producto: id } })
-    .then((res) => res.data as Types.MovimientoResponse[])
-    .catch((error) => {
-      toast.error(error.message);
-      return [] as Types.MovimientoResponse[];
-    });
-
   const lotes = await withAuth
     .get(ENDPOINTS.lotes.list, { params: { producto: id } })
     .then((res) => res.data as Types.LoteResponse[])
@@ -37,7 +29,7 @@ export const fetchProductoById = async (id: string | number) => {
       return [] as Types.LoteResponse[];
     });
 
-  return { producto, movimientos, lotes };
+  return { producto, lotes };
 };
 
 export const fetchCatalogs = async () => {
@@ -101,13 +93,5 @@ export const fetchClientById = async (id: string | number) => {
       throw new Error(error.message);
     });
 
-  const movimientos = await withAuth
-    .get(ENDPOINTS.movimientos.list, { params: { detalle_salida__cliente: id } })
-    .then((res) => res.data as Types.MovimientoResponse[])
-    .catch((error) => {
-      toast.error(error.message);
-      return [] as Types.MovimientoResponse[];
-    });
-
-  return { cliente, equiposCliente, movimientos };
+  return { cliente, equiposCliente };
 };

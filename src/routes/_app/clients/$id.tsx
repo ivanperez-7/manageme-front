@@ -1,12 +1,14 @@
 import { useMask } from '@react-input/mask';
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { ArrowLeft, ArrowUpFromDot, CheckCircle, Gauge, Printer, Trash2 } from 'lucide-react';
+import { format } from 'date-fns';
+import { ArrowLeft, ArrowUpFromDot, CheckCircle, Gauge, Loader2, Printer, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { AssignEquipoDialog } from '@/components/assign-equipo-dialog';
 import { DataTable } from '@/components/data-table';
+import { DateRangePicker } from '@/components/date-range-pickers';
 import { useHeader } from '@/components/site-header';
 import {
   Breadcrumb,
@@ -32,9 +34,11 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import UserTag from '@/components/user-tag';
 
 import { fetchClientById } from '@/api/catalogo';
 import { ENDPOINTS } from '@/api/endpoints';
+import { fetchMovimientos } from '@/api/movimientos';
 import { useAppForm } from '@/hooks/use-app-form';
 import { withAuth } from '@/lib/auth';
 import { type ClienteResponse, type EquipoClienteResponse, type MovimientoResponse } from '@/lib/types';
@@ -62,16 +66,8 @@ const movementsColumns: ColumnDef<MovimientoResponse>[] = [
     cell: ({ row }) => humanTime(row.getValue('creado')),
   },
   {
-    accessorKey: 'creado_por.username',
     header: 'Usuario',
-    cell: ({ row }) => {
-      const name = row.original.creado_por.full_name;
-      return (
-        <span className='inline-flex items-center justify-center size-7 rounded-full bg-primary/10 text-primary text-xs font-medium'>
-          {name.charAt(0).toUpperCase()}
-        </span>
-      );
-    },
+    cell: ({ row }) => <UserTag username={row.original.creado_por.full_name} />,
   },
   { accessorKey: 'comentarios', header: 'Comentarios' },
   {
@@ -87,13 +83,19 @@ const movementsColumns: ColumnDef<MovimientoResponse>[] = [
   },
 ];
 
+type MovimientoSearch = { fechaInicio?: string; fechaFin?: string };
+
 export const Route = createFileRoute('/_app/clients/$id')({
+  validateSearch: ({ fechaInicio, fechaFin }): MovimientoSearch => ({
+    fechaInicio: (fechaInicio as string) || undefined,
+    fechaFin: (fechaFin as string) || undefined,
+  }),
   component: ClienteDetailPage,
   loader: ({ params }) => fetchClientById(params.id),
 });
 
 function ClienteDetailPage() {
-  const { cliente, equiposCliente, movimientos } = Route.useLoaderData();
+  const { cliente, equiposCliente } = Route.useLoaderData();
   const router = useRouter();
 
   const { setContent } = useHeader();
@@ -160,11 +162,73 @@ function ClienteDetailPage() {
         </Card>
       </div>
 
-      <Card className='mb-6'>
-        <CardHeader className='grid items-center md:flex md:justify-between'>
-          <CardTitle>Últimos movimientos de salida</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <ClientMovementsCard />
+    </div>
+  );
+}
+
+const ClientMovementsCard = () => {
+  const { cliente, equiposCliente } = Route.useLoaderData();
+  const { fechaInicio, fechaFin } = Route.useSearch();
+  const navigate = Route.useNavigate();
+
+  const [movimientos, setMovimientos] = useState<MovimientoResponse[]>([]);
+  const [oldestDate, setOldestDate] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+    setLoading(true);
+
+    fetchMovimientos({
+      clienteId: cliente.id,
+      fechaInicio: fechaInicio || format(new Date(), 'yyyy-MM-dd'),
+      fechaFin: fechaFin || format(new Date(), 'yyyy-MM-dd'),
+    }).then(({ movimientos: data, oldestDate: od }) => {
+      if (!ignore) {
+        setMovimientos(data);
+        setOldestDate(od);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      ignore = true;
+    };
+  }, [fechaInicio, fechaFin, cliente.id, equiposCliente]);
+
+  return (
+    <Card className='mb-6'>
+      <CardHeader className='grid items-center md:flex md:justify-between'>
+        <CardTitle>Movimientos de salida</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <DateRangePicker
+          minDate={oldestDate ? new Date(oldestDate) : undefined}
+          defaultStartDate={fechaInicio ? new Date(fechaInicio) : undefined}
+          defaultEndDate={fechaFin ? new Date(fechaFin) : undefined}
+          onStartDateChange={(date) =>
+            navigate({
+              search: (prev) => ({ ...prev, fechaInicio: format(date, 'yyyy-MM-dd') }),
+              replace: true,
+              resetScroll: false,
+            })
+          }
+          onEndDateChange={(date) =>
+            navigate({
+              search: (prev) => ({ ...prev, fechaFin: format(date, 'yyyy-MM-dd') }),
+              replace: true,
+              resetScroll: false,
+            })
+          }
+          className='mb-3'
+        />
+
+        {loading ? (
+          <div className='flex items-center justify-center py-12'>
+            <Loader2 className='size-6 animate-spin text-muted-foreground' />
+          </div>
+        ) : (
           <DataTable
             data={movimientos}
             columns={movementsColumns}
@@ -181,11 +245,11 @@ function ClienteDetailPage() {
               </Empty>
             }
           />
-        </CardContent>
-      </Card>
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
-}
+};
 
 function ClienteForm({ cliente, onSuccess }: { cliente: ClienteResponse; onSuccess: () => void }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -269,28 +333,28 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
   const handleUpdateContador = () =>
     toast.promise(
       withAuth
-        .patch(
-          // TODO: replace with real endpoint
-          `${ENDPOINTS.clientes.detail(equipo.id)}update_contador/`,
-          { incremento }
-        )
+        .post(`${ENDPOINTS.clientes.detail(equipo.cliente_id)}incrementar_contador/`, {
+          equipoId: equipo.equipo_id,
+          cantidad: incremento,
+        })
         .then(() => {
           setPopoverOpen(false);
           setIncremento(0);
           onDelete();
         }),
-      {
-        loading: 'Actualizando contador...',
-        error: (data) => 'Error: ' + data.message,
-      }
+      { loading: 'Actualizando contador...', error: (data) => 'Error: ' + data.message }
     );
 
   const handleDelete = () =>
     toast.promise(
-      withAuth.delete(ENDPOINTS.clientes.detail(equipo.id) + 'del_equipo/').then(() => {
-        setConfirmOpen(false);
-        onDelete();
-      }),
+      withAuth
+        .delete(ENDPOINTS.clientes.detail(equipo.cliente_id) + 'equipos/', {
+          data: { equipoId: equipo.equipo_id },
+        })
+        .then(() => {
+          setConfirmOpen(false);
+          onDelete();
+        }),
       { loading: 'Eliminando equipo...', error: (data) => 'Error: ' + data.message }
     );
 
@@ -303,7 +367,9 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
           </div>
           <div className='min-w-0'>
             <p className='text-sm font-medium truncate'>{equipo.alias}</p>
-            <p className='text-xs text-muted-foreground truncate'>{equipo.equipo_nombre}</p>
+            <Link to='/equipos' className='text-xs text-muted-foreground truncate hover:underline'>
+              {equipo.equipo_nombre}
+            </Link>
           </div>
         </div>
 

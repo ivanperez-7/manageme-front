@@ -37,10 +37,10 @@ export const Route = createFileRoute('/_app/movements/')({
   }),
   loaderDeps: ({ search }) => ({ fechaInicio: search.fechaInicio, fechaFin: search.fechaFin }),
   loader: async ({ deps }) =>
-    await fetchMovimientos(
-      deps.fechaInicio || format(new Date(), 'yyyy-MM-dd'),
-      deps.fechaFin || format(new Date(), 'yyyy-MM-dd')
-    ),
+    await fetchMovimientos({
+      fechaInicio: deps.fechaInicio || format(new Date(), 'yyyy-MM-dd'),
+      fechaFin: deps.fechaFin || format(new Date(), 'yyyy-MM-dd'),
+    }),
   staleTime: 30_000,
   component: MovementsListPage,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
@@ -191,12 +191,14 @@ function MovementsListPage() {
           navigate({
             search: (prev) => ({ ...prev, fechaInicio: format(date, 'yyyy-MM-dd') }),
             replace: true,
+            resetScroll: false,
           })
         }
         onEndDateChange={(date) =>
           navigate({
             search: (prev) => ({ ...prev, fechaFin: format(date, 'yyyy-MM-dd') }),
             replace: true,
+            resetScroll: false,
           })
         }
       />
@@ -206,7 +208,7 @@ function MovementsListPage() {
         data={filtered}
         initialPage={page ?? 0}
         onChangePage={(pageIndex) =>
-          navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true })
+          navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true, resetScroll: false })
         }
       />
 

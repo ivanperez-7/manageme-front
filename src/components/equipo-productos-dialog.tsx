@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { DataTable } from './data-table';
 import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,8 @@ import {
   DialogTitle,
 } from './ui/dialog';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from './ui/empty';
-import { Separator } from './ui/separator';
+import { ScrollArea } from './ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { withAuth } from '@/lib/auth';
@@ -129,116 +130,126 @@ export function EquipoProductosDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='flex max-h-[80vh] max-w-full flex-col md:max-w-4xl lg:max-w-6xl'>
+      <DialogContent className='flex max-h-[80vh] flex-col md:max-w-4xl lg:max-w-6xl'>
         <DialogHeader>
           <DialogTitle>Equipo: {equipo.nombre}</DialogTitle>
           <DialogDescription>Productos compatibles, clientes que lo usan y estadísticas.</DialogDescription>
         </DialogHeader>
 
         {statsLoading ? (
-          <div className='flex items-center justify-center py-4'>
+          <div role='status' aria-busy='true' className='flex items-center justify-center py-4'>
             <Loader2 className='size-6 animate-spin text-muted-foreground' />
+            <span className='sr-only'>Cargando estadísticas...</span>
           </div>
         ) : stats ? (
           <div className='-mx-6 mb-4 grid grid-cols-2 gap-3 px-6 sm:grid-cols-3 lg:grid-cols-5'>
             <Card>
-              <CardContent className='p-4 text-center'>
-                <p className='text-2xl font-bold'>{plural('producto', stats.total_productos)}</p>
+              <CardHeader className='p-4 pb-0 text-center'>
+                <CardTitle className='text-2xl font-bold'>
+                  {plural('producto', stats.total_productos)}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className='p-4 pt-0 text-center'>
                 <p className='text-sm text-muted-foreground'>Compatibles</p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className='p-4 text-center'>
-                <p className='text-2xl font-bold'>{plural('instalación', stats.total_instalaciones)}</p>
+              <CardHeader className='p-4 pb-0 text-center'>
+                <CardTitle className='text-2xl font-bold'>
+                  {plural('instalación', stats.total_instalaciones)}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className='p-4 pt-0 text-center'>
                 <p className='text-sm text-muted-foreground'>Cliente-equipo</p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className='p-4 text-center'>
-                <p className='text-2xl font-bold'>{stats.uso_total.toLocaleString('es-MX')}</p>
+              <CardHeader className='p-4 pb-0 text-center'>
+                <CardTitle className='text-2xl font-bold'>
+                  {stats.uso_total.toLocaleString('es-MX')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className='p-4 pt-0 text-center'>
                 <p className='text-sm text-muted-foreground'>Usos totales</p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className='p-4 text-center'>
-                <p className='text-2xl font-bold'>{stats.uso_promedio.toLocaleString('es-MX')}</p>
+              <CardHeader className='p-4 pb-0 text-center'>
+                <CardTitle className='text-2xl font-bold'>
+                  {stats.uso_promedio.toLocaleString('es-MX')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className='p-4 pt-0 text-center'>
                 <p className='text-sm text-muted-foreground'>Usos promedio</p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className='p-4 text-center'>
-                <p className='text-2xl font-bold'>{plural('movimiento', stats.total_movimientos)}</p>
+              <CardHeader className='p-4 pb-0 text-center'>
+                <CardTitle className='text-2xl font-bold'>
+                  {plural('movimiento', stats.total_movimientos)}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className='p-4 pt-0 text-center'>
                 <p className='text-sm text-muted-foreground'>Total</p>
               </CardContent>
             </Card>
           </div>
         ) : null}
 
-        <div className='-mx-6 flex-1 overflow-y-auto px-6'>
-          <section>
-            <h3 className='mb-4 text-lg font-semibold'>Productos compatibles</h3>
-            {productosLoading ? (
-              <div className='flex items-center justify-center py-16'>
-                <Loader2 className='size-6 animate-spin text-muted-foreground' />
-              </div>
-            ) : productos.length > 0 ? (
-              <DataTable
-                columns={columns}
-                data={productos}
-                emptyComponent={
-                  <Empty>
-                    <EmptyHeader>
-                      <EmptyTitle>No hay productos vinculados</EmptyTitle>
-                      <EmptyDescription>
-                        Este equipo no tiene productos compatibles registrados.
-                      </EmptyDescription>
-                    </EmptyHeader>
-                  </Empty>
-                }
-              />
-            ) : (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyTitle>No hay productos vinculados</EmptyTitle>
-                  <EmptyDescription>
-                    Este equipo no tiene productos compatibles registrados.
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            )}
-          </section>
+        <ScrollArea className='-mx-6 flex-1 px-6'>
+          <Tabs defaultValue='productos'>
+            <TabsList className='mb-4'>
+              <TabsTrigger value='productos'>Productos compatibles</TabsTrigger>
+              <TabsTrigger value='clientes'>Clientes</TabsTrigger>
+            </TabsList>
 
-          <Separator className='my-6' />
+            <TabsContent value='productos'>
+              {productosLoading ? (
+                <div role='status' aria-busy='true' className='flex items-center justify-center py-16'>
+                  <Loader2 className='size-6 animate-spin text-muted-foreground' />
+                  <span className='sr-only'>Cargando productos...</span>
+                </div>
+              ) : (
+                <DataTable
+                  columns={columns}
+                  data={productos}
+                  emptyComponent={
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyTitle>No hay productos vinculados</EmptyTitle>
+                        <EmptyDescription>
+                          Este equipo no tiene productos compatibles registrados.
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  }
+                />
+              )}
+            </TabsContent>
 
-          <section>
-            <h3 className='mb-4 text-lg font-semibold'>Clientes</h3>
-            {clientesLoading ? (
-              <div className='flex items-center justify-center py-16'>
-                <Loader2 className='size-6 animate-spin text-muted-foreground' />
-              </div>
-            ) : clientes.length > 0 ? (
-              <DataTable
-                columns={clienteColumns}
-                data={clientes}
-                emptyComponent={
-                  <Empty>
-                    <EmptyHeader>
-                      <EmptyTitle>No hay clientes vinculados</EmptyTitle>
-                      <EmptyDescription>Este equipo no tiene clientes registrados.</EmptyDescription>
-                    </EmptyHeader>
-                  </Empty>
-                }
-              />
-            ) : (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyTitle>No hay clientes vinculados</EmptyTitle>
-                  <EmptyDescription>Este equipo no tiene clientes registrados.</EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            )}
-          </section>
-        </div>
+            <TabsContent value='clientes'>
+              {clientesLoading ? (
+                <div role='status' aria-busy='true' className='flex items-center justify-center py-16'>
+                  <Loader2 className='size-6 animate-spin text-muted-foreground' />
+                  <span className='sr-only'>Cargando clientes...</span>
+                </div>
+              ) : (
+                <DataTable
+                  columns={clienteColumns}
+                  data={clientes}
+                  emptyComponent={
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyTitle>No hay clientes vinculados</EmptyTitle>
+                        <EmptyDescription>Este equipo no tiene clientes registrados.</EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  }
+                />
+              )}
+            </TabsContent>
+          </Tabs>
+        </ScrollArea>
 
         <DialogFooter>
           <Button variant='ghost' onClick={() => onOpenChange(false)}>

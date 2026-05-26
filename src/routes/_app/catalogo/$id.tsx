@@ -1,5 +1,6 @@
 import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
+import { format } from 'date-fns';
 import {
   ArrowDownToDot,
   ArrowLeft,
@@ -7,6 +8,7 @@ import {
   ArrowUpFromDot,
   CheckCircle,
   Edit,
+  Loader2,
   PackageOpen,
   Trash,
 } from 'lucide-react';
@@ -40,6 +42,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 // OTRAS UTILIDADES
 import { fetchProductoById } from '@/api/catalogo';
+import { fetchMovimientos } from '@/api/movimientos';
 import type { LoteResponse, MovimientoResponse, ProductoResponse, ProveedorResponse } from '@/lib/types';
 import { cn, humanDate, humanTime, plural } from '@/lib/utils';
 
@@ -148,14 +151,13 @@ export const Route = createFileRoute('/_app/catalogo/$id')({
     fechaInicio: (fechaInicio as string) || undefined,
     fechaFin: (fechaFin as string) || undefined,
   }),
-  loaderDeps: ({ search }) => search,
   loader: async ({ params }) => await fetchProductoById(params.id),
   component: ProductDetailPage,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
 
 function ProductDetailPage() {
-  const { producto, movimientos, lotes } = Route.useLoaderData();
+  const { producto, lotes } = Route.useLoaderData();
   const { setContent } = useHeader();
   const router = useRouter();
 
@@ -213,7 +215,7 @@ function ProductDetailPage() {
       <ProductInfoCard producto={producto} />
       <ProductProviderCard proveedor={producto.proveedor} />
       <ProductBatchesCard lotes={lotes} />
-      <ProductMovementsCard movimientos={movimientos} />
+      <ProductMovementsCard />
     </>
   );
 }
@@ -344,12 +346,40 @@ const ProductBatchesCard = ({ lotes }: { lotes: LoteResponse[] }) => {
   );
 };
 
-const ProductMovementsCard = ({ movimientos }: { movimientos: MovimientoResponse[] }) => {
-  const { producto } = Route.useLoaderData();
+const ProductMovementsCard = () => {
+  const { producto, lotes } = Route.useLoaderData();
+  const { fechaInicio, fechaFin } = Route.useSearch();
+  const navigate = Route.useNavigate();
+
+  const [movimientos, setMovimientos] = useState<MovimientoResponse[]>([]);
+  const [oldestDate, setOldestDate] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+    setLoading(true);
+
+    fetchMovimientos({
+      productoId: producto.id,
+      fechaInicio: fechaInicio || format(new Date(), 'yyyy-MM-dd'),
+      fechaFin: fechaFin || format(new Date(), 'yyyy-MM-dd'),
+    }).then(({ movimientos: data, oldestDate: od }) => {
+      if (!ignore) {
+        setMovimientos(data);
+        setOldestDate(od);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      ignore = true;
+    };
+  }, [fechaInicio, fechaFin, producto.id, lotes]);
+
   return (
     <Card className='mb-6'>
       <CardHeader className='grid items-center md:flex md:justify-between'>
-        <CardTitle className='text-lg'>Últimos movimientos</CardTitle>
+        <CardTitle className='text-lg'>Movimientos</CardTitle>
         <div className='grid md:flex gap-3'>
           <AddMovementDialog
             trigger={
@@ -366,30 +396,55 @@ const ProductMovementsCard = ({ movimientos }: { movimientos: MovimientoResponse
         </div>
       </CardHeader>
       <CardContent>
-        <DateRangePicker onStartDateChange={() => {}} onEndDateChange={() => {}} className='mb-3' />
-        <DataTable
-          // hacemos básicamente un cross product de cada movimiento con su array de items
-          data={movimientos.flatMap((mov) =>
-            mov.items
-              .filter((item) => item.producto.id == producto.id)
-              .map((item) => ({ cantidad: item.cantidad, ...mov }))
-          )}
-          columns={movementsColumns}
-          transparent
-          emptyComponent={
-            <Empty className='my-0 py-0'>
-              <EmptyHeader>
-                <EmptyMedia variant='icon'>
-                  <ArrowLeftRight />
-                </EmptyMedia>
-                <EmptyTitle>No se ha hecho ningún movimiento</EmptyTitle>
-                <EmptyDescription>
-                  Comienza registrando una entrada o salida de este producto
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+        <DateRangePicker
+          minDate={oldestDate ? new Date(oldestDate) : undefined}
+          defaultStartDate={fechaInicio ? new Date(fechaInicio) : undefined}
+          defaultEndDate={fechaFin ? new Date(fechaFin) : undefined}
+          onStartDateChange={(date) =>
+            navigate({
+              search: (prev) => ({ ...prev, fechaInicio: format(date, 'yyyy-MM-dd') }),
+              replace: true,
+              resetScroll: false,
+            })
           }
+          onEndDateChange={(date) =>
+            navigate({
+              search: (prev) => ({ ...prev, fechaFin: format(date, 'yyyy-MM-dd') }),
+              replace: true,
+              resetScroll: false,
+            })
+          }
+          className='mb-3'
         />
+
+        {loading ? (
+          <div className='flex items-center justify-center py-12'>
+            <Loader2 className='size-6 animate-spin text-muted-foreground' />
+          </div>
+        ) : (
+          <DataTable
+            data={movimientos.flatMap((mov) =>
+              mov.items
+                .filter((item) => item.producto.id == producto.id)
+                .map((item) => ({ cantidad: item.cantidad, ...mov }))
+            )}
+            columns={movementsColumns}
+            transparent
+            emptyComponent={
+              <Empty className='my-0 py-0'>
+                <EmptyHeader>
+                  <EmptyMedia variant='icon'>
+                    <ArrowLeftRight />
+                  </EmptyMedia>
+                  <EmptyTitle>No se ha hecho ningún movimiento</EmptyTitle>
+                  <EmptyDescription>
+                    Comienza registrando una entrada o salida de este producto
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            }
+          />
+        )}
       </CardContent>
     </Card>
   );
