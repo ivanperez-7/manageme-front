@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { DataTable } from '@/components/data-table';
+import { MovementDetailSkeleton } from '@/components/route-skeletons';
 import { useHeader } from '@/components/site-header';
 import TipoMovimientoBadge from '@/components/tipo-movimiento-badge';
 import {
@@ -50,6 +51,8 @@ const itemsColumns: ColumnDef<MovimientoItemResponse>[] = [
 export const Route = createFileRoute('/_app/movements/$id')({
   loader: async ({ params }) => await fetchMovimientoById(params.id),
   component: MovementDetailPage,
+  pendingComponent: MovementDetailSkeleton,
+  pendingMs: 200,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
 
@@ -250,7 +253,7 @@ function MovementDetailPage() {
             emptyComponent={
               <Empty className='my-0 py-0'>
                 <EmptyHeader>
-                  <EmptyMedia variant='icon'>
+                  <EmptyMedia variant='decorative'>
                     <PackageOpen />
                   </EmptyMedia>
                   <EmptyTitle>No hay productos</EmptyTitle>

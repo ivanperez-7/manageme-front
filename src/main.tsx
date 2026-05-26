@@ -13,6 +13,13 @@ const catalogsMask = createRouteMask({
   search: { text: undefined, categoria: undefined, marca: undefined, equipo: undefined, page: undefined },
 });
 
+const catalogsDetailMask = createRouteMask({
+  routeTree,
+  from: '/catalogo/$id',
+  to: '/catalogo/$id',
+  search: { fechaInicio: undefined, fechaFin: undefined },
+});
+
 const movimientosMask = createRouteMask({
   routeTree,
   from: '/movements',
@@ -28,7 +35,7 @@ const router = createRouter({
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
-  routeMasks: [catalogsMask, movimientosMask],
+  routeMasks: [catalogsMask, movimientosMask, catalogsDetailMask],
 });
 
 // Register the router instance for type safety

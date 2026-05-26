@@ -91,7 +91,7 @@ function ClientesPage() {
         emptyComponent={
           <Empty className='my-0 py-0'>
             <EmptyHeader>
-              <EmptyMedia variant='icon'>
+              <EmptyMedia variant='decorative'>
                 <PackageOpen />
               </EmptyMedia>
               <EmptyTitle>No hay clientes registrados</EmptyTitle>

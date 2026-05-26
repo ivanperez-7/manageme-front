@@ -8,7 +8,7 @@ import { useDebounce } from 'use-debounce';
 import { AddProductDialog } from '@/components/add-product-dialog';
 import { DataTable } from '@/components/data-table';
 import { DeleteProductDialog } from '@/components/delete-product-dialog';
-import { ProductCard } from '@/components/product-card';
+import { CatalogoSkeleton } from '@/components/route-skeletons';
 import { useHeader } from '@/components/site-header';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 // OTRAS UTILIDADES
 import { fetchAllProductos } from '@/api/catalogo';
 import { useCatalogs } from '@/hooks/use-catalogs';
-import { useIsMobile } from '@/hooks/use-mobile';
 import type { ProductoResponse } from '@/lib/types';
 import { plural, statusFromStock } from '@/lib/utils';
 
@@ -117,6 +116,8 @@ export const Route = createFileRoute('/_app/catalogo/')({
   }),
   loader: fetchAllProductos,
   component: ProductListPage,
+  pendingComponent: CatalogoSkeleton,
+  pendingMs: 200,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
   staleTime: 30_000,
 });
@@ -128,7 +129,6 @@ function ProductListPage() {
 
   const { categorias, marcas, equipos } = useCatalogs();
   const { setContent } = useHeader();
-  const isMobile = useIsMobile();
 
   const [_localText, setLocalText] = useState(text);
   const [localText] = useDebounce(_localText, 800);
@@ -152,7 +152,7 @@ function ProductListPage() {
   const emptyComponent = !productos.length ? (
     <Empty className='my-0 py-0'>
       <EmptyHeader>
-        <EmptyMedia variant='icon'>
+        <EmptyMedia variant='decorative'>
           <Package2 />
         </EmptyMedia>
         <EmptyTitle>¡El catálogo está vacío!</EmptyTitle>
@@ -162,7 +162,7 @@ function ProductListPage() {
   ) : (
     <Empty className='my-0 py-0'>
       <EmptyHeader>
-        <EmptyMedia variant='icon'>
+        <EmptyMedia variant='decorative'>
           <Search />
         </EmptyMedia>
         <EmptyTitle>No se encontró ningún producto</EmptyTitle>
@@ -273,19 +273,15 @@ function ProductListPage() {
         </Button>
       </div>
 
-      {isMobile ? (
-        filtered.slice(0, 10).map((producto) => <ProductCard key={producto.id} producto={producto} />)
-      ) : (
-        <DataTable
-          columns={columns}
-          data={filtered}
-          emptyComponent={emptyComponent}
-          initialPage={page ?? 0}
-          onChangePage={(pageIndex) =>
-            navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true })
-          }
-        />
-      )}
+      <DataTable
+        columns={columns}
+        data={filtered}
+        emptyComponent={emptyComponent}
+        initialPage={page ?? 0}
+        onChangePage={(pageIndex) =>
+          navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true })
+        }
+      />
 
       <div className='fixed bottom-4 right-3 md:bottom-8 md:right-8'>
         <AddProductDialog

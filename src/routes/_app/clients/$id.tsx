@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { AssignEquipoDialog } from '@/components/assign-equipo-dialog';
 import { DataTable } from '@/components/data-table';
 import { DateRangePicker } from '@/components/date-range-pickers';
+import { ClientDetailSkeleton } from '@/components/route-skeletons';
 import { useHeader } from '@/components/site-header';
 import {
   Breadcrumb,
@@ -90,8 +91,10 @@ export const Route = createFileRoute('/_app/clients/$id')({
     fechaInicio: (fechaInicio as string) || undefined,
     fechaFin: (fechaFin as string) || undefined,
   }),
-  component: ClienteDetailPage,
   loader: ({ params }) => fetchClientById(params.id),
+  component: ClienteDetailPage,
+  pendingComponent: ClientDetailSkeleton,
+  pendingMs: 200,
 });
 
 function ClienteDetailPage() {
@@ -144,7 +147,7 @@ function ClienteDetailPage() {
             {equiposCliente.length === 0 ? (
               <Empty className='my-0 py-0'>
                 <EmptyHeader>
-                  <EmptyMedia variant='icon'>
+                  <EmptyMedia variant='decorative'>
                     <Printer />
                   </EmptyMedia>
                   <EmptyTitle>No se ha asignado ningún equipo</EmptyTitle>
@@ -236,7 +239,7 @@ const ClientMovementsCard = () => {
             emptyComponent={
               <Empty className='my-0 py-0'>
                 <EmptyHeader>
-                  <EmptyMedia variant='icon'>
+                  <EmptyMedia variant='decorative'>
                     <ArrowUpFromDot />
                   </EmptyMedia>
                   <EmptyTitle>No se ha hecho ningún movimiento</EmptyTitle>

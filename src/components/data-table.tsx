@@ -99,7 +99,7 @@ export function DataTable<TData, TValue>({
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: index * 0.03, ease: 'easeOut' }}
-                  className='border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted'
+                  className='border-b transition-colors hover:bg-muted/50 even:bg-muted/20 data-[state=selected]:bg-muted'
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className='py-2.5'>

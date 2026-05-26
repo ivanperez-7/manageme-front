@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AddMovementDialog } from '@/components/add-movement-dialog';
 import { DataTable } from '@/components/data-table';
 import { DateRangePicker } from '@/components/date-range-pickers';
+import { MovementsSkeleton } from '@/components/route-skeletons';
 import { useHeader } from '@/components/site-header';
 import TipoMovimientoBadge from '@/components/tipo-movimiento-badge';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
@@ -43,6 +44,8 @@ export const Route = createFileRoute('/_app/movements/')({
     }),
   staleTime: 30_000,
   component: MovementsListPage,
+  pendingComponent: MovementsSkeleton,
+  pendingMs: 200,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
 

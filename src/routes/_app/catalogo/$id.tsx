@@ -21,6 +21,7 @@ import { DataTable } from '@/components/data-table';
 import { DateRangePicker } from '@/components/date-range-pickers';
 import { DeleteProductDialog } from '@/components/delete-product-dialog';
 import { RemainingProgress } from '@/components/remaining-progress';
+import { ProductDetailSkeleton } from '@/components/route-skeletons';
 import { useHeader } from '@/components/site-header';
 import TipoMovimientoBadge from '@/components/tipo-movimiento-badge';
 import { Badge } from '@/components/ui/badge';
@@ -153,6 +154,8 @@ export const Route = createFileRoute('/_app/catalogo/$id')({
   }),
   loader: async ({ params }) => await fetchProductoById(params.id),
   component: ProductDetailPage,
+  pendingComponent: ProductDetailSkeleton,
+  pendingMs: 200,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
 
@@ -332,7 +335,7 @@ const ProductBatchesCard = ({ lotes }: { lotes: LoteResponse[] }) => {
           emptyComponent={
             <Empty className='my-0 py-0'>
               <EmptyHeader>
-                <EmptyMedia variant='icon'>
+                <EmptyMedia variant='decorative'>
                   <PackageOpen />
                 </EmptyMedia>
                 <EmptyTitle>No se ha registrado ningún lote</EmptyTitle>
@@ -433,7 +436,7 @@ const ProductMovementsCard = () => {
             emptyComponent={
               <Empty className='my-0 py-0'>
                 <EmptyHeader>
-                  <EmptyMedia variant='icon'>
+                  <EmptyMedia variant='decorative'>
                     <ArrowLeftRight />
                   </EmptyMedia>
                   <EmptyTitle>No se ha hecho ningún movimiento</EmptyTitle>

@@ -1,6 +1,7 @@
 import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
+import { Layers, Package2, Truck, Users } from 'lucide-react';
 import { useEffect } from 'react';
 import {
   Bar,
@@ -17,6 +18,7 @@ import {
 
 import { DataTable } from '@/components/data-table';
 import { DeficitProgress } from '@/components/deficit-progress';
+import { DashboardSkeleton } from '@/components/route-skeletons';
 import { useHeader } from '@/components/site-header';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +48,8 @@ const lowStockColumns: ColumnDef<DashboardData['productosBajos'][0]>[] = [
 export const Route = createFileRoute('/_app/dashboard')({
   loader: getDashboardData,
   component: DashboardPage,
+  pendingComponent: DashboardSkeleton,
+  pendingMs: 200,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
 
@@ -81,38 +85,66 @@ function DashboardPage() {
         variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
       >
         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Productos</CardTitle>
+          <Card className='relative overflow-hidden'>
+            <div className='absolute top-0 left-0 w-full h-0.5 bg-chart-3' />
+            <CardHeader className='flex flex-row items-center justify-between pb-2'>
+              <CardTitle className='text-sm font-medium'>Productos</CardTitle>
+              <div className='size-9 rounded-lg bg-chart-3/10 flex items-center justify-center'>
+                <Package2 className='size-4 text-chart-3' />
+              </div>
             </CardHeader>
-            <CardContent className='text-3xl font-semibold'>{stats.productos}</CardContent>
+            <CardContent>
+              <div className='text-2xl font-bold'>{stats.productos}</div>
+              <p className='text-xs text-muted-foreground'>Total en catálogo</p>
+            </CardContent>
           </Card>
         </motion.div>
 
         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Lotes</CardTitle>
+          <Card className='relative overflow-hidden'>
+            <div className='absolute top-0 left-0 w-full h-0.5 bg-chart-2' />
+            <CardHeader className='flex flex-row items-center justify-between pb-2'>
+              <CardTitle className='text-sm font-medium'>Lotes</CardTitle>
+              <div className='size-9 rounded-lg bg-chart-2/10 flex items-center justify-center'>
+                <Layers className='size-4 text-chart-2' />
+              </div>
             </CardHeader>
-            <CardContent className='text-3xl font-semibold'>{stats.lotes}</CardContent>
+            <CardContent>
+              <div className='text-2xl font-bold'>{stats.lotes}</div>
+              <p className='text-xs text-muted-foreground'>Lotes registrados</p>
+            </CardContent>
           </Card>
         </motion.div>
 
         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Clientes</CardTitle>
+          <Card className='relative overflow-hidden'>
+            <div className='absolute top-0 left-0 w-full h-0.5 bg-chart-1' />
+            <CardHeader className='flex flex-row items-center justify-between pb-2'>
+              <CardTitle className='text-sm font-medium'>Clientes</CardTitle>
+              <div className='size-9 rounded-lg bg-chart-1/10 flex items-center justify-center'>
+                <Users className='size-4 text-chart-1' />
+              </div>
             </CardHeader>
-            <CardContent className='text-3xl font-semibold'>{stats.clientes}</CardContent>
+            <CardContent>
+              <div className='text-2xl font-bold'>{stats.clientes}</div>
+              <p className='text-xs text-muted-foreground'>Clientes activos</p>
+            </CardContent>
           </Card>
         </motion.div>
 
         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Proveedores</CardTitle>
+          <Card className='relative overflow-hidden'>
+            <div className='absolute top-0 left-0 w-full h-0.5 bg-chart-5' />
+            <CardHeader className='flex flex-row items-center justify-between pb-2'>
+              <CardTitle className='text-sm font-medium'>Proveedores</CardTitle>
+              <div className='size-9 rounded-lg bg-chart-5/10 flex items-center justify-center'>
+                <Truck className='size-4 text-chart-5' />
+              </div>
             </CardHeader>
-            <CardContent className='text-3xl font-semibold'>{stats.proveedores}</CardContent>
+            <CardContent>
+              <div className='text-2xl font-bold'>{stats.proveedores}</div>
+              <p className='text-xs text-muted-foreground'>Proveedores registrados</p>
+            </CardContent>
           </Card>
         </motion.div>
       </motion.div>

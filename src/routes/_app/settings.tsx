@@ -1,7 +1,8 @@
 import { createFileRoute, ErrorComponent } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import { SettingsSkeleton } from '@/components/route-skeletons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,11 +12,14 @@ import { Separator } from '@/components/ui/separator';
 import { ENDPOINTS } from '@/api/endpoints';
 import { fetchAllSysvars } from '@/api/system';
 import { withAuth } from '@/lib/auth';
+import { cn } from '@/lib/utils';
 import type { VariableSistemaResponse } from '@/lib/types';
 
 export const Route = createFileRoute('/_app/settings')({
   loader: fetchAllSysvars,
   component: SettingsPage,
+  pendingComponent: SettingsSkeleton,
+  pendingMs: 200,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
 
@@ -57,6 +61,7 @@ function SysvarRow({ sysvar }: { sysvar: VariableSistemaResponse }) {
 
       if (res.status === 200) {
         toast.success(`Guardado: ${sysvar.clave}`);
+        setValue(sysvar.valor);
       } else {
         toast.error('No se pudo guardar.');
       }
@@ -67,30 +72,35 @@ function SysvarRow({ sysvar }: { sysvar: VariableSistemaResponse }) {
     }
   };
 
-  const renderInput = () => {
-    return (
-      <Input
-        value={value || ''}
-        onChange={(e) => setValue(e.target.value)}
-        className='w-full max-w-xs'
-      />
-    );
-  };
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's' && isDirty) {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDirty, value]);
 
   return (
-    <div className='space-y-2'>
+    <div className={cn('space-y-2 relative', isDirty && 'pl-3 border-l-2 border-primary/40')}>
       <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-3'>
-        <div className='space-y-1'>
+        <div className='space-y-1 min-w-0'>
           <Label className='font-medium'>{sysvar.clave}</Label>
           {sysvar.descripcion && <p className='text-sm text-muted-foreground'>{sysvar.descripcion}</p>}
         </div>
 
-        <div className='flex items-center gap-4'>
-          {renderInput()}
+        <div className='flex items-center gap-3 shrink-0'>
+          <Input
+            value={value || ''}
+            onChange={(e) => setValue(e.target.value)}
+            className='w-full md:w-72'
+          />
 
           {isDirty && (
             <Button size='sm' onClick={handleSave} disabled={saving}>
-              Guardar
+              {saving ? 'Guardando...' : 'Guardar'}
             </Button>
           )}
         </div>
