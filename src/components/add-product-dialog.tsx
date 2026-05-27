@@ -93,11 +93,11 @@ export function AddProductDialog({
           {/* Datos generales */}
           <div className='space-y-4'>
             <form.AppField name='codigo_interno'>
-              {(field) => <field.InputField label='Código interno' />}
+              {(field) => <field.InputField label='Código interno' placeholder='AT1809' />}
             </form.AppField>
 
             <form.AppField name='descripcion'>
-              {(field) => <field.InputField label='Descripción' />}
+              {(field) => <field.InputField label='Descripción' placeholder='Pieza para KMX 3070' />}
             </form.AppField>
           </div>
 
@@ -155,7 +155,9 @@ export function AddProductDialog({
 
           {/* Cantidad / Stock */}
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <form.AppField name='sku'>{(field) => <field.InputField label='SKU' />}</form.AppField>
+            <form.AppField name='sku'>
+              {(field) => <field.InputField label='SKU' placeholder='17850346891' />}
+            </form.AppField>
 
             <form.Field name='proveedor_id'>
               {(field) => (
@@ -186,7 +188,7 @@ export function AddProductDialog({
           <form.Field name='equipos_id'>
             {(field) => (
               <Field className='space-y-1'>
-                <FieldLabel className='text-xl'>Equipos compatibles</FieldLabel>
+                <FieldLabel>Equipos compatibles</FieldLabel>
                 <EquipoSelector selectedEquipos={field.state.value} onEquiposChange={field.handleChange} />
                 <FieldError errors={field.state.meta.errors} />
               </Field>

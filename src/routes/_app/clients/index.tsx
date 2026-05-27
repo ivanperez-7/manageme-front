@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { EllipsisVertical, PackageOpen } from 'lucide-react';
+import { EllipsisVertical, PackageOpen, Plus } from 'lucide-react';
 import { useEffect } from 'react';
 
 import { DataTable } from '@/components/data-table';
@@ -76,13 +76,9 @@ function ClientesPage() {
 
   return (
     <div className='space-y-4'>
-      <div className='flex justify-between items-center'>
-        <div className='space-y-1'>
-          <h1 className='text-3xl font-semibold tracking-tight'>Clientes registrados</h1>
-          <p className='text-muted-foreground'>Administra los clientes registrados en el sistema.</p>
-        </div>
-
-        <CreateClienteDialog onSuccess={reloadCatalogs} />
+      <div className='space-y-1'>
+        <h1 className='text-3xl font-semibold tracking-tight'>Clientes registrados</h1>
+        <p className='text-muted-foreground'>Administra los clientes registrados en el sistema.</p>
       </div>
 
       <DataTable
@@ -99,6 +95,17 @@ function ClientesPage() {
           </Empty>
         }
       />
+
+      <div className='fixed bottom-4 right-3 md:bottom-8 md:right-8'>
+        <CreateClienteDialog
+          onSuccess={reloadCatalogs}
+          trigger={
+            <Button className='rounded-full' size='icon-lg' variant='default'>
+              <Plus />
+            </Button>
+          }
+        />
+      </div>
     </div>
   );
 }

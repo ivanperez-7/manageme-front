@@ -39,14 +39,10 @@ import { ENDPOINTS } from '@/api/endpoints';
 import { useAppForm } from '@/hooks/use-app-form';
 import { useCatalogs } from '@/hooks/use-catalogs';
 import { useClientEquipos } from '@/hooks/use-client-equipos';
+import { useItemLookup } from '@/hooks/use-item-lookup';
 import { useMovementScan } from '@/hooks/use-movement-scan';
 import { withAuth } from '@/lib/auth';
-import {
-  movimientoCreateSchema,
-  type MovimientoCreate,
-  type MovimientoResponse,
-  type ProductoResponse,
-} from '@/lib/types';
+import { movimientoCreateSchema, type MovimientoCreate, type MovimientoResponse } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { userStore } from '@/stores/userStore';
 
@@ -138,11 +134,6 @@ export function AddMovementDialog({
   );
 }
 
-type ProductosMap = Record<
-  number,
-  Pick<ProductoResponse, 'id' | 'codigo_interno' | 'descripcion' | 'equipos'>
->;
-
 function MovementForm({
   initialData,
   onSuccess,
@@ -154,13 +145,10 @@ function MovementForm({
 }) {
   const scan = useMovementScan();
   const clientEquipos = useClientEquipos();
+  const cache = useItemLookup(initialData);
+
   const { clientes } = useCatalogs();
   const router = useRouter();
-
-  const [productosMap, setProductosMap] = useState<ProductosMap>({});
-  const [initialProductsLoading, setInitialProductsLoading] = useState(() =>
-    Boolean(initialData?.items?.length)
-  );
 
   const currentUserId = userStore.state.id;
 
@@ -214,33 +202,6 @@ function MovementForm({
     onItemsChange?.(items.length > 0);
   }, [items.length, onItemsChange]);
 
-  useEffect(() => {
-    const loadInitialProducts = async () => {
-      if (!initialData?.items?.length) return;
-
-      setInitialProductsLoading(true);
-      const pendingIds = initialData.items.map((item) => item.producto_id);
-      if (!pendingIds.length) {
-        setInitialProductsLoading(false);
-        return;
-      }
-
-      try {
-        const responses = await Promise.all(
-          pendingIds.map((productoId) => withAuth.get(ENDPOINTS.products.detail(productoId)))
-        );
-        const products = responses.map((r) => r.data as ProductoResponse);
-
-        setProductosMap((prev) => ({ ...prev, ...Object.fromEntries(products.map((p) => [p.id, p])) }));
-      } catch (err) {
-        toast.error('Error al cargar la información de los productos iniciales');
-      } finally {
-        setInitialProductsLoading(false);
-      }
-    };
-    loadInitialProducts();
-  }, [initialData]);
-
   // Para enfocar el input de escaneo al abrir el formulario
   useEffect(() => {
     scan.scanInputRef.current?.focus();
@@ -249,16 +210,12 @@ function MovementForm({
   const handleScanSubmit = (e: React.FormEvent) => {
     scan.handleScanSubmit(e, tipo, {
       onProductoScanned: (producto) => {
-        setProductosMap((prev) => ({ ...prev, [producto.id]: producto }));
+        cache.addProducto(producto);
         form.pushFieldValue('items', { producto_id: producto.id, cantidad: 1 });
       },
       onLoteScanned: (lote) => {
-        setProductosMap((prev) => ({ ...prev, [lote.producto.id]: lote.producto }));
-        form.pushFieldValue('items', {
-          producto_id: lote.producto.id,
-          cantidad: 1,
-          lote_id: lote.id,
-        });
+        cache.addLote(lote);
+        form.pushFieldValue('items', { producto_id: lote.producto.id, cantidad: 1, lote_id: lote.id });
       },
     });
   };
@@ -278,12 +235,13 @@ function MovementForm({
       });
     }
     form.setFieldValue('items', []);
+    cache.clearLotes();
     if (items.length > 0) toast.info('Productos eliminados al cambiar el tipo de movimiento');
   };
 
   const getMatchingEquipos = (productoId: number) =>
     clientEquipos.clientEquipos.filter(({ equipo_id }) =>
-      (productosMap[productoId]?.equipos ?? []).some((eq) => eq.id === equipo_id)
+      (cache.productosMap[productoId]?.equipos ?? []).some((eq) => eq.id === equipo_id)
     );
 
   const hasClientWarnings =
@@ -340,8 +298,9 @@ function MovementForm({
         <TableRow>
           <TableHead>Código</TableHead>
           <TableHead>Descripción</TableHead>
+          <TableHead hidden={tipo !== 'salida'}>Lote</TableHead>
           <TableHead>Cantidad</TableHead>
-          <TableHead hidden={!!!clienteId}>Equipo</TableHead>
+          <TableHead hidden={!clienteId}>Equipo</TableHead>
           <TableHead className='w-10' />
         </TableRow>
       </TableHeader>
@@ -352,7 +311,10 @@ function MovementForm({
             if (field.state.value.length <= 0)
               return (
                 <TableRow>
-                  <TableCell colSpan={5} className='p-6'>
+                  <TableCell
+                    colSpan={4 + (tipo === 'salida' ? 1 : 0) + (clienteId ? 1 : 0)}
+                    className='p-6'
+                  >
                     <Empty>
                       <EmptyHeader>
                         <EmptyTitle>No hay productos</EmptyTitle>
@@ -367,9 +329,11 @@ function MovementForm({
 
             return (
               <AnimatePresence initial={false}>
-                {field.state.value.map(({ producto_id }, index) => {
-                  const producto = productosMap[producto_id];
-                  const isLoading = initialProductsLoading && !producto?.codigo_interno;
+                {field.state.value.map(({ producto_id, lote_id }, index) => {
+                  const producto = cache.productosMap[producto_id];
+                  const lote = lote_id ? cache.lotesMap[lote_id] : undefined;
+
+                  const isLoading = cache.initialProductsLoading;
                   const noMatching = !!clienteId && getMatchingEquipos(producto_id).length === 0;
 
                   return (
@@ -390,6 +354,13 @@ function MovementForm({
                       <TableCell>
                         {isLoading ? <Skeleton className='h-5 w-48' /> : producto?.descripcion}
                       </TableCell>
+                      <TableCell hidden={tipo !== 'salida'}>
+                        {cache.initialLotesLoading ? (
+                          <Skeleton className='h-5 w-28' />
+                        ) : (
+                          <span className='text-sm font-mono'>{lote?.codigo_lote ?? '—'}</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <form.Field name={`items[${index}].cantidad`}>
                           {(subfield) => (
@@ -402,7 +373,7 @@ function MovementForm({
                           )}
                         </form.Field>
                       </TableCell>
-                      <TableCell hidden={!!!clienteId}>
+                      <TableCell hidden={!clienteId}>
                         {clientEquipos.loadingClientEquipos ? (
                           <Skeleton className='h-5 w-24' />
                         ) : (
@@ -507,7 +478,7 @@ function MovementForm({
         scanInputRef={scan.scanInputRef}
       />
 
-      {initialProductsLoading && (
+      {cache.initialProductsLoading && (
         <div className='flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400'>
           <Loader2 className='size-4 animate-spin' />
           <span>Recuperando información de los productos iniciales...</span>
@@ -528,7 +499,7 @@ function MovementForm({
         <form.AppForm>
           <form.SaveButton
             label='Guardar movimiento'
-            disabled={hasClientWarnings || initialProductsLoading}
+            disabled={hasClientWarnings || cache.initialProductsLoading}
           />
         </form.AppForm>
       </DialogFooter>

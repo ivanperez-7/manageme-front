@@ -7,13 +7,10 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
-  Pagination,
-  PaginationContent,
   PaginationEllipsis,
-  PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
@@ -46,11 +43,14 @@ export function DataTable<TData, TValue>({
     pageSize: 10,
   });
 
+  const animateRowsRef = useRef(true);
+
   const table = useReactTable({
     data,
     columns,
     state: { pagination },
     onPaginationChange: (updater) => {
+      animateRowsRef.current = false;
       setPagination((prev) => {
         const next = typeof updater === 'function' ? updater(prev) : updater;
         onChangePage?.(next.pageIndex);
@@ -71,6 +71,10 @@ export function DataTable<TData, TValue>({
       onChangePage?.(clamped);
     }
   }, [data]);
+
+  useEffect(() => {
+    animateRowsRef.current = true;
+  });
 
   return (
     <>
@@ -96,9 +100,9 @@ export function DataTable<TData, TValue>({
                 <motion.tr
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={animateRowsRef.current ? { opacity: 0, y: 8 } : false}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, delay: index * 0.03, ease: 'easeOut' }}
+                  transition={{ duration: 0.2, delay: animateRowsRef.current ? index * 0.03 : 0, ease: 'easeOut' }}
                   className='border-b transition-colors hover:bg-muted/50 even:bg-muted/20 data-[state=selected]:bg-muted'
                 >
                   {row.getVisibleCells().map((cell) => (
@@ -127,46 +131,34 @@ export function DataTable<TData, TValue>({
         </div>
 
         {/* Paginación */}
-        <Pagination className='mx-auto md:mx-0'>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => table.previousPage()}
-                className={cn(!table.getCanPreviousPage() && 'pointer-events-none opacity-50')}
-              />
-            </PaginationItem>
-
+        <nav className='flex items-center gap-1'>
+          <PaginationPrevious
+            onClick={() => table.previousPage()}
+            className={cn(!table.getCanPreviousPage() && 'pointer-events-none opacity-50')}
+          />
+          <div className='flex items-center justify-center gap-1 min-w-[276px]'>
             {getPageItems({
               pageIndex: table.getState().pagination.pageIndex,
               pageCount: table.getPageCount(),
-            }).map((item, i) => {
-              if (item === ELLIPSIS) {
-                return (
-                  <PaginationItem key={`ellipsis-${i}`}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                );
-              }
-              return (
-                <PaginationItem key={item}>
-                  <PaginationLink
-                    isActive={table.getState().pagination.pageIndex === item}
-                    onClick={() => table.setPageIndex(item)}
-                  >
-                    {item + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              );
-            })}
-
-            <PaginationItem>
-              <PaginationNext
-                onClick={() => table.nextPage()}
-                className={cn(!table.getCanNextPage() && 'pointer-events-none opacity-50')}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+            }).map((item, i) =>
+              item === ELLIPSIS ? (
+                <PaginationEllipsis key={`ellipsis-${i}`} />
+              ) : (
+                <PaginationLink
+                  key={item}
+                  isActive={table.getState().pagination.pageIndex === item}
+                  onClick={() => table.setPageIndex(item)}
+                >
+                  {item + 1}
+                </PaginationLink>
+              )
+            )}
+          </div>
+          <PaginationNext
+            onClick={() => table.nextPage()}
+            className={cn(!table.getCanNextPage() && 'pointer-events-none opacity-50')}
+          />
+        </nav>
       </div>
     </>
   );

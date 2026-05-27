@@ -24,7 +24,7 @@ import { useAppForm } from '@/hooks/use-app-form';
 import { withAuth } from '@/lib/auth';
 import { clienteCreateSchema } from '@/lib/types';
 
-export function CreateClienteDialog({ onSuccess }: { onSuccess: () => void }) {
+export function CreateClienteDialog({ onSuccess, trigger }: { onSuccess: () => void; trigger?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
 
   const form = useAppForm({
@@ -61,9 +61,11 @@ export function CreateClienteDialog({ onSuccess }: { onSuccess: () => void }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button>
-          <Plus /> Nuevo cliente
-        </Button>
+        {trigger ?? (
+          <Button>
+            <Plus /> Nuevo cliente
+          </Button>
+        )}
       </DialogTrigger>
 
       <DialogContent className='sm:max-w-lg'>

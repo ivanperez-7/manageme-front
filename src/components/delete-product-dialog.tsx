@@ -39,7 +39,7 @@ export function DeleteProductDialog({
           router.invalidate();
         }
       })
-      .catch((error) => toast.error(error.message))
+      .catch((error) => toast.error(error.response?.data?.detail || error.message))
       .finally(() => setLoading(false));
   };
 
