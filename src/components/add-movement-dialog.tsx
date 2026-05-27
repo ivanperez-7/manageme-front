@@ -203,6 +203,7 @@ function MovementForm({
     tipo === 'salida' ? values.detalle_salida?.cliente_id : undefined
   );
 
+  // Para checar que los productos escaneados tengan equipos asociados al cliente seleccionado
   useEffect(() => {
     if (!clienteId) return;
     const ids = items.map((item) => item.producto_id);
@@ -240,6 +241,7 @@ function MovementForm({
     loadInitialProducts();
   }, [initialData]);
 
+  // Para enfocar el input de escaneo al abrir el formulario
   useEffect(() => {
     scan.scanInputRef.current?.focus();
   }, []);

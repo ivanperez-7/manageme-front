@@ -8,6 +8,7 @@ import {
   ArrowUpFromDot,
   CheckCircle,
   Edit,
+  Info,
   Loader2,
   PackageOpen,
   Trash,
@@ -251,7 +252,19 @@ const ProductInfoCard = ({ producto }: { producto: ProductoResponse }) => (
             <p>{plural('unidad', producto.cantidad_disponible)}</p>
           </div>
           <div>
-            <p className='text-sm text-muted-foreground'>Vida útil</p>
+            <p className='text-sm text-muted-foreground'>
+              Vida útil
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className='inline-flex ml-1 cursor-help align-middle'>
+                    <Info className='h-3 w-3 text-muted-foreground/70' />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side='right' className='max-w-56 text-xs'>
+                  Unidades en promedio que rinde este producto antes de necesitar ser reemplazado.
+                </TooltipContent>
+              </Tooltip>
+            </p>
             <p>{plural('unidad', producto.vida_util)}</p>
           </div>
           <div>
