@@ -146,12 +146,14 @@ const lotesColumns: ColumnDef<LoteResponse>[] = [
   },
 ];
 
-type MovimientoSearch = { fechaInicio?: string; fechaFin?: string };
+type MovimientoSearch = { fechaInicio?: string; fechaFin?: string; lotesPage?: number; movPage?: number };
 
 export const Route = createFileRoute('/_app/catalogo/$id')({
-  validateSearch: ({ fechaInicio, fechaFin }): MovimientoSearch => ({
+  validateSearch: ({ fechaInicio, fechaFin, lotesPage, movPage }): MovimientoSearch => ({
     fechaInicio: (fechaInicio as string) || undefined,
     fechaFin: (fechaFin as string) || undefined,
+    lotesPage: lotesPage != null ? Number(lotesPage) : undefined,
+    movPage: movPage != null ? Number(movPage) : undefined,
   }),
   loader: async ({ params }) => await fetchProductoById(params.id),
   component: ProductDetailPage,
@@ -325,6 +327,8 @@ const ProductProviderCard = ({ proveedor }: { proveedor?: ProveedorResponse }) =
 
 const ProductBatchesCard = ({ lotes }: { lotes: LoteResponse[] }) => {
   const [showEmpty, setShowEmpty] = useState(false);
+  const { lotesPage } = Route.useSearch();
+  const navigate = Route.useNavigate();
 
   const filteredLotes = useMemo(
     () => (showEmpty ? lotes : lotes.filter((lote) => lote.cantidad_restante > 0)),
@@ -345,6 +349,14 @@ const ProductBatchesCard = ({ lotes }: { lotes: LoteResponse[] }) => {
           data={filteredLotes}
           columns={lotesColumns}
           transparent
+          initialPage={lotesPage ?? 0}
+          onChangePage={(pageIndex) =>
+            navigate({
+              search: (prev) => ({ ...prev, lotesPage: pageIndex }),
+              replace: true,
+              resetScroll: false,
+            })
+          }
           emptyComponent={
             <Empty className='my-0 py-0'>
               <EmptyHeader>
@@ -363,8 +375,8 @@ const ProductBatchesCard = ({ lotes }: { lotes: LoteResponse[] }) => {
 };
 
 const ProductMovementsCard = () => {
-  const { producto, lotes } = Route.useLoaderData();
-  const { fechaInicio, fechaFin } = Route.useSearch();
+  const { producto } = Route.useLoaderData();
+  const { fechaInicio, fechaFin, movPage } = Route.useSearch();
   const navigate = Route.useNavigate();
 
   const [movimientos, setMovimientos] = useState<MovimientoResponse[]>([]);
@@ -390,7 +402,7 @@ const ProductMovementsCard = () => {
     return () => {
       ignore = true;
     };
-  }, [fechaInicio, fechaFin, producto.id, lotes]);
+  }, [fechaInicio, fechaFin, producto.id]);
 
   return (
     <Card className='mb-6'>
@@ -446,6 +458,14 @@ const ProductMovementsCard = () => {
             )}
             columns={movementsColumns}
             transparent
+            initialPage={movPage ?? 0}
+            onChangePage={(pageIndex) =>
+              navigate({
+                search: (prev) => ({ ...prev, movPage: pageIndex }),
+                replace: true,
+                resetScroll: false,
+              })
+            }
             emptyComponent={
               <Empty className='my-0 py-0'>
                 <EmptyHeader>

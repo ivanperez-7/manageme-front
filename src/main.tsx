@@ -17,7 +17,14 @@ const catalogsDetailMask = createRouteMask({
   routeTree,
   from: '/catalogo/$id',
   to: '/catalogo/$id',
-  search: { fechaInicio: undefined, fechaFin: undefined },
+  search: { fechaInicio: undefined, fechaFin: undefined, lotesPage: undefined, movPage: undefined },
+});
+
+const clientDetailMask = createRouteMask({
+  routeTree,
+  from: '/clients/$id',
+  to: '/clients/$id',
+  search: { fechaInicio: undefined, fechaFin: undefined, movPage: undefined },
 });
 
 const movimientosMask = createRouteMask({
@@ -25,6 +32,20 @@ const movimientosMask = createRouteMask({
   from: '/movements',
   to: '/movements',
   search: { fechaInicio: undefined, fechaFin: undefined, page: undefined },
+});
+
+const movimientosDetailMask = createRouteMask({
+  routeTree,
+  from: '/movements/$id',
+  to: '/movements/$id',
+  search: { itemsPage: undefined },
+});
+
+const clientsMask = createRouteMask({
+  routeTree,
+  from: '/clients',
+  to: '/clients',
+  search: { page: undefined },
 });
 
 // Create a new router instance
@@ -35,7 +56,7 @@ const router = createRouter({
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
-  routeMasks: [catalogsMask, movimientosMask, catalogsDetailMask],
+  routeMasks: [catalogsMask, movimientosMask, catalogsDetailMask, clientDetailMask, movimientosDetailMask, clientsMask],
 });
 
 // Register the router instance for type safety

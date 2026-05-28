@@ -48,7 +48,12 @@ const itemsColumns: ColumnDef<MovimientoItemResponse>[] = [
   },
 ];
 
+type Search = { itemsPage?: number };
+
 export const Route = createFileRoute('/_app/movements/$id')({
+  validateSearch: ({ itemsPage }): Search => ({
+    itemsPage: itemsPage != null ? Number(itemsPage) : undefined,
+  }),
   loader: async ({ params }) => await fetchMovimientoById(params.id),
   component: MovementDetailPage,
   pendingComponent: MovementDetailSkeleton,
@@ -60,8 +65,10 @@ function MovementDetailPage() {
   const [isApproving, setIsApproving] = useState(false);
 
   const movimiento = Route.useLoaderData();
+  const { itemsPage } = Route.useSearch();
   const { setContent } = useHeader();
   const router = useRouter();
+  const navigate = Route.useNavigate();
 
   const detalleEntrada = movimiento.detalle_entrada;
   const detalleSalida = movimiento.detalle_salida;
@@ -250,6 +257,14 @@ function MovementDetailPage() {
             data={movimiento.items}
             columns={itemsColumns}
             transparent
+            initialPage={itemsPage ?? 0}
+            onChangePage={(pageIndex) =>
+              navigate({
+                search: (prev) => ({ ...prev, itemsPage: pageIndex }),
+                replace: true,
+                resetScroll: false,
+              })
+            }
             emptyComponent={
               <Empty className='my-0 py-0'>
                 <EmptyHeader>

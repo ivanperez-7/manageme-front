@@ -84,12 +84,13 @@ const movementsColumns: ColumnDef<MovimientoResponse>[] = [
   },
 ];
 
-type MovimientoSearch = { fechaInicio?: string; fechaFin?: string };
+type MovimientoSearch = { fechaInicio?: string; fechaFin?: string; movPage?: number };
 
 export const Route = createFileRoute('/_app/clients/$id')({
-  validateSearch: ({ fechaInicio, fechaFin }): MovimientoSearch => ({
+  validateSearch: ({ fechaInicio, fechaFin, movPage }): MovimientoSearch => ({
     fechaInicio: (fechaInicio as string) || undefined,
     fechaFin: (fechaFin as string) || undefined,
+    movPage: movPage != null ? Number(movPage) : undefined,
   }),
   loader: ({ params }) => fetchClientById(params.id),
   component: ClienteDetailPage,
@@ -172,7 +173,7 @@ function ClienteDetailPage() {
 
 const ClientMovementsCard = () => {
   const { cliente, equiposCliente } = Route.useLoaderData();
-  const { fechaInicio, fechaFin } = Route.useSearch();
+  const { fechaInicio, fechaFin, movPage } = Route.useSearch();
   const navigate = Route.useNavigate();
 
   const [movimientos, setMovimientos] = useState<MovimientoResponse[]>([]);
@@ -236,6 +237,14 @@ const ClientMovementsCard = () => {
             data={movimientos}
             columns={movementsColumns}
             transparent
+            initialPage={movPage ?? 0}
+            onChangePage={(pageIndex) =>
+              navigate({
+                search: (prev) => ({ ...prev, movPage: pageIndex }),
+                replace: true,
+                resetScroll: false,
+              })
+            }
             emptyComponent={
               <Empty className='my-0 py-0'>
                 <EmptyHeader>

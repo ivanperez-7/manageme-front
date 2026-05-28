@@ -53,13 +53,20 @@ const clientesColumns: ColumnDef<ClienteResponse>[] = [
   },
 ];
 
+type ClientsSearch = { page?: number };
+
 export const Route = createFileRoute('/_app/clients/')({
+  validateSearch: ({ page }): ClientsSearch => ({
+    page: page != null ? Number(page) : undefined,
+  }),
   component: ClientesPage,
 });
 
 function ClientesPage() {
   const { clientes, reloadCatalogs } = useCatalogs();
+  const { page } = Route.useSearch();
   const { setContent } = useHeader();
+  const navigate = Route.useNavigate();
 
   useEffect(() => {
     setContent(
@@ -84,6 +91,10 @@ function ClientesPage() {
       <DataTable
         data={clientes}
         columns={clientesColumns}
+        initialPage={page ?? 0}
+        onChangePage={(pageIndex) =>
+          navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true, resetScroll: false })
+        }
         emptyComponent={
           <Empty className='my-0 py-0'>
             <EmptyHeader>

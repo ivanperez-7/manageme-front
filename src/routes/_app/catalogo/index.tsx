@@ -279,7 +279,7 @@ function ProductListPage() {
         emptyComponent={emptyComponent}
         initialPage={page ?? 0}
         onChangePage={(pageIndex) =>
-          navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true })
+          navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true, resetScroll: false })
         }
       />
 
