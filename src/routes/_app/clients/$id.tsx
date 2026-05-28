@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { AssignEquipoDialog } from '@/components/assign-equipo-dialog';
 import { DataTable } from '@/components/data-table';
 import { DateRangePicker } from '@/components/date-range-pickers';
+import { EquipoProductosDialog } from '@/components/equipo-productos-dialog';
 import { ClientDetailSkeleton } from '@/components/route-skeletons';
 import { useHeader } from '@/components/site-header';
 import {
@@ -37,12 +38,17 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Separator } from '@/components/ui/separator';
 import UserTag from '@/components/user-tag';
 
-import { fetchClientById } from '@/api/catalogo';
 import { ENDPOINTS } from '@/api/endpoints';
 import { fetchMovimientos } from '@/api/movimientos';
+import { fetchClientById } from '@/api/organizacion';
 import { useAppForm } from '@/hooks/use-app-form';
 import { withAuth } from '@/lib/auth';
-import { type ClienteResponse, type EquipoClienteResponse, type MovimientoResponse } from '@/lib/types';
+import {
+  type ClienteResponse,
+  type EquipoClienteResponse,
+  type EquipoResponse,
+  type MovimientoResponse,
+} from '@/lib/types';
 import { humanDate, humanTime } from '@/lib/utils';
 
 const movementsColumns: ColumnDef<MovimientoResponse>[] = [
@@ -342,6 +348,8 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [incremento, setIncremento] = useState(0);
 
+  const [modalOpen, setModalOpen] = useState(false);
+
   const handleUpdateContador = () =>
     toast.promise(
       withAuth
@@ -379,9 +387,12 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
           </div>
           <div className='min-w-0'>
             <p className='text-sm font-medium truncate'>{equipo.alias}</p>
-            <Link to='/equipos' className='text-xs text-muted-foreground truncate hover:underline'>
+            <span
+              className='text-xs text-muted-foreground truncate hover:underline cursor-pointer'
+              onClick={() => setModalOpen(true)}
+            >
               {equipo.equipo_nombre}
-            </Link>
+            </span>
           </div>
         </div>
 
@@ -445,6 +456,12 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
           </div>
         </PopoverContent>
       </Popover>
+
+      <EquipoProductosDialog
+        equipo={{ id: equipo.equipo_id, nombre: equipo.equipo_nombre } as EquipoResponse}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
     </div>
   );
 }

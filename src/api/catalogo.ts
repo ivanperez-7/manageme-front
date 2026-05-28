@@ -77,21 +77,3 @@ export const fetchCatalogs = async () => {
 
   return { categorias, marcas, equipos, proveedores, users, clientes };
 };
-
-export const fetchClientById = async (id: string | number) => {
-  const cliente = await withAuth
-    .get(ENDPOINTS.clientes.detail(id))
-    .then((res) => res.data as Types.ClienteResponse)
-    .catch(() => {
-      throw redirect({ to: '/clients' });
-    });
-
-  const equiposCliente = await withAuth
-    .get(ENDPOINTS.clientes.detail(id) + 'equipos/')
-    .then((res) => res.data as Types.EquipoClienteResponse[])
-    .catch((error) => {
-      throw new Error(error.message);
-    });
-
-  return { cliente, equiposCliente };
-};
