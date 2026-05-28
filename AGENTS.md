@@ -43,6 +43,10 @@ axios, zod v4, date-fns (es locale), framer-motion, recharts, sonner.
   with pagination so nav-back restores the page without a refetch.
 - **Route codegen** runs automatically during `vite` dev/build. If a new
   route isn't recognized, restart the dev server.
+- **Route masking**: Search params can be hidden from the browser's URL via
+  masking on `src\main.tsx`, where multiple createRouteMask functions can be
+  seen being created and configured in router.routeMasks. These have to perfectly
+  match the target route's search params. This is all TanStack Router functionalities.
 
 ## Forms
 
