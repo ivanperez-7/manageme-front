@@ -15,19 +15,20 @@ export const getSucursales = async () =>
     });
 
 export const fetchClientById = async (id: string | number) => {
-  const cliente = await withAuth
-    .get(ENDPOINTS.clientes.detail(id))
-    .then((res) => res.data as Types.ClienteResponse)
-    .catch(() => {
-      throw redirect({ to: '/clients' });
-    });
-
-  const equiposCliente = await withAuth
-    .get(ENDPOINTS.clientes.detail(id) + 'equipos/')
-    .then((res) => res.data as Types.EquipoClienteResponse[])
-    .catch((error) => {
-      throw new Error(error.message);
-    });
+  const [cliente, equiposCliente] = await Promise.all([
+    withAuth
+      .get(ENDPOINTS.clientes.detail(id))
+      .then((res) => res.data as Types.ClienteResponse)
+      .catch(() => {
+        throw redirect({ to: '/clients' });
+      }),
+    withAuth
+      .get(ENDPOINTS.clientes.detail(id) + 'equipos/')
+      .then((res) => res.data as Types.EquipoClienteResponse[])
+      .catch((error) => {
+        throw new Error(error.message);
+      }),
+  ]);
 
   return { cliente, equiposCliente };
 };

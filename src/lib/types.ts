@@ -211,6 +211,7 @@ export type EquipoClienteResponse = {
   cliente_nombre: string;
   equipo_id: number;
   equipo_nombre: string;
+  marca_nombre: string;
   alias: string;
   contador_uso: number;
 };

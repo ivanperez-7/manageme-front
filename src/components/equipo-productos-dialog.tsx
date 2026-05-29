@@ -6,14 +6,7 @@ import { useEffect, useState } from 'react';
 import { DataTable } from './data-table';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from './ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from './ui/empty';
 import { ScrollArea } from './ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
@@ -132,8 +125,10 @@ export function EquipoProductosDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-h-[80vh] flex-col md:max-w-4xl lg:max-w-6xl'>
         <DialogHeader>
-          <DialogTitle>Equipo: {equipo.nombre}</DialogTitle>
-          <DialogDescription>Productos compatibles, clientes que lo usan y estadísticas.</DialogDescription>
+          <DialogTitle>
+            {equipo.nombre}{' '}
+            <span className='text-muted-foreground ml-2 text-sm'>{equipo.marca.nombre}</span>
+          </DialogTitle>
         </DialogHeader>
 
         {statsLoading ? (

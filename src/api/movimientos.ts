@@ -24,21 +24,22 @@ export const fetchMovimientos = async ({
   if (productoId) params.items__producto = productoId;
   if (clienteId) params.detalle_salida__cliente = clienteId;
 
-  const movimientos = await withAuth
-    .get(ENDPOINTS.movimientos.list, { params })
-    .then((res) => res.data as MovimientoResponse[])
-    .catch((error) => {
-      toast.error(error.message);
-      return [];
-    });
-
-  const oldestDate = await withAuth
-    .get(ENDPOINTS.movimientos.list + 'get_oldest/', { params })
-    .then((res) => res.data as string)
-    .catch((error) => {
-      toast.error(error.message);
-      return '';
-    });
+  const [movimientos, oldestDate] = await Promise.all([
+    withAuth
+      .get(ENDPOINTS.movimientos.list, { params })
+      .then((res) => res.data as MovimientoResponse[])
+      .catch((error) => {
+        toast.error(error.message);
+        return [];
+      }),
+    withAuth
+      .get(ENDPOINTS.movimientos.list + 'get_oldest/', { params })
+      .then((res) => res.data as string)
+      .catch((error) => {
+        toast.error(error.message);
+        return '';
+      }),
+  ]);
 
   return { movimientos, oldestDate };
 };

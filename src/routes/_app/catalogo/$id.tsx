@@ -408,20 +408,18 @@ const ProductMovementsCard = () => {
     <Card className='mb-6'>
       <CardHeader className='grid items-center md:flex md:justify-between'>
         <CardTitle className='text-lg'>Movimientos</CardTitle>
-        <div className='grid md:flex gap-3'>
-          <AddMovementDialog
-            trigger={
-              <Button size='sm'>
-                <ArrowDownToDot />
-                Registrar entrada
-              </Button>
-            }
-            initialData={{
-              tipo: 'entrada',
-              items: [{ producto_id: producto.id, cantidad: 0 }],
-            }}
-          />
-        </div>
+        <AddMovementDialog
+          trigger={
+            <Button size='sm'>
+              <ArrowDownToDot />
+              Registrar entrada
+            </Button>
+          }
+          initialData={{
+            tipo: 'entrada',
+            items: [{ producto_id: producto.id, cantidad: 0 }],
+          }}
+        />
       </CardHeader>
       <CardContent>
         <DateRangePicker

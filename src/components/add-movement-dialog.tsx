@@ -151,13 +151,14 @@ function MovementForm({
   const router = useRouter();
 
   const currentUserId = userStore.state.id;
+  const initialTipo = initialData?.tipo ?? 'entrada';
 
   const form = useAppForm({
     defaultValues: {
-      tipo: initialData?.tipo ?? 'entrada',
+      tipo: initialTipo,
       items: initialData?.items ?? [],
-      detalle_entrada:
-        (initialData?.tipo ?? 'entrada') === 'entrada' ? { recibido_por_id: currentUserId } : null,
+      detalle_entrada: initialTipo === 'entrada' ? { recibido_por_id: currentUserId } : null,
+      detalle_salida: initialTipo === 'salida' ? initialData?.detalle_salida : null,
       comentarios: '',
     } as z.input<typeof movimientoCreateSchema>,
     validators: { onSubmit: movimientoCreateSchema },
@@ -419,7 +420,7 @@ function MovementForm({
           </form.AppField>
           <Field>
             <FieldLabel>Recibido por</FieldLabel>
-            <span className='text-sm text-muted-foreground'>{userStore.state?.full_name || '—'}</span>
+            <Input value={userStore.state?.full_name || '—'} readOnly />
           </Field>
         </FieldGroup>
       </FieldSet>
