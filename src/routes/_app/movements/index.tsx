@@ -2,15 +2,13 @@ import { createFileRoute, ErrorComponent, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { CheckCircle, EllipsisVertical, Plus, Search } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { AddMovementDialog } from '@/components/add-movement-dialog';
 import { DataTable } from '@/components/data-table';
 import { DateRangePicker } from '@/components/date-range-pickers';
 import { MovementsSkeleton } from '@/components/route-skeletons';
-import { useHeader } from '@/components/site-header';
 import TipoMovimientoBadge from '@/components/tipo-movimiento-badge';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -31,6 +29,7 @@ import { humanDate, humanTime } from '@/lib/utils';
 type MovimientoSearch = { fechaInicio?: string; fechaFin?: string; page?: number };
 
 export const Route = createFileRoute('/_app/movements/')({
+  staticData: { headerBreadcrumb: [{ label: 'Movimientos' }] },
   validateSearch: ({ fechaInicio, fechaFin, page }): MovimientoSearch => ({
     fechaInicio: (fechaInicio as string) || undefined,
     fechaFin: (fechaFin as string) || undefined,
@@ -127,7 +126,6 @@ const columns: ColumnDef<MovimientoResponse>[] = [
 function MovementsListPage() {
   const { movimientos, oldestDate } = Route.useLoaderData();
   const { fechaInicio, fechaFin, page } = Route.useSearch();
-  const { setContent } = useHeader();
   const navigate = Route.useNavigate();
 
   const [search, setSearch] = useState('');
@@ -142,19 +140,6 @@ function MovementsListPage() {
       return true;
     });
   }, [movimientos, search, filterEntrada, filterSalida]);
-
-  useEffect(() => {
-    setContent(
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbPage>Movimientos</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-    return () => setContent(null);
-  }, []);
 
   return (
     <div className='space-y-4'>

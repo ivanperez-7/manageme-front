@@ -3,8 +3,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, Bot, ChevronDown, ChevronUp, Send, User } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import { useHeader } from '@/components/site-header';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -20,6 +18,7 @@ interface Message {
 }
 
 export const Route = createFileRoute('/_app/chatbot')({
+  staticData: { headerBreadcrumb: [{ label: 'Chatbot' }] },
   component: ChatbotPage,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
@@ -41,7 +40,6 @@ function ChatbotPage() {
   const [loading, setLoading] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { setContent } = useHeader();
 
   const sendMessage = async (text?: string) => {
     const msg = text ?? input.trim();
@@ -80,19 +78,6 @@ function ChatbotPage() {
       sendMessage();
     }
   };
-
-  useEffect(() => {
-    setContent(
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbPage>Chatbot</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-    return () => setContent(null);
-  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });

@@ -9,8 +9,7 @@ import { AddProductDialog } from '@/components/add-product-dialog';
 import { DataTable } from '@/components/data-table';
 import { DeleteProductDialog } from '@/components/delete-product-dialog';
 import { CatalogoSkeleton } from '@/components/route-skeletons';
-import { useHeader } from '@/components/site-header';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
+
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -107,6 +106,7 @@ const columns: ColumnDef<ProductoResponse>[] = [
 type CatalogoSearch = { text?: string; categoria?: number; marca?: number; equipo?: number; page?: number };
 
 export const Route = createFileRoute('/_app/catalogo/')({
+  staticData: { headerBreadcrumb: [{ label: 'Productos' }] },
   validateSearch: (search): CatalogoSearch => ({
     text: search.text as string,
     categoria: Number(search.categoria) || undefined,
@@ -128,7 +128,6 @@ function ProductListPage() {
   const navigate = Route.useNavigate();
 
   const { categorias, marcas, equipos } = useCatalogs();
-  const { setContent } = useHeader();
 
   const [_localText, setLocalText] = useState(text);
   const [localText] = useDebounce(_localText, 800);
@@ -170,19 +169,6 @@ function ProductListPage() {
       </EmptyHeader>
     </Empty>
   );
-
-  useEffect(() => {
-    setContent(
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbPage>Productos</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-    return () => setContent(null);
-  }, []);
 
   useEffect(() => {
     navigate({ search: (prev) => ({ ...prev, text: localText }), replace: true });

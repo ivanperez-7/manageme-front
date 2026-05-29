@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import type { VariableSistemaResponse } from '@/lib/types';
 
 export const Route = createFileRoute('/_app/settings')({
+  staticData: { headerBreadcrumb: [{ label: 'Configuración' }] },
   loader: fetchAllSysvars,
   component: SettingsPage,
   pendingComponent: SettingsSkeleton,

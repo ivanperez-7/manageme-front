@@ -1,6 +1,7 @@
 import { createFileRoute, ErrorComponent } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_app/suppliers')({
+  staticData: { headerBreadcrumb: [{ label: 'Proveedores' }] },
   component: SuppliersPage,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });

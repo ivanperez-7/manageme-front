@@ -2,21 +2,12 @@ import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/reac
 import type { ColumnDef } from '@tanstack/react-table';
 import { formatDate } from 'date-fns';
 import { ArrowLeft, CheckCircle, PackageOpen, XCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { DataTable } from '@/components/data-table';
 import { MovementDetailSkeleton } from '@/components/route-skeletons';
-import { useHeader } from '@/components/site-header';
 import TipoMovimientoBadge from '@/components/tipo-movimiento-badge';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
@@ -26,6 +17,8 @@ import UserTag from '@/components/user-tag';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { fetchMovimientoById } from '@/api/movimientos';
+
+type MovimientoLoaderData = Awaited<ReturnType<typeof fetchMovimientoById>>;
 import { withAuth } from '@/lib/auth';
 import type { MovimientoItemResponse } from '@/lib/types';
 import { firstUpperCase, humanDate, humanTime } from '@/lib/utils';
@@ -51,6 +44,17 @@ const itemsColumns: ColumnDef<MovimientoItemResponse>[] = [
 type Search = { itemsPage?: number };
 
 export const Route = createFileRoute('/_app/movements/$id')({
+  staticData: {
+    headerBreadcrumb: (match) => {
+      const data = match.loaderData as MovimientoLoaderData | undefined;
+      return [
+        { label: 'Movimientos', to: '/movements' },
+        {
+          label: data ? `${data.tipo === 'entrada' ? 'Entrada' : 'Salida'} #${data.id}` : '...',
+        },
+      ];
+    },
+  },
   validateSearch: ({ itemsPage }): Search => ({
     itemsPage: itemsPage != null ? Number(itemsPage) : undefined,
   }),
@@ -66,7 +70,6 @@ function MovementDetailPage() {
 
   const movimiento = Route.useLoaderData();
   const { itemsPage } = Route.useSearch();
-  const { setContent } = useHeader();
   const router = useRouter();
   const navigate = Route.useNavigate();
 
@@ -90,28 +93,6 @@ function MovementDetailPage() {
       )
       .finally(() => setIsApproving(false));
   };
-
-  useEffect(() => {
-    setContent(
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to='/movements'>Movimientos</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>
-              {movimiento.tipo === 'entrada' ? 'Entrada #' : 'Salida #'}
-              {movimiento.id}
-            </BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-    return () => setContent(null);
-  }, []);
 
   return (
     <>

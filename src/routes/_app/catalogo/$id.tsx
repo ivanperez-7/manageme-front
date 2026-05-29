@@ -23,17 +23,8 @@ import { DateRangePicker } from '@/components/date-range-pickers';
 import { DeleteProductDialog } from '@/components/delete-product-dialog';
 import { RemainingProgress } from '@/components/remaining-progress';
 import { ProductDetailSkeleton } from '@/components/route-skeletons';
-import { useHeader } from '@/components/site-header';
 import TipoMovimientoBadge from '@/components/tipo-movimiento-badge';
 import { Badge } from '@/components/ui/badge';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -46,6 +37,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { fetchProductoById } from '@/api/catalogo';
 import { fetchMovimientos } from '@/api/movimientos';
 import type { LoteResponse, MovimientoResponse, ProductoResponse, ProveedorResponse } from '@/lib/types';
+
+type CatalogoLoaderData = Awaited<ReturnType<typeof fetchProductoById>>;
 import { cn, humanDate, humanTime, plural } from '@/lib/utils';
 
 const movementsColumns: ColumnDef<MovimientoResponse & { cantidad: number }>[] = [
@@ -149,6 +142,15 @@ const lotesColumns: ColumnDef<LoteResponse>[] = [
 type MovimientoSearch = { fechaInicio?: string; fechaFin?: string; lotesPage?: number; movPage?: number };
 
 export const Route = createFileRoute('/_app/catalogo/$id')({
+  staticData: {
+    headerBreadcrumb: (match) => {
+      const data = match.loaderData as CatalogoLoaderData | undefined;
+      return [
+        { label: 'Productos', to: '/catalogo' },
+        { label: data?.producto?.codigo_interno ?? '...' },
+      ];
+    },
+  },
   validateSearch: ({ fechaInicio, fechaFin, lotesPage, movPage }): MovimientoSearch => ({
     fechaInicio: (fechaInicio as string) || undefined,
     fechaFin: (fechaFin as string) || undefined,
@@ -164,27 +166,7 @@ export const Route = createFileRoute('/_app/catalogo/$id')({
 
 function ProductDetailPage() {
   const { producto, lotes } = Route.useLoaderData();
-  const { setContent } = useHeader();
   const router = useRouter();
-
-  useEffect(() => {
-    setContent(
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to='/catalogo'>Productos</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{producto.codigo_interno}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-    return () => setContent(null);
-  }, []);
 
   return (
     <>

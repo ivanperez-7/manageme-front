@@ -2,7 +2,6 @@ import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/reac
 import type { ColumnDef } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
 import { Layers, Package2, Truck, Users } from 'lucide-react';
-import { useEffect } from 'react';
 import {
   Bar,
   BarChart,
@@ -19,8 +18,6 @@ import {
 import { DataTable } from '@/components/data-table';
 import { DeficitProgress } from '@/components/deficit-progress';
 import { DashboardSkeleton } from '@/components/route-skeletons';
-import { useHeader } from '@/components/site-header';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { getDashboardData } from '@/api/dashboard';
@@ -46,6 +43,7 @@ const lowStockColumns: ColumnDef<DashboardData['productosBajos'][0]>[] = [
 ];
 
 export const Route = createFileRoute('/_app/dashboard')({
+  staticData: { headerBreadcrumb: [{ label: 'Dashboard' }] },
   loader: getDashboardData,
   component: DashboardPage,
   pendingComponent: DashboardSkeleton,
@@ -56,21 +54,7 @@ export const Route = createFileRoute('/_app/dashboard')({
 function DashboardPage() {
   const { stats, categoriasChart, movimientosChart, productosBajos, topProductosChart } =
     Route.useLoaderData();
-  const { setContent } = useHeader();
   const router = useRouter();
-
-  useEffect(() => {
-    setContent(
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbPage>Dashboard</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-    return () => setContent(null);
-  }, []);
 
   return (
     <div className='space-y-4'>

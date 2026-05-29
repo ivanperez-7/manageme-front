@@ -12,15 +12,7 @@ import { DataTable } from '@/components/data-table';
 import { DateRangePicker } from '@/components/date-range-pickers';
 import { EquipoProductosDialog } from '@/components/equipo-productos-dialog';
 import { ClientDetailSkeleton } from '@/components/route-skeletons';
-import { useHeader } from '@/components/site-header';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -42,6 +34,8 @@ import UserTag from '@/components/user-tag';
 import { ENDPOINTS } from '@/api/endpoints';
 import { fetchMovimientos } from '@/api/movimientos';
 import { fetchClientById } from '@/api/organizacion';
+
+type ClienteLoaderData = Awaited<ReturnType<typeof fetchClientById>>;
 import { useAppForm } from '@/hooks/use-app-form';
 import { withAuth } from '@/lib/auth';
 import {
@@ -94,6 +88,12 @@ const movementsColumns: ColumnDef<MovimientoResponse>[] = [
 type MovimientoSearch = { fechaInicio?: string; fechaFin?: string; movPage?: number };
 
 export const Route = createFileRoute('/_app/clients/$id')({
+  staticData: {
+    headerBreadcrumb: (match) => {
+      const data = match.loaderData as ClienteLoaderData | undefined;
+      return [{ label: 'Clientes', to: '/clients' }, { label: data?.cliente?.nombre ?? '...' }];
+    },
+  },
   validateSearch: ({ fechaInicio, fechaFin, movPage }): MovimientoSearch => ({
     fechaInicio: (fechaInicio as string) || undefined,
     fechaFin: (fechaFin as string) || undefined,
@@ -108,27 +108,6 @@ export const Route = createFileRoute('/_app/clients/$id')({
 function ClienteDetailPage() {
   const { cliente, equiposCliente } = Route.useLoaderData();
   const router = useRouter();
-
-  const { setContent } = useHeader();
-
-  useEffect(() => {
-    setContent(
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to='/clients'>Clientes</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{cliente.nombre}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-    return () => setContent(null);
-  }, []);
 
   return (
     <div className='space-y-4'>

@@ -1,11 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { EllipsisVertical, PackageOpen, Plus } from 'lucide-react';
-import { useEffect } from 'react';
-
 import { DataTable } from '@/components/data-table';
-import { useHeader } from '@/components/site-header';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -56,6 +52,7 @@ const clientesColumns: ColumnDef<ClienteResponse>[] = [
 type ClientsSearch = { page?: number };
 
 export const Route = createFileRoute('/_app/clients/')({
+  staticData: { headerBreadcrumb: [{ label: 'Clientes' }] },
   validateSearch: ({ page }): ClientsSearch => ({
     page: page != null ? Number(page) : undefined,
   }),
@@ -65,21 +62,7 @@ export const Route = createFileRoute('/_app/clients/')({
 function ClientesPage() {
   const { clientes, reloadCatalogs } = useCatalogs();
   const { page } = Route.useSearch();
-  const { setContent } = useHeader();
   const navigate = Route.useNavigate();
-
-  useEffect(() => {
-    setContent(
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbPage>Clientes</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-    return () => setContent(null);
-  }, []);
 
   return (
     <div className='space-y-4'>

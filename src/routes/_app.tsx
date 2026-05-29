@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { AppSidebar } from '@/components/app-sidebar';
-import { HeaderProvider, SiteHeader } from '@/components/site-header';
+import { SiteHeader } from '@/components/site-header';
 import { useTheme } from '@/components/theme-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
@@ -44,22 +44,20 @@ function AppLayout() {
         <AppSidebar onLogout={onLogout} loadingLogout={loadingLogout} />
         <SidebarInset>
           <Toaster position='top-right' richColors theme={theme} />
-          <HeaderProvider>
-            <SiteHeader />
-            <div className='p-4 md:pt-7 md:px-11'>
-              <AnimatePresence mode='wait'>
-                <motion.div
-                  key={router.state.location.pathname}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.2, ease: 'easeOut' }}
-                >
-                  <Outlet />
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </HeaderProvider>
+          <SiteHeader />
+          <div className='p-4 md:pt-7 md:px-11'>
+            <AnimatePresence mode='wait'>
+              <motion.div
+                key={router.state.location.pathname}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+              >
+                <Outlet />
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </SidebarInset>
       </CatalogsProvider>
     </SidebarProvider>

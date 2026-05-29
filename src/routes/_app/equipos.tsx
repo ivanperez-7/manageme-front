@@ -38,6 +38,7 @@ import { withAuth } from '@/lib/auth';
 import type { EquipoResponse, MarcaResponse } from '@/lib/types';
 
 export const Route = createFileRoute('/_app/equipos')({
+  staticData: { headerBreadcrumb: [{ label: 'Equipos' }] },
   component: EquiposPage,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
