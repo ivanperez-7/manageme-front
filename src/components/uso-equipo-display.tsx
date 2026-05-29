@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import React from 'react';
+import { useEffect } from 'react';
 
 import { ClientWarning } from './client-warning';
 
@@ -15,6 +15,22 @@ export default function UsoEquipoDisplay({
   value: number | undefined;
   onChange: (value: number | undefined) => void;
 }) {
+  const onlyEquipo = matchingEquipos.length === 1 ? matchingEquipos[0] : null;
+
+  // Si hay exactamente un equipo coincidente, actualiza el valor al ID de ese equipo
+  useEffect(() => {
+    if (matchingEquipos.length === 1 && value !== matchingEquipos[0].id) {
+      onChange(matchingEquipos[0].id);
+    }
+  }, [matchingEquipos.length, onlyEquipo?.id, value, onChange]);
+
+  // Si no hay equipos coincidentes pero hay un valor seleccionado, limpia el valor
+  useEffect(() => {
+    if (matchingEquipos.length === 0 && value !== undefined) {
+      onChange(undefined);
+    }
+  }, [matchingEquipos.length, value, onChange]);
+
   let content: React.ReactNode;
 
   // MULTIPLE
@@ -44,10 +60,7 @@ export default function UsoEquipoDisplay({
         )}
       </motion.div>
     );
-  } else if (matchingEquipos.length === 1) {
-    const [onlyEquipo] = matchingEquipos;
-
-    if (value !== onlyEquipo.id) onChange(onlyEquipo.id);
+  } else if (onlyEquipo) {
     content = (
       <motion.div
         key='single'
@@ -62,7 +75,6 @@ export default function UsoEquipoDisplay({
       </motion.div>
     );
   } else {
-    if (value !== undefined) onChange(undefined);
     content = (
       <motion.div
         key='none'

@@ -19,8 +19,9 @@ export const { useAppForm, withForm } = createFormHook({
 export function InputField({
   label,
   readOnly,
+  numeric,
   ...props
-}: { label: string; readOnly?: boolean } & React.ComponentProps<'input'>) {
+}: { label: string; readOnly?: boolean; numeric?: boolean } & React.ComponentProps<'input'>) {
   const field = useFieldContext<string>();
   return (
     <Field className='space-y-1'>
@@ -30,8 +31,11 @@ export function InputField({
       ) : (
         <Input
           id={field.name}
-          value={field.state.value}
-          onChange={(e) => field.handleChange(e.target.value)}
+          value={field.state.value ?? ''}
+          onChange={(e) => {
+            const value = numeric ? e.target.value.replace(/\D/g, '') : e.target.value;
+            field.handleChange(value);
+          }}
           {...props}
         />
       )}

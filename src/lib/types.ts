@@ -111,7 +111,10 @@ export const movimientoItemCreateSchema = z.object({
 
 // ── DetalleEntrada (keep zod schema) ──
 export const detalleEntradaCreateSchema = z.object({
-  numero_factura: z.string().min(3, 'El número de factura es obligatorio'),
+  numero_factura: z
+    .string()
+    .min(3, 'El número de factura es obligatorio')
+    .regex(/^\d+$/, 'Solo se aceptan números'),
   recibido_por_id: z.number().gt(0, 'Seleccione un usuario válido'),
 });
 

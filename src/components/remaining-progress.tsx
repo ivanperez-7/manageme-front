@@ -5,7 +5,7 @@ export function RemainingProgress({ total, remaining }: { total: number; remaini
   const percentRemaining = total > 0 ? (safeRemaining / total) * 100 : 0;
 
   return (
-    <div className='space-y-2'>
+    <div className='space-y-2 mr-8'>
       <Progress value={percentRemaining} />
 
       <div className='text-sm text-muted-foreground'>

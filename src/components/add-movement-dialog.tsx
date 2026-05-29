@@ -157,7 +157,8 @@ function MovementForm({
     defaultValues: {
       tipo: initialTipo,
       items: initialData?.items ?? [],
-      detalle_entrada: initialTipo === 'entrada' ? { recibido_por_id: currentUserId } : null,
+      detalle_entrada:
+        initialTipo === 'entrada' ? { recibido_por_id: currentUserId, numero_factura: '' } : null,
       detalle_salida: initialTipo === 'salida' ? initialData?.detalle_salida : null,
       comentarios: '',
     } as z.input<typeof movimientoCreateSchema>,
@@ -335,7 +336,10 @@ function MovementForm({
                   const lote = lote_id ? cache.lotesMap[lote_id] : undefined;
 
                   const isLoading = cache.initialProductsLoading;
-                  const noMatching = !!clienteId && getMatchingEquipos(producto_id).length === 0;
+                  const noMatching =
+                    !!clienteId &&
+                    !clientEquipos.loadingClientEquipos &&
+                    getMatchingEquipos(producto_id).length === 0;
 
                   return (
                     <motion.tr
@@ -416,7 +420,7 @@ function MovementForm({
       <FieldSet>
         <FieldGroup className='grid grid-cols-3 gap-4'>
           <form.AppField name='detalle_entrada.numero_factura'>
-            {(field) => <field.InputField label='Número de factura' placeholder='XXX-00110011-RKO' />}
+            {(field) => <field.InputField label='Número de factura' placeholder='9284' numeric />}
           </form.AppField>
           <Field>
             <FieldLabel>Recibido por</FieldLabel>

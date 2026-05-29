@@ -2,7 +2,7 @@ import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/reac
 import type { ColumnDef } from '@tanstack/react-table';
 import { formatDate } from 'date-fns';
 import { ArrowLeft, CheckCircle, PackageOpen, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { DataTable } from '@/components/data-table';
@@ -17,31 +17,40 @@ import UserTag from '@/components/user-tag';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { fetchMovimientoById } from '@/api/movimientos';
-
-type MovimientoLoaderData = Awaited<ReturnType<typeof fetchMovimientoById>>;
 import { withAuth } from '@/lib/auth';
 import type { MovimientoItemResponse } from '@/lib/types';
 import { firstUpperCase, humanDate, humanTime } from '@/lib/utils';
 import { userStore } from '@/stores/userStore';
 
-const itemsColumns: ColumnDef<MovimientoItemResponse>[] = [
-  {
-    header: 'Producto',
-    cell: ({ row }) => (
-      <Link to='/catalogo/$id' params={{ id: String(row.original.producto.id) }} className='font-medium'>
-        {row.original.producto.codigo_interno}
-      </Link>
-    ),
-  },
-  { accessorKey: 'lote.codigo_lote', header: 'Código de lote' },
-  { accessorKey: 'producto.descripcion', header: 'Descripción' },
-  {
-    header: 'Cantidad',
-    cell: ({ row }) => row.original.cantidad.toLocaleString('es-MX'),
-  },
-];
+const useItemsColumns = (tipo: string): ColumnDef<MovimientoItemResponse>[] =>
+  useMemo(() => {
+    const cols: ColumnDef<MovimientoItemResponse>[] = [
+      {
+        header: 'Producto',
+        cell: ({ row }) => (
+          <Link
+            to='/catalogo/$id'
+            params={{ id: String(row.original.producto.id) }}
+            className='font-medium'
+          >
+            {row.original.producto.codigo_interno}
+          </Link>
+        ),
+      },
+      { accessorKey: 'producto.descripcion', header: 'Descripción' },
+      {
+        header: 'Cantidad',
+        cell: ({ row }) => row.original.cantidad.toLocaleString('es-MX'),
+      },
+    ];
+
+    if (tipo === 'salida') cols.splice(1, 0, { accessorKey: 'lote.codigo_lote', header: 'Código de lote' });
+
+    return cols;
+  }, [tipo]);
 
 type Search = { itemsPage?: number };
+type MovimientoLoaderData = Awaited<ReturnType<typeof fetchMovimientoById>>;
 
 export const Route = createFileRoute('/_app/movements/$id')({
   staticData: {
@@ -236,7 +245,7 @@ function MovementDetailPage() {
         <CardContent>
           <DataTable
             data={movimiento.items}
-            columns={itemsColumns}
+            columns={useItemsColumns(movimiento.tipo)}
             transparent
             initialPage={itemsPage ?? 0}
             onChangePage={(pageIndex) =>
