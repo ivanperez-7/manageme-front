@@ -2,7 +2,7 @@ import { useStore } from '@tanstack/react-form';
 import { useRouter } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowDownToDot, ArrowUpFromDot, Loader2, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -38,9 +38,7 @@ import UsoEquipoDisplay from './uso-equipo-display';
 import { ENDPOINTS } from '@/api/endpoints';
 import { useAppForm } from '@/hooks/use-app-form';
 import { useCatalogs } from '@/hooks/use-catalogs';
-import { useClientEquipos } from '@/hooks/use-client-equipos';
-import { useItemLookup } from '@/hooks/use-item-lookup';
-import { useMovementScan } from '@/hooks/use-movement-scan';
+import { useClientEquipos, useItemLookup, useMovementScan } from '@/hooks/use-movement-form-data';
 import { withAuth } from '@/lib/auth';
 import { movimientoCreateSchema, type MovimientoCreate, type MovimientoResponse } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -62,91 +60,10 @@ export function AddMovementDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
-  const formHasItemsRef = useRef(false); // para advertencia al cerrar si hay productos escaneados
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !open && useShortcut) {
-        e.preventDefault();
-        setOpen(true);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
-
-  return (
-    <>
-      <Dialog
-        open={open}
-        onOpenChange={(open) => {
-          if (!open && formHasItemsRef.current) setAlertOpen(true);
-          else setOpen(open);
-        }}
-      >
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
-        <DialogContent className='max-w-full md:max-w-4xl lg:max-w-5xl'>
-          <DialogHeader>
-            <DialogTitle>Registrar movimiento</DialogTitle>
-            <DialogDescription>Escanea productos para agregarlos al movimiento.</DialogDescription>
-          </DialogHeader>
-
-          <MovementForm
-            initialData={initialData}
-            onSuccess={() => {
-              formHasItemsRef.current = false;
-              setOpen(false);
-            }}
-            onItemsChange={(hasItems) => {
-              formHasItemsRef.current = hasItems;
-            }}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Descartar movimiento?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Los productos escaneados se perderán si cierras este formulario.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                formHasItemsRef.current = false;
-                setAlertOpen(false);
-                setOpen(false);
-              }}
-            >
-              Descartar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
-  );
-}
-
-function MovementForm({
-  initialData,
-  onSuccess,
-  onItemsChange,
-}: {
-  initialData?: Partial<MovimientoCreate>;
-  onSuccess: () => void;
-  onItemsChange?: (hasItems: boolean) => void;
-}) {
   const scan = useMovementScan();
   const clientEquipos = useClientEquipos();
-  const cache = useItemLookup(initialData);
-
+  const cache = useItemLookup(initialData, open);
   const { clientes } = useCatalogs();
   const router = useRouter();
 
@@ -182,7 +99,7 @@ function MovementForm({
           if (!initialData) form.reset();
           scan.setScanCode('');
           router.invalidate();
-          onSuccess();
+          setOpen(false);
         })
         .catch((error) => toast.error(error.response?.data?.non_field_errors?.[0] || error.message)),
   });
@@ -193,21 +110,33 @@ function MovementForm({
     tipo === 'salida' ? values.detalle_salida?.cliente_id : undefined
   );
 
-  // Para checar que los productos escaneados tengan equipos asociados al cliente seleccionado
+  useEffect(() => {
+    if (!useShortcut) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !open) {
+        e.preventDefault();
+        setOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [useShortcut, open]);
+
   useEffect(() => {
     if (!clienteId) return;
     const ids = items.map((item) => item.producto_id);
     if (ids.length > 0) clientEquipos.check(clienteId, ids);
-  }, [clienteId, items.length]);
+  }, [clienteId, items]);
 
   useEffect(() => {
-    onItemsChange?.(items.length > 0);
-  }, [items.length, onItemsChange]);
+    if (open) scan.scanInputRef.current?.focus();
+  }, [open]);
 
-  // Para enfocar el input de escaneo al abrir el formulario
-  useEffect(() => {
-    scan.scanInputRef.current?.focus();
-  }, []);
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && items.length > 0) setAlertOpen(true);
+    else setOpen(nextOpen);
+  };
 
   const handleScanSubmit = (e: React.FormEvent) => {
     scan.handleScanSubmit(e, tipo, {
@@ -241,13 +170,18 @@ function MovementForm({
     if (items.length > 0) toast.info('Productos eliminados al cambiar el tipo de movimiento');
   };
 
-  const getMatchingEquipos = (productoId: number) =>
-    clientEquipos.clientEquipos.filter(({ equipo_id }) =>
-      (cache.productosMap[productoId]?.equipos ?? []).some((eq) => eq.id === equipo_id)
-    );
+  const getMatchingEquipos = useCallback(
+    (productoId: number) =>
+      clientEquipos.clientEquipos.filter(({ equipo_id }) =>
+        (cache.productosMap[productoId]?.equipos ?? []).some((eq) => eq.id === equipo_id)
+      ),
+    [clientEquipos.clientEquipos, cache.productosMap]
+  );
 
-  const hasClientWarnings =
-    !!clienteId && items.some(({ producto_id }) => getMatchingEquipos(producto_id).length === 0);
+  const hasClientWarnings = useMemo(
+    () => !!clienteId && items.some(({ producto_id }) => getMatchingEquipos(producto_id).length === 0),
+    [clienteId, items, getMatchingEquipos]
+  );
 
   const renderTipoSelector = () => (
     <FieldSet>
@@ -335,7 +269,7 @@ function MovementForm({
                   const producto = cache.productosMap[producto_id];
                   const lote = lote_id ? cache.lotesMap[lote_id] : undefined;
 
-                  const isLoading = cache.initialProductsLoading;
+                  const isLoading = cache.initialLoading;
                   const noMatching =
                     !!clienteId &&
                     !clientEquipos.loadingClientEquipos &&
@@ -347,7 +281,7 @@ function MovementForm({
                       initial={{ opacity: 0, x: -12 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 12, height: 0, padding: 0 }}
-                      transition={{ duration: 0.2, delay: index * 0.03, ease: 'easeOut' }}
+                      transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.3), ease: 'easeOut' }}
                       className={cn(
                         'border-b transition-colors hover:bg-muted/50',
                         noMatching && 'bg-destructive/10 hover:bg-destructive/15'
@@ -360,7 +294,7 @@ function MovementForm({
                         {isLoading ? <Skeleton className='h-5 w-48' /> : producto?.descripcion}
                       </TableCell>
                       <TableCell hidden={tipo !== 'salida'}>
-                        {cache.initialLotesLoading ? (
+                        {cache.initialLoading ? (
                           <Skeleton className='h-5 w-28' />
                         ) : (
                           <span className='text-sm font-mono'>{lote?.codigo_lote ?? '—'}</span>
@@ -464,50 +398,84 @@ function MovementForm({
   );
 
   return (
-    <form
-      id='movement-form'
-      onSubmit={(e) => {
-        e.preventDefault();
-        form.handleSubmit();
-      }}
-      className='space-y-6'
-    >
-      {renderTipoSelector()}
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogContent className='max-w-full md:max-w-4xl lg:max-w-5xl'>
+          <DialogHeader>
+            <DialogTitle>Registrar movimiento</DialogTitle>
+            <DialogDescription>Escanea productos para agregarlos al movimiento.</DialogDescription>
+          </DialogHeader>
 
-      <MovementScanInput
-        tipo={tipo}
-        scanCode={scan.scanCode}
-        onScanCodeChange={scan.setScanCode}
-        searching={scan.searching}
-        onSubmit={handleScanSubmit}
-        scanInputRef={scan.scanInputRef}
-      />
+          <form
+            id='movement-form'
+            onSubmit={(e) => {
+              e.preventDefault();
+              form.handleSubmit();
+            }}
+            className='space-y-6'
+          >
+            {renderTipoSelector()}
 
-      {cache.initialProductsLoading && (
-        <div className='flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400'>
-          <Loader2 className='size-4 animate-spin' />
-          <span>Recuperando información de los productos iniciales...</span>
-        </div>
-      )}
+            <MovementScanInput
+              tipo={tipo}
+              scanCode={scan.scanCode}
+              onScanCodeChange={scan.setScanCode}
+              searching={scan.searching}
+              onSubmit={handleScanSubmit}
+              scanInputRef={scan.scanInputRef}
+            />
 
-      <div className='overflow-hidden rounded-lg border'>{renderProductItemsTable()}</div>
+            {cache.initialLoading && (
+              <div className='flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400'>
+                <Loader2 className='size-4 animate-spin' />
+                <span>Recuperando información de los productos iniciales...</span>
+              </div>
+            )}
 
-      <AnimatePresence mode='wait'>
-        {tipo === 'entrada' && renderEntryDetails()}
-        {tipo === 'salida' && renderExitDetails()}
-      </AnimatePresence>
+            <div className='overflow-hidden rounded-lg border'>{renderProductItemsTable()}</div>
 
-      <DialogFooter>
-        <DialogClose asChild>
-          <Button variant='ghost'>Cerrar</Button>
-        </DialogClose>
-        <form.AppForm>
-          <form.SaveButton
-            label='Guardar movimiento'
-            disabled={hasClientWarnings || cache.initialProductsLoading}
-          />
-        </form.AppForm>
-      </DialogFooter>
-    </form>
+            <AnimatePresence mode='wait'>
+              {tipo === 'entrada' && renderEntryDetails()}
+              {tipo === 'salida' && renderExitDetails()}
+            </AnimatePresence>
+
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant='ghost'>Cerrar</Button>
+              </DialogClose>
+              <form.AppForm>
+                <form.SaveButton
+                  label='Guardar movimiento'
+                  disabled={hasClientWarnings || cache.initialLoading}
+                />
+              </form.AppForm>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Descartar movimiento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Los productos escaneados se perderán si cierras este formulario.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Conservar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setAlertOpen(false);
+                setOpen(false);
+              }}
+            >
+              Descartar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
