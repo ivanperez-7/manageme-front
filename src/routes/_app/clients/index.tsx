@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, ErrorComponent, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { EllipsisVertical, PackageOpen, Plus } from 'lucide-react';
 import { DataTable } from '@/components/data-table';
@@ -57,6 +57,7 @@ export const Route = createFileRoute('/_app/clients/')({
     page: page != null ? Number(page) : undefined,
   }),
   component: ClientesPage,
+  errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
 
 function ClientesPage() {

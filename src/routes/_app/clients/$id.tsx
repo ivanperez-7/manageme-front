@@ -1,5 +1,5 @@
 import { useMask } from '@react-input/mask';
-import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
+import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { ArrowLeft, ArrowUpFromDot, CheckCircle, Gauge, Loader2, Printer, Trash2 } from 'lucide-react';
@@ -103,6 +103,7 @@ export const Route = createFileRoute('/_app/clients/$id')({
   component: ClienteDetailPage,
   pendingComponent: ClientDetailSkeleton,
   pendingMs: 200,
+  errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
 
 function ClienteDetailPage() {
