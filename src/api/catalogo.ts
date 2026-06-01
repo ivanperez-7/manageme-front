@@ -39,37 +39,43 @@ export const fetchCatalogs = async () => {
       .get(ENDPOINTS.categorias.list)
       .then((res) => res.data as Types.CategoriaResponse[])
       .catch((error) => {
-        throw new Error(error.message);
+        console.error(`Error al cargar categorías: ${error.message}`);
+        return [] as Types.CategoriaResponse[];
       }),
     withAuth
       .get(ENDPOINTS.marcas.list)
       .then((res) => res.data as Types.MarcaResponse[])
       .catch((error) => {
-        throw new Error(error.message);
+        console.error(`Error al cargar marcas: ${error.message}`);
+        return [] as Types.MarcaResponse[];
       }),
     withAuth
       .get(ENDPOINTS.equipos.list)
       .then((res) => res.data as Types.EquipoResponse[])
       .catch((error) => {
-        throw new Error(error.message);
+        console.error(`Error al cargar equipos: ${error.message}`);
+        return [] as Types.EquipoResponse[];
       }),
     withAuth
       .get(ENDPOINTS.proveedores.list)
       .then((res) => res.data as Types.ProveedorResponse[])
       .catch((error) => {
-        throw new Error(error.message);
+        console.error(`Error al cargar proveedores: ${error.message}`);
+        return [] as Types.ProveedorResponse[];
       }),
     withAuth
       .get(ENDPOINTS.users.list)
       .then((res) => res.data as Types.UserResponse[])
       .catch((error) => {
-        throw new Error(error.message);
+        console.error(`Error al cargar usuarios: ${error.message}`);
+        return [] as Types.UserResponse[];
       }),
     withAuth
       .get(ENDPOINTS.clientes.list)
       .then((res) => res.data as Types.ClienteResponse[])
       .catch((error) => {
-        throw new Error(error.message);
+        console.error(`Error al cargar clientes: ${error.message}`);
+        return [] as Types.ClienteResponse[];
       }),
   ]);
 

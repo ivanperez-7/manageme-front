@@ -57,6 +57,7 @@ export const Route = createFileRoute('/_app/clients/')({
     page: page != null ? Number(page) : undefined,
   }),
   component: ClientesPage,
+  staleTime: 30_000,
   errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
 

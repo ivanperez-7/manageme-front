@@ -4,7 +4,7 @@ import Cookies from 'js-cookie';
 
 import { API_BASE, ENDPOINTS } from '@/api/endpoints';
 import { authActions, authStore } from '@/stores/authStore';
-import { userActions } from '@/stores/userStore';
+import { userActions, userStore } from '@/stores/userStore';
 
 function isTokenExpired(token: string): boolean {
   try {
@@ -31,6 +31,13 @@ const tryRefresh = async (): Promise<boolean> =>
       return true;
     })
     .catch(() => false);
+
+export function authRoleGuard(allowedRoles: string[]) {
+  const rol = userStore.state.profile?.rol;
+  if (!rol || !allowedRoles.includes(rol)) {
+    throw redirect({ to: '/dashboard' });
+  }
+}
 
 export async function authGuard() {
   const token = authStore.state.accessToken;

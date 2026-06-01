@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 import { fetchActividades } from '@/api/actividades';
 import { useCatalogs } from '@/hooks/use-catalogs';
+import { authRoleGuard } from '@/lib/auth';
 import { getSegmentoLink } from '@/lib/segment-route-map';
 import type { ActividadResponse } from '@/lib/types';
 import { humanDate, humanTime } from '@/lib/utils';
@@ -96,6 +97,7 @@ type ActividadSearch = {
 };
 
 export const Route = createFileRoute('/_app/actividades')({
+  beforeLoad: () => authRoleGuard(['admin']),
   staticData: { headerBreadcrumb: [{ label: 'Actividades' }] },
   validateSearch: ({ usuario, accion, fechaInicio, fechaFin, page }): ActividadSearch => ({
     usuario: usuario != null ? Number(usuario) : undefined,
