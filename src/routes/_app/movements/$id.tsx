@@ -1,8 +1,8 @@
 import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { formatDate } from 'date-fns';
-import { ArrowLeft, CheckCircle, PackageOpen, XCircle } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ArrowLeft, CheckCircle, Download, PackageOpen, XCircle } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { DataTable } from '@/components/data-table';
@@ -22,32 +22,22 @@ import type { MovimientoItemResponse } from '@/lib/types';
 import { firstUpperCase, humanDate, humanTime } from '@/lib/utils';
 import { userStore } from '@/stores/userStore';
 
-const useItemsColumns = (tipo: string): ColumnDef<MovimientoItemResponse>[] =>
-  useMemo(() => {
-    const cols: ColumnDef<MovimientoItemResponse>[] = [
-      {
-        header: 'Producto',
-        cell: ({ row }) => (
-          <Link
-            to='/catalogo/$id'
-            params={{ id: String(row.original.producto.id) }}
-            className='font-medium'
-          >
-            {row.original.producto.codigo_interno}
-          </Link>
-        ),
-      },
-      { accessorKey: 'producto.descripcion', header: 'Descripción' },
-      {
-        header: 'Cantidad',
-        cell: ({ row }) => row.original.cantidad.toLocaleString('es-MX'),
-      },
-    ];
-
-    if (tipo === 'salida') cols.splice(1, 0, { accessorKey: 'lote.codigo_lote', header: 'Código de lote' });
-
-    return cols;
-  }, [tipo]);
+const lotesColumns: ColumnDef<MovimientoItemResponse>[] = [
+  {
+    header: 'Producto',
+    cell: ({ row }) => (
+      <Link to='/catalogo/$id' params={{ id: String(row.original.producto.id) }} className='font-medium'>
+        {row.original.producto.codigo_interno}
+      </Link>
+    ),
+  },
+  { accessorKey: 'producto.descripcion', header: 'Descripción' },
+  { accessorKey: 'lote.codigo_lote', header: 'Código de lote asociado' },
+  {
+    header: 'Cantidad',
+    cell: ({ row }) => row.original.cantidad.toLocaleString('es-MX'),
+  },
+];
 
 type Search = { itemsPage?: number };
 type MovimientoLoaderData = Awaited<ReturnType<typeof fetchMovimientoById>>;
@@ -76,6 +66,7 @@ export const Route = createFileRoute('/_app/movements/$id')({
 
 function MovementDetailPage() {
   const [isApproving, setIsApproving] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const movimiento = Route.useLoaderData();
   const { itemsPage } = Route.useSearch();
@@ -101,6 +92,35 @@ function MovementDetailPage() {
         )
       )
       .finally(() => setIsApproving(false));
+  };
+
+  const downloadEtiquetas = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+
+    await withAuth
+      .get(ENDPOINTS.movimientos.etiquetas(movimiento.id), { responseType: 'blob' })
+      .then((res) => res.data as Blob)
+      .then((data) => {
+        const url = URL.createObjectURL(data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `etiquetas-entrada-${movimiento.id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      })
+      .catch(async (error) => {
+        let msg = 'No se pudieron descargar las etiquetas';
+        if (error?.response?.data instanceof Blob)
+          try {
+            const body = JSON.parse(await error.response.data.text());
+            msg = body.detail || msg;
+          } catch {}
+        toast.error(msg);
+      })
+      .finally(() => setIsDownloading(false));
   };
 
   return (
@@ -162,6 +182,19 @@ function MovementDetailPage() {
                       {formatDate(new Date(movimiento.aprobado_fecha as string), 'dd/MM/yyyy HH:mm')} por{' '}
                       {movimiento.user_aprueba?.full_name || '—'}
                     </span>
+
+                    {movimiento.tipo === 'entrada' && (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        className='ml-4'
+                        onClick={downloadEtiquetas}
+                        disabled={isDownloading}
+                      >
+                        {isDownloading ? <Spinner /> : <Download className='h-4 w-4' />}
+                        Etiquetas
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <span className='flex items-center gap-2 text-red-600 dark:text-red-400'>
@@ -245,7 +278,7 @@ function MovementDetailPage() {
         <CardContent>
           <DataTable
             data={movimiento.items}
-            columns={useItemsColumns(movimiento.tipo)}
+            columns={lotesColumns}
             transparent
             initialPage={itemsPage ?? 0}
             onChangePage={(pageIndex) =>

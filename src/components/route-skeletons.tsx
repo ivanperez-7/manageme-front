@@ -315,6 +315,45 @@ export const MovementDetailSkeleton = () => (
   </div>
 );
 
+export const ActividadesSkeleton = () => (
+  <div className='space-y-4'>
+    <div className='space-y-1'>
+      <Skeleton className='h-8 w-64' />
+      <Skeleton className='h-4 w-72' />
+    </div>
+    <div className='flex flex-col md:flex-row gap-2 md:items-center'>
+      <Skeleton className='h-9 w-60 rounded-md' />
+      <Skeleton className='h-9 w-40 rounded-md' />
+      <Skeleton className='h-9 w-60 rounded-md' />
+      <Skeleton className='h-9 w-40 rounded-md' />
+    </div>
+    <div className='overflow-hidden rounded-lg border'>
+      <div className='bg-muted/50 border-b'>
+        <div className='flex gap-4 p-3'>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className='h-4' style={{ width: `${10 + ((i * 4) % 12)}%` }} />
+          ))}
+        </div>
+      </div>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className='flex gap-4 p-3 border-b last:border-0'>
+          {Array.from({ length: 6 }).map((_, j) => (
+            <Skeleton key={j} className='h-4' style={{ width: `${8 + ((j * 5 + i * 3) % 14)}%` }} />
+          ))}
+        </div>
+      ))}
+    </div>
+    <div className='flex justify-between items-center'>
+      <Skeleton className='h-4 w-44' />
+      <div className='flex gap-2'>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className='size-8 rounded-md' />
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 export const SettingsSkeleton = () => (
   <div className='mx-auto max-w-3xl space-y-6'>
     <div className='space-y-1'>

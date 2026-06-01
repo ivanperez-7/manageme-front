@@ -41,6 +41,13 @@ const movimientosDetailMask = createRouteMask({
   search: { itemsPage: undefined },
 });
 
+const actividadesMask = createRouteMask({
+  routeTree,
+  from: '/actividades',
+  to: '/actividades',
+  search: { usuario: undefined, accion: undefined, fechaInicio: undefined, fechaFin: undefined, page: undefined },
+});
+
 const clientsMask = createRouteMask({
   routeTree,
   from: '/clients',
@@ -56,7 +63,7 @@ const router = createRouter({
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
-  routeMasks: [catalogsMask, movimientosMask, catalogsDetailMask, clientDetailMask, movimientosDetailMask, clientsMask],
+  routeMasks: [catalogsMask, movimientosMask, catalogsDetailMask, clientDetailMask, movimientosDetailMask, actividadesMask, clientsMask],
 });
 
 // Register the router instance for type safety

@@ -2,16 +2,20 @@ import type { Link, LinkComponentProps } from '@tanstack/react-router';
 import {
   ArrowLeftRight,
   BookUser,
+  History,
   LayoutDashboard,
   Package2,
   Printer,
   Sparkles,
-  TruckIcon
+  TruckIcon,
 } from 'lucide-react';
+
+import type { UserResponse } from './types';
 
 type NavItem = LinkComponentProps<typeof Link> & {
   content: string;
   icon?: React.ReactNode;
+  canRender?: (user: UserResponse) => boolean;
 };
 
 type NavSection = {
@@ -23,50 +27,31 @@ const navigation: NavSection[] = [
   {
     title: '',
     items: [
-      {
-        to: '/dashboard',
-        content: 'Dashboard',
-        icon: <LayoutDashboard />,
-      },
-      {
-        to: '/chatbot',
-        content: 'Asistente IA',
-        icon: <Sparkles />,
-      },
+      { to: '/dashboard', content: 'Dashboard', icon: <LayoutDashboard /> },
+      { to: '/chatbot', content: 'Asistente IA', icon: <Sparkles /> },
     ],
   },
   {
     title: 'Catálogos',
     items: [
-      {
-        to: '/catalogo',
-        content: 'Productos',
-        icon: <Package2 />,
-      },
-      {
-        to: '/equipos',
-        content: 'Equipos',
-        icon: <Printer />,
-      },
-      {
-        to: '/clients',
-        content: 'Clientes',
-        icon: <BookUser />,
-      },
-      {
-        to: '/suppliers',
-        content: 'Proveedores',
-        icon: <TruckIcon />,
-      },
+      { to: '/catalogo', content: 'Productos', icon: <Package2 /> },
+      { to: '/equipos', content: 'Equipos', icon: <Printer /> },
+      { to: '/clients', content: 'Clientes', icon: <BookUser /> },
+      { to: '/suppliers', content: 'Proveedores', icon: <TruckIcon /> },
     ],
   },
   {
     title: 'Movimientos',
+    items: [{ to: '/movements', content: 'Ver movimientos', icon: <ArrowLeftRight /> }],
+  },
+  {
+    title: 'Sistema',
     items: [
       {
-        to: '/movements',
-        content: 'Ver movimientos',
-        icon: <ArrowLeftRight />,
+        to: '/actividades',
+        content: 'Registro de actividades',
+        icon: <History />,
+        canRender: (user) => user.profile?.rol === 'admin',
       },
     ],
   },

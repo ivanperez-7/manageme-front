@@ -17,6 +17,7 @@ import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppEquiposRouteImport } from './routes/_app/equipos'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppChatbotRouteImport } from './routes/_app/chatbot'
+import { Route as AppActividadesRouteImport } from './routes/_app/actividades'
 import { Route as AppMovementsIndexRouteImport } from './routes/_app/movements/index'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients/index'
 import { Route as AppCatalogoIndexRouteImport } from './routes/_app/catalogo/index'
@@ -63,6 +64,11 @@ const AppChatbotRoute = AppChatbotRouteImport.update({
   path: '/chatbot',
   getParentRoute: () => AppRoute,
 } as any)
+const AppActividadesRoute = AppActividadesRouteImport.update({
+  id: '/actividades',
+  path: '/actividades',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMovementsIndexRoute = AppMovementsIndexRouteImport.update({
   id: '/movements/',
   path: '/movements/',
@@ -97,6 +103,7 @@ const AppCatalogoIdRoute = AppCatalogoIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/actividades': typeof AppActividadesRoute
   '/chatbot': typeof AppChatbotRoute
   '/dashboard': typeof AppDashboardRoute
   '/equipos': typeof AppEquiposRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/actividades': typeof AppActividadesRoute
   '/chatbot': typeof AppChatbotRoute
   '/dashboard': typeof AppDashboardRoute
   '/equipos': typeof AppEquiposRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/actividades': typeof AppActividadesRoute
   '/_app/chatbot': typeof AppChatbotRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/equipos': typeof AppEquiposRoute
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/actividades'
     | '/chatbot'
     | '/dashboard'
     | '/equipos'
@@ -161,6 +171,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/actividades'
     | '/chatbot'
     | '/dashboard'
     | '/equipos'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/actividades'
     | '/_app/chatbot'
     | '/_app/dashboard'
     | '/_app/equipos'
@@ -254,6 +266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChatbotRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/actividades': {
+      id: '/_app/actividades'
+      path: '/actividades'
+      fullPath: '/actividades'
+      preLoaderRoute: typeof AppActividadesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/movements/': {
       id: '/_app/movements/'
       path: '/movements'
@@ -300,6 +319,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppActividadesRoute: typeof AppActividadesRoute
   AppChatbotRoute: typeof AppChatbotRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppEquiposRoute: typeof AppEquiposRoute
@@ -314,6 +334,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppActividadesRoute: AppActividadesRoute,
   AppChatbotRoute: AppChatbotRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppEquiposRoute: AppEquiposRoute,

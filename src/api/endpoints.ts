@@ -46,10 +46,14 @@ export const ENDPOINTS = {
   movimientos: {
     list: '/movimientos/movimientos/',
     detail: (id: IdLike) => `/movimientos/movimientos/${id}/`,
+    etiquetas: (id: IdLike) => `/movimientos/movimientos/${id}/etiquetas/`,
   },
   sysvars: {
     list: '/system/configuracion/',
     detail: (id: IdLike) => `/system/configuracion/${id}/`,
+  },
+  system: {
+    actividades: '/system/actividades/',
   },
   sucursales: {
     list: '/organizacion/sucursales/',

@@ -199,6 +199,27 @@ export type VariableSistemaResponse = {
   actualizado: string;
 };
 
+// ── Actividad ──
+type SegmentoLink = {
+  texto: string;
+  tipo: string;
+  id: number;
+};
+
+type SegmentoText = {
+  texto: string;
+};
+
+export type ActividadResponse = {
+  id: number;
+  usuario: number;
+  usuario_nombre: string;
+  accion: string;
+  descripcion: string;
+  segmentos: (SegmentoText | SegmentoLink)[];
+  creado: string;
+};
+
 // ── Other ──
 export type EquipoStatsResponse = {
   total_productos: number;

@@ -22,6 +22,7 @@ import {
 import navigation from '@/lib/navigation';
 import { Kbd, KbdGroup } from './ui/kbd';
 import { userStore } from '@/stores/userStore';
+import type { UserResponse } from '@/lib/types';
 
 export function AppSidebar({
   onLogout,
@@ -65,25 +66,33 @@ export function AppSidebar({
             </SidebarMenuItem>
           </SidebarGroupContent>
         </SidebarGroup>
-        {navigation.map((section) => (
-          <SidebarGroup key={section.title}>
-            {section.title && <SidebarGroupLabel>{section.title}</SidebarGroupLabel>}
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {section.items.map((item) => (
-                  <SidebarMenuItem key={item.content}>
-                    <CustomSidebarLink
-                      to={item.to}
-                      content={item.content}
-                      icon={item.icon}
-                      onClick={() => setOpenMobile(false)}
-                    />
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        {navigation
+          .map((section) => ({
+            ...section,
+            items: section.items.filter(
+              (item) => !item.canRender || item.canRender(userStore.state as UserResponse)
+            ),
+          }))
+          .filter((section) => section.items.length > 0)
+          .map((section) => (
+            <SidebarGroup key={section.title}>
+              {section.title && <SidebarGroupLabel>{section.title}</SidebarGroupLabel>}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {section.items.map((item) => (
+                    <SidebarMenuItem key={item.content}>
+                      <CustomSidebarLink
+                        to={item.to}
+                        content={item.content}
+                        icon={item.icon}
+                        onClick={() => setOpenMobile(false)}
+                      />
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenuItem>
