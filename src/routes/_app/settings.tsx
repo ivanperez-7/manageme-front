@@ -30,7 +30,7 @@ function SettingsPage() {
   return (
     <div className='mx-auto max-w-3xl space-y-6'>
       <div className='space-y-1'>
-        <h1 className='text-3xl font-semibold tracking-tight'>Configuraciones del sistema</h1>
+        <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>Configuraciones del sistema</h1>
         <p className='text-muted-foreground'>Administra las variables de configuración del sistema.</p>
       </div>
 

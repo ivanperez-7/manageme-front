@@ -132,7 +132,7 @@ function MovementDetailPage() {
             <ArrowLeft className='h-4 w-4' />
           </Button>
 
-          <h1 className='text-3xl font-semibold tracking-tight'>
+          <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>
             {movimiento.tipo === 'entrada' ? 'Entrada' : 'Salida'} #{movimiento.id}
           </h1>
         </div>
@@ -146,7 +146,7 @@ function MovementDetailPage() {
         </CardHeader>
 
         <CardContent>
-          <div className='grid grid-cols-2 gap-8'>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
             <div className='space-y-4'>
               {/* Tipo */}
               <div>
@@ -233,7 +233,7 @@ function MovementDetailPage() {
             <Separator />
           </CardHeader>
           <CardContent>
-            <div className='grid grid-cols-2'>
+            <div className='grid grid-cols-1 md:grid-cols-2'>
               <span>
                 <p className='text-sm text-muted-foreground'>Número de factura</p>{' '}
                 {detalleEntrada.numero_factura || '—'}
@@ -255,7 +255,7 @@ function MovementDetailPage() {
             <Separator />
           </CardHeader>
           <CardContent>
-            <div className='grid grid-cols-2 gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               <span>
                 <p className='text-sm text-muted-foreground'>Cliente</p>{' '}
                 <Link to='/clients/$id' params={{ id: String(detalleSalida.cliente.id) }}>

@@ -84,7 +84,7 @@ function ChatbotPage() {
   }, [messages]);
 
   return (
-    <div className='flex h-[calc(100vh-8rem)] flex-col overflow-hidden'>
+    <div className='flex h-[calc(100dvh-8rem)] flex-col overflow-hidden'>
       <div className='flex items-center gap-3 border-b px-6 py-4'>
         <div className='relative'>
           <div className='flex items-center justify-center size-10 rounded-xl bg-primary/10 text-primary'>

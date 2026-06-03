@@ -177,7 +177,7 @@ function ProductListPage() {
   return (
     <div className='space-y-4'>
       <div className='space-y-1'>
-        <h1 className='text-3xl font-semibold tracking-tight'>Buscar productos</h1>
+        <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>Buscar productos</h1>
         <p className='text-muted-foreground'>Explora y administra el catálogo de productos.</p>
       </div>
       <div className='flex flex-col gap-2 items-stretch md:flex-row md:items-center'>
@@ -262,6 +262,7 @@ function ProductListPage() {
       <DataTable
         columns={columns}
         data={filtered}
+        hiddenColumnIds={['check', 'codigo_interno', 'proveedor.nombre']}
         emptyComponent={emptyComponent}
         initialPage={page ?? 0}
         onChangePage={(pageIndex) =>

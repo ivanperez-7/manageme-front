@@ -29,6 +29,7 @@ interface DataTableProps<TData, TValue> {
   transparent?: boolean;
   emptyComponent?: React.ReactNode;
   onChangePage?: (pageIndex: number) => void;
+  hiddenColumnIds?: string[];
 }
 
 export function DataTable<TData, TValue>({
@@ -39,6 +40,7 @@ export function DataTable<TData, TValue>({
   transparent,
   emptyComponent,
   onChangePage,
+  hiddenColumnIds,
 }: DataTableProps<TData, TValue>) {
   const [pagination, setPagination] = useState({
     pageIndex: initialPage ?? 0,
@@ -86,7 +88,10 @@ export function DataTable<TData, TValue>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    className={cn(hiddenColumnIds?.includes(header.column.id) && 'hidden md:table-cell')}
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
@@ -108,7 +113,10 @@ export function DataTable<TData, TValue>({
                   className='border-b transition-colors hover:bg-muted/50 even:bg-muted/20 data-[state=selected]:bg-muted'
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className='py-2.5'>
+                    <TableCell
+                      key={cell.id}
+                      className={cn('py-2.5', hiddenColumnIds?.includes(cell.column.id) && 'hidden md:table-cell')}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -138,7 +146,7 @@ export function DataTable<TData, TValue>({
             onClick={() => table.previousPage()}
             className={cn(!table.getCanPreviousPage() && 'pointer-events-none opacity-50')}
           />
-          <div className='flex items-center justify-center gap-1 min-w-[276px]'>
+          <div className='flex items-center justify-center gap-1 min-w-0'>
             {getPageItems({
               pageIndex: table.getState().pagination.pageIndex,
               pageCount: table.getPageCount(),

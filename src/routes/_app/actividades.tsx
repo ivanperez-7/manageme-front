@@ -148,7 +148,7 @@ function ActividadesListPage() {
   return (
     <div className='space-y-4'>
       <div className='space-y-1'>
-        <h1 className='text-3xl font-semibold tracking-tight'>Registro de actividades</h1>
+        <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>Registro de actividades</h1>
         <p className='text-muted-foreground'>Consulta el historial de acciones realizadas en el sistema.</p>
       </div>
 
@@ -232,6 +232,7 @@ function ActividadesListPage() {
       <DataTable
         columns={columns}
         data={filtered}
+        hiddenColumnIds={['hora']}
         initialPage={page ?? 0}
         onChangePage={(pageIndex) =>
           navigate({

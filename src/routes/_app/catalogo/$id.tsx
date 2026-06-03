@@ -176,7 +176,7 @@ function ProductDetailPage() {
           <Button variant='ghost' size='icon' onClick={() => router.history.back()}>
             <ArrowLeft className='h-4 w-4' />
           </Button>
-          <h1 className='text-3xl font-semibold tracking-tight'>{producto.descripcion}</h1>
+          <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>{producto.descripcion}</h1>
         </div>
 
         <div className='space-x-2'>
@@ -215,7 +215,7 @@ const ProductInfoCard = ({ producto }: { producto: ProductoResponse }) => (
       <Separator />
     </CardHeader>
     <CardContent>
-      <div className='grid grid-cols-2 gap-8'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
         <div className='space-y-4'>
           <div>
             <p className='text-sm text-muted-foreground'>Código</p>
@@ -279,7 +279,7 @@ const ProductProviderCard = ({ proveedor }: { proveedor?: ProveedorResponse }) =
         <Separator />
       </CardHeader>
       <CardContent>
-        <div className='grid grid-cols-2 gap-8'>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
           <div className='space-y-4'>
             <div>
               <p className='text-sm text-muted-foreground'>Razón social</p>
@@ -331,6 +331,7 @@ const ProductBatchesCard = ({ lotes }: { lotes: LoteResponse[] }) => {
           data={filteredLotes}
           columns={lotesColumns}
           transparent
+          hiddenColumnIds={['hora_entrada']}
           initialPage={lotesPage ?? 0}
           onChangePage={(pageIndex) =>
             navigate({
@@ -438,6 +439,7 @@ const ProductMovementsCard = () => {
             )}
             columns={movementsColumns}
             transparent
+            hiddenColumnIds={['hora']}
             initialPage={movPage ?? 0}
             onChangePage={(pageIndex) =>
               navigate({

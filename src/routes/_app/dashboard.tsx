@@ -59,7 +59,7 @@ function DashboardPage() {
   return (
     <div className='space-y-4'>
       <div className='space-y-1'>
-        <h1 className='text-3xl font-semibold tracking-tight'>Dashboard</h1>
+        <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>Dashboard</h1>
         <p className='text-muted-foreground'>Resumen general del inventario.</p>
       </div>
       <motion.div

@@ -71,7 +71,7 @@ function EquiposPage() {
       {/* HEADER */}
       <div className='flex items-start justify-between'>
         <div className='space-y-1'>
-          <h1 className='text-3xl font-semibold tracking-tight'>Equipos</h1>
+          <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>Equipos</h1>
           <p className='text-muted-foreground'>Administra marcas y equipos registrados.</p>
         </div>
 
@@ -115,7 +115,7 @@ function EquiposPage() {
                         {active && <Check className='h-4 w-4 text-primary' />}
 
                         {!active && (
-                          <ChevronsUpDown className='h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100' />
+                          <ChevronsUpDown className='h-4 w-4 text-muted-foreground opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100' />
                         )}
 
                         <span className='truncate font-medium'>{marca.nombre}</span>
@@ -129,7 +129,7 @@ function EquiposPage() {
                         <Button
                           variant='ghost'
                           size='icon'
-                          className='h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100'
+                          className='h-8 w-8 opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100'
                         >
                           <Trash2 className='h-4 w-4 text-destructive' />
                         </Button>
@@ -274,7 +274,7 @@ function EditableMarcaNombre({ marca, onRename }: { marca: MarcaResponse; onRena
 
   return (
     <button onClick={() => setEditing(true)} className='group flex items-center gap-2'>
-      <h2 className='text-3xl font-semibold tracking-tight'>{marca.nombre}</h2>
+      <h2 className='text-2xl md:text-3xl font-semibold tracking-tight'>{marca.nombre}</h2>
 
       <Pencil className='h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100' />
     </button>

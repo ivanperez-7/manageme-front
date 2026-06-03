@@ -144,10 +144,10 @@ function MovementsListPage() {
   return (
     <div className='space-y-4'>
       <div className='space-y-1'>
-        <h1 className='text-3xl font-semibold tracking-tight'>Movimientos del almacén</h1>
+        <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>Movimientos del almacén</h1>
         <p className='text-muted-foreground'>Consulta entradas y salidas registradas.</p>
       </div>
-      <div className='flex gap-4 items-center'>
+      <div className='flex flex-col sm:flex-row gap-4 items-start sm:items-center'>
         <div className='flex-1'>
           <InputGroup>
             <InputGroupInput
@@ -194,6 +194,7 @@ function MovementsListPage() {
       <DataTable
         columns={columns}
         data={filtered}
+        hiddenColumnIds={['check', 'hora', 'comentarios']}
         initialPage={page ?? 0}
         onChangePage={(pageIndex) =>
           navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true, resetScroll: false })

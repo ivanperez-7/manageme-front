@@ -69,13 +69,14 @@ function ClientesPage() {
   return (
     <div className='space-y-4'>
       <div className='space-y-1'>
-        <h1 className='text-3xl font-semibold tracking-tight'>Clientes registrados</h1>
+        <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>Clientes registrados</h1>
         <p className='text-muted-foreground'>Administra los clientes registrados en el sistema.</p>
       </div>
 
       <DataTable
         data={clientes}
         columns={clientesColumns}
+        hiddenColumnIds={['check', 'direccion']}
         initialPage={page ?? 0}
         onChangePage={(pageIndex) =>
           navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true, resetScroll: false })
