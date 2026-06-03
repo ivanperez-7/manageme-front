@@ -101,17 +101,10 @@ export function AppSidebar({
             content='Configuración'
             icon={<Settings />}
             onClick={() => setOpenMobile(false)}
+            hidden={userStore.state.profile?.rol !== 'admin'}
           />
         </SidebarMenuItem>
-        <NavFooter
-          user={{
-            name: userStore.state.full_name || 'N/A',
-            email: userStore.state.email || 'N/A',
-            avatar: userStore.state.profile?.avatar ?? undefined,
-          }}
-          onLogout={onLogout}
-          loadingLogout={loadingLogout}
-        />
+        <NavFooter user={userStore.state} onLogout={onLogout} loadingLogout={loadingLogout} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

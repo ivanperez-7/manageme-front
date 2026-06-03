@@ -1,4 +1,5 @@
 import { BadgeCheck, Bell, ChevronRight, CreditCard, LogOut } from 'lucide-react';
+import type { MouseEventHandler } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -11,19 +12,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
+
+import type { UserResponse } from '@/lib/types';
 import { Spinner } from './ui/spinner';
-import type { MouseEventHandler } from 'react';
 
 export function NavFooter({
   user,
   onLogout,
   loadingLogout,
 }: {
-  user: {
-    name: string;
-    email: string;
-    avatar?: string;
-  };
+  user: UserResponse;
   onLogout: MouseEventHandler<HTMLDivElement>;
   loadingLogout: boolean;
 }) {
@@ -39,13 +37,13 @@ export function NavFooter({
               className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
             >
               <Avatar className='h-8 w-8 rounded-lg'>
-                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarImage src={user.profile?.avatar ?? undefined} alt={user.full_name} />
                 <AvatarFallback className='rounded-lg'>
-                  {user.name[0].toLocaleUpperCase()}
+                  {user.full_name[0].toLocaleUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className='grid flex-1 text-left text-sm leading-tight'>
-                <span className='truncate font-medium'>{user.name}</span>
+                <span className='truncate font-medium'>{user.full_name}</span>
                 <span className='truncate text-xs'>{user.email}</span>
               </div>
               <ChevronRight className='ml-auto size-4' />
@@ -60,13 +58,13 @@ export function NavFooter({
             <DropdownMenuLabel className='p-0 font-normal'>
               <div className='flex items-center gap-2 px-1 py-1.5 text-left text-sm'>
                 <Avatar className='h-8 w-8 rounded-lg'>
-                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarImage src={user.profile?.avatar ?? undefined} alt={user.full_name} />
                   <AvatarFallback className='rounded-lg'>
-                    {user.name[0].toLocaleUpperCase()}
+                    {user.full_name[0].toLocaleUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className='grid flex-1 text-left text-sm leading-tight'>
-                  <span className='truncate font-medium'>{user.name}</span>
+                  <span className='truncate font-medium'>{user.full_name}</span>
                   <span className='truncate text-xs'>{user.email}</span>
                 </div>
               </div>

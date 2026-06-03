@@ -237,7 +237,7 @@ function DashboardPage() {
               <CardTitle>Productos con bajo inventario</CardTitle>
             </CardHeader>
             <CardContent>
-              <DataTable transparent data={productosBajos} columns={lowStockColumns} />
+              <DataTable transparent data={productosBajos} columns={lowStockColumns} pageSize={5} />
             </CardContent>
             <CardFooter>
               <p className='text-sm text-muted-foreground'>

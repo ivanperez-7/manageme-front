@@ -1,4 +1,3 @@
-import Cookies from 'js-cookie';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -24,7 +23,13 @@ import { useAppForm } from '@/hooks/use-app-form';
 import { withAuth } from '@/lib/auth';
 import { clienteCreateSchema } from '@/lib/types';
 
-export function CreateClienteDialog({ onSuccess, trigger }: { onSuccess: () => void; trigger?: React.ReactNode }) {
+export function CreateClienteDialog({
+  onSuccess,
+  trigger,
+}: {
+  onSuccess: () => void;
+  trigger?: React.ReactNode;
+}) {
   const [open, setOpen] = useState(false);
 
   const form = useAppForm({
@@ -39,7 +44,7 @@ export function CreateClienteDialog({ onSuccess, trigger }: { onSuccess: () => v
     validators: { onSubmit: clienteCreateSchema },
     onSubmit: async ({ value }) => {
       await withAuth
-        .post(ENDPOINTS.clientes.list, { ...value, sucursal: Cookies.get('branch') })
+        .post(ENDPOINTS.clientes.list, value)
         .then(() => {
           form.reset();
           setOpen(false);

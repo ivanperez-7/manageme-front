@@ -25,6 +25,7 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   initialPage?: number;
+  pageSize?: number;
   transparent?: boolean;
   emptyComponent?: React.ReactNode;
   onChangePage?: (pageIndex: number) => void;
@@ -34,13 +35,14 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   initialPage,
+  pageSize,
   transparent,
   emptyComponent,
   onChangePage,
 }: DataTableProps<TData, TValue>) {
   const [pagination, setPagination] = useState({
     pageIndex: initialPage ?? 0,
-    pageSize: 10,
+    pageSize: pageSize ?? 10,
   });
 
   const animateRowsRef = useRef(true);
