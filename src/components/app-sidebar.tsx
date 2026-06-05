@@ -1,7 +1,7 @@
+import { useNavigate } from '@tanstack/react-router';
 import { PackageOpen, Settings } from 'lucide-react';
 import * as React from 'react';
 
-import { AddMovementDialog } from './add-movement-dialog';
 import { CustomSidebarLink } from './custom-link';
 import { NavFooter } from './nav-footer';
 import { Button } from './ui/button';
@@ -33,6 +33,19 @@ export function AppSidebar({
   loadingLogout: boolean;
 } & React.ComponentProps<typeof Sidebar>) {
   const { setOpenMobile } = useSidebar();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        navigate({ to: '/movements/new' });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
 
   return (
     <Sidebar {...props}>
@@ -51,18 +64,20 @@ export function AppSidebar({
         <SidebarGroup className='-mb-1.5'>
           <SidebarGroupContent>
             <SidebarMenuItem>
-              <AddMovementDialog
-                trigger={
-                  <Button size='sm' className='w-full'>
-                    Registrar movimiento
-                    <KbdGroup>
-                      <Kbd className='bg-blue-800 text-white'>Ctrl</Kbd>
-                      <Kbd className='bg-blue-800 text-white font-extrabold'>⏎</Kbd>
-                    </KbdGroup>
-                  </Button>
-                }
-                useShortcut
-              />
+              <Button
+                size='sm'
+                className='w-full'
+                onClick={() => {
+                  setOpenMobile(false);
+                  navigate({ to: '/movements/new' });
+                }}
+              >
+                Registrar movimiento
+                <KbdGroup>
+                  <Kbd className='bg-blue-800 text-white'>Ctrl</Kbd>
+                  <Kbd className='bg-blue-800 text-white font-extrabold'>⏎</Kbd>
+                </KbdGroup>
+              </Button>
             </SidebarMenuItem>
           </SidebarGroupContent>
         </SidebarGroup>

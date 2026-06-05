@@ -1,39 +1,21 @@
+import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-form';
-import { useRouter } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowDownToDot, ArrowUpFromDot, Loader2, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ArrowDownToDot, ArrowLeft, ArrowUpFromDot, Loader2, PackageOpen, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { MovementScanInput } from './movement/movement-scan-input';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from './ui/alert-dialog';
-import { Button } from './ui/button';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from './ui/dialog';
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from './ui/empty';
-import { Field, FieldGroup, FieldLabel, FieldSet } from './ui/field';
-import { Input } from './ui/input';
-import { Skeleton } from './ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import UsoEquipoDisplay from './uso-equipo-display';
+import { MovementScanInput } from '@/components/movement/movement-scan-input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Field, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import UsoEquipoDisplay from '@/components/uso-equipo-display';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { useAppForm } from '@/hooks/use-app-form';
@@ -49,21 +31,24 @@ const tipoOptions = [
   { value: 'salida' as const, label: 'Salida', Icon: ArrowUpFromDot },
 ];
 
-export function AddMovementDialog({
-  trigger,
-  initialData,
-  useShortcut,
-}: {
-  trigger: React.ReactNode;
-  initialData?: Partial<MovimientoCreate>;
-  useShortcut?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [alertOpen, setAlertOpen] = useState(false);
+type MovementNewSearch = { initialData?: Partial<MovimientoCreate> };
+
+export const Route = createFileRoute('/_app/movements/new')({
+  staticData: {
+    headerBreadcrumb: [{ label: 'Movimientos', to: '/movements' }, { label: 'Registrar' }],
+  },
+  validateSearch: (search): MovementNewSearch => ({
+    initialData: (search.initialData as Partial<MovimientoCreate>) || undefined,
+  }),
+  component: AddMovementPage,
+});
+
+function AddMovementPage() {
+  const { initialData } = Route.useSearch();
 
   const scan = useMovementScan();
   const clientEquipos = useClientEquipos();
-  const cache = useItemLookup(initialData, open);
+  const cache = useItemLookup(initialData, true);
   const { clientes } = useCatalogs();
   const router = useRouter();
 
@@ -85,21 +70,11 @@ export function AddMovementDialog({
         .post(ENDPOINTS.movimientos.list, value)
         .then((res) => res.data as MovimientoResponse)
         .then((mov) => {
-          toast.success('¡Movimiento registrado correctamente!', {
-            action: {
-              label: 'Ver',
-              onClick: () =>
-                router.navigate({
-                  to: '/movements/$id',
-                  params: { id: mov.id.toString() },
-                }),
-            },
-          });
+          toast.success('¡Movimiento registrado correctamente!');
 
-          if (!initialData) form.reset();
           scan.setScanCode('');
           router.invalidate();
-          setOpen(false);
+          router.navigate({ to: '/movements/$id', params: { id: mov.id.toString() } });
         })
         .catch((error) => toast.error(error.response?.data?.non_field_errors?.[0] || error.message)),
   });
@@ -111,42 +86,35 @@ export function AddMovementDialog({
   );
 
   useEffect(() => {
-    if (!useShortcut) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !open) {
-        e.preventDefault();
-        setOpen(true);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [useShortcut, open]);
-
-  useEffect(() => {
     if (!clienteId) return;
     const ids = items.map((item) => item.producto_id);
     if (ids.length > 0) clientEquipos.check(clienteId, ids);
-  }, [clienteId, items]);
+  }, [clienteId, items.length]);
 
   useEffect(() => {
-    if (open) scan.scanInputRef.current?.focus();
-  }, [open]);
-
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen && items.length > 0) setAlertOpen(true);
-    else setOpen(nextOpen);
-  };
+    scan.scanInputRef.current?.focus();
+  }, []);
 
   const handleScanSubmit = (e: React.FormEvent) => {
     scan.handleScanSubmit(e, tipo, {
       onProductoScanned: (producto) => {
         cache.addProducto(producto);
-        form.pushFieldValue('items', { producto_id: producto.id, cantidad: 1, cambio_anticipado: false, motivo_cambio: null });
+        form.pushFieldValue('items', {
+          producto_id: producto.id,
+          cantidad: 1,
+          cambio_anticipado: false,
+          motivo_cambio: null,
+        });
       },
       onLoteScanned: (lote) => {
         cache.addLote(lote);
-        form.pushFieldValue('items', { producto_id: lote.producto.id, cantidad: 1, lote_id: lote.id, cambio_anticipado: false, motivo_cambio: null });
+        form.pushFieldValue('items', {
+          producto_id: lote.producto.id,
+          cantidad: 1,
+          lote_id: lote.id,
+          cambio_anticipado: false,
+          motivo_cambio: null,
+        });
       },
     });
   };
@@ -235,9 +203,11 @@ export function AddMovementDialog({
           <TableHead>Código</TableHead>
           <TableHead>Descripción</TableHead>
           <TableHead hidden={tipo !== 'salida'}>Lote</TableHead>
-        <TableHead>Cantidad</TableHead>
-        <TableHead hidden={!clienteId}>Equipo</TableHead>
-        <TableHead className='w-10' />
+          <TableHead>Cantidad</TableHead>
+          <TableHead className='w-56' hidden={!clienteId}>
+            Equipo
+          </TableHead>
+          <TableHead className='w-10' />
         </TableRow>
       </TableHeader>
 
@@ -249,10 +219,13 @@ export function AddMovementDialog({
                 <TableRow>
                   <TableCell
                     colSpan={4 + (tipo === 'salida' ? 1 : 0) + (clienteId ? 1 : 0)}
-                    className='p-6'
+                    className='p-10'
                   >
                     <Empty>
                       <EmptyHeader>
+                        <EmptyMedia variant='icon'>
+                          <PackageOpen />
+                        </EmptyMedia>
                         <EmptyTitle>No hay productos</EmptyTitle>
                         <EmptyDescription>
                           Escanea un producto para agregarlo al movimiento.
@@ -282,7 +255,11 @@ export function AddMovementDialog({
                         initial={{ opacity: 0, x: -12 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 12, height: 0, padding: 0 }}
-                        transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.3), ease: 'easeOut' }}
+                        transition={{
+                          duration: 0.2,
+                          delay: Math.min(index * 0.03, 0.3),
+                          ease: 'easeOut',
+                        }}
                         className={cn(
                           'border-b transition-colors hover:bg-muted/50',
                           noMatching && 'bg-destructive/10 hover:bg-destructive/15'
@@ -313,7 +290,10 @@ export function AddMovementDialog({
                             )}
                           </form.Field>
                         </TableCell>
-                        <TableCell hidden={!clienteId}>
+                        <TableCell
+                          className='w-56 max-w-56 [&_button]:w-full [&_button]:min-w-0'
+                          hidden={!clienteId}
+                        >
                           {clientEquipos.loadingClientEquipos ? (
                             <Skeleton className='h-5 w-24' />
                           ) : (
@@ -329,7 +309,11 @@ export function AddMovementDialog({
                           )}
                         </TableCell>
                         <TableCell>
-                          <Button variant='ghost' size='icon-sm' onClick={() => field.removeValue(index)}>
+                          <Button
+                            variant='ghost'
+                            size='icon-sm'
+                            onClick={() => field.removeValue(index)}
+                          >
                             <X />
                           </Button>
                         </TableCell>
@@ -396,7 +380,7 @@ export function AddMovementDialog({
       transition={{ duration: 0.2, ease: 'easeOut' }}
     >
       <FieldSet>
-        <FieldGroup className='grid grid-cols-3 gap-4'>
+        <FieldGroup className='grid grid-cols-1 gap-4'>
           <form.AppField name='detalle_entrada.numero_factura'>
             {(field) => <field.InputField label='Número de factura' placeholder='9284' numeric />}
           </form.AppField>
@@ -418,7 +402,7 @@ export function AddMovementDialog({
       transition={{ duration: 0.2, ease: 'easeOut' }}
     >
       <FieldSet>
-        <FieldGroup className='grid grid-cols-2 gap-4'>
+        <FieldGroup className='grid grid-cols-1 gap-4'>
           <form.AppField name='detalle_salida.cliente_id'>
             {(field) => (
               <field.NumberSelectField
@@ -442,84 +426,112 @@ export function AddMovementDialog({
   );
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
-        <DialogContent className='max-w-full md:max-w-4xl lg:max-w-5xl'>
-          <DialogHeader>
-            <DialogTitle>Registrar movimiento</DialogTitle>
-            <DialogDescription>Escanea productos para agregarlos al movimiento.</DialogDescription>
-          </DialogHeader>
+    <form
+      id='movement-form'
+      onSubmit={(e) => {
+        e.preventDefault();
+        form.handleSubmit();
+      }}
+      className='flex min-h-0 flex-1 flex-col'
+    >
+      {/* HEADER */}
+      <header className='flex items-center justify-between gap-4'>
+        <div className='flex items-center gap-4'>
+          <Button type='button' variant='ghost' size='icon' onClick={() => router.history.back()}>
+            <ArrowLeft className='h-4 w-4' />
+          </Button>
+          <div>
+            <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>Registrar movimiento</h1>
+            <p className='text-sm text-muted-foreground'>
+              Escanea productos para agregarlos al movimiento.
+            </p>
+          </div>
+        </div>
 
-          <form
-            id='movement-form'
-            onSubmit={(e) => {
-              e.preventDefault();
-              form.handleSubmit();
-            }}
-            className='space-y-6'
-          >
-            {renderTipoSelector()}
-
-            <MovementScanInput
-              tipo={tipo}
-              scanCode={scan.scanCode}
-              onScanCodeChange={scan.setScanCode}
-              searching={scan.searching}
-              onSubmit={handleScanSubmit}
-              scanInputRef={scan.scanInputRef}
+        <div className='hidden md:flex items-center gap-2'>
+          <Button type='button' variant='ghost' onClick={() => router.history.back()}>
+            Cancelar
+          </Button>
+          <form.AppForm>
+            <form.SaveButton
+              label='Guardar movimiento'
+              disabled={hasClientWarnings || cache.initialLoading}
             />
+          </form.AppForm>
+        </div>
+      </header>
 
-            {cache.initialLoading && (
-              <div className='flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400'>
-                <Loader2 className='size-4 animate-spin' />
-                <span>Recuperando información de los productos iniciales...</span>
-              </div>
-            )}
+      {/* TWO-COLUMN WORKSPACE */}
+      <div className='mt-6 grid flex-1 min-h-0 gap-6 lg:grid-cols-[380px_1fr] xl:grid-cols-[420px_1fr]'>
+        {/* LEFT: configuration */}
+        <div className='flex flex-col gap-6'>
+          <Card>
+            <CardHeader>
+              <CardTitle className='text-lg'>Configuración</CardTitle>
+              <Separator />
+            </CardHeader>
+            <CardContent className='space-y-6'>
+              {renderTipoSelector()}
 
-            <div className='overflow-hidden rounded-lg border'>{renderProductItemsTable()}</div>
+              <AnimatePresence mode='wait'>
+                {tipo === 'entrada' && renderEntryDetails()}
+                {tipo === 'salida' && renderExitDetails()}
+              </AnimatePresence>
+            </CardContent>
+          </Card>
 
-            <AnimatePresence mode='wait'>
-              {tipo === 'entrada' && renderEntryDetails()}
-              {tipo === 'salida' && renderExitDetails()}
-            </AnimatePresence>
+          <Card>
+            <CardHeader>
+              <CardTitle className='text-lg'>Escaneo</CardTitle>
+              <Separator />
+            </CardHeader>
+            <CardContent>
+              <MovementScanInput
+                tipo={tipo}
+                scanCode={scan.scanCode}
+                onScanCodeChange={scan.setScanCode}
+                searching={scan.searching}
+                onSubmit={handleScanSubmit}
+                scanInputRef={scan.scanInputRef}
+              />
+            </CardContent>
+          </Card>
+        </div>
 
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant='ghost'>Cerrar</Button>
-              </DialogClose>
-              <form.AppForm>
-                <form.SaveButton
-                  label='Guardar movimiento'
-                  disabled={hasClientWarnings || cache.initialLoading}
-                />
-              </form.AppForm>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        {/* RIGHT: live product table */}
+        <div className='flex min-h-0 min-w-0 flex-col gap-4'>
+          <div className='flex items-center justify-between'>
+            <h2 className='text-lg font-semibold'>Productos</h2>
+            <span className='text-sm text-muted-foreground'>
+              {items.length} {items.length === 1 ? 'producto' : 'productos'}
+            </span>
+          </div>
 
-      <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Descartar movimiento?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Los productos escaneados se perderán si cierras este formulario.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Conservar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setAlertOpen(false);
-                setOpen(false);
-              }}
-            >
-              Descartar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+          {cache.initialLoading && (
+            <div className='flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400'>
+              <Loader2 className='size-4 animate-spin' />
+              <span>Recuperando información de los productos iniciales...</span>
+            </div>
+          )}
+
+          <div className='min-h-0 flex-1 overflow-auto rounded-lg border'>
+            {renderProductItemsTable()}
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE ACTION BAR */}
+      <div className='mt-6 flex items-center justify-end gap-2 md:hidden'>
+        <Button type='button' variant='ghost' onClick={() => router.history.back()}>
+          Cancelar
+        </Button>
+        <form.AppForm>
+          <form.SaveButton
+            label='Guardar movimiento'
+            disabled={hasClientWarnings || cache.initialLoading}
+          />
+        </form.AppForm>
+      </div>
+    </form>
   );
 }

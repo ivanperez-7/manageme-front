@@ -16,7 +16,6 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 
 // COMPONENTES DEL PROYECTO
-import { AddMovementDialog } from '@/components/add-movement-dialog';
 import { AddProductDialog } from '@/components/add-product-dialog';
 import { DataTable } from '@/components/data-table';
 import { DateRangePicker } from '@/components/date-range-pickers';
@@ -120,19 +119,23 @@ const lotesColumns: ColumnDef<LoteResponse>[] = [
     id: 'actions',
     cell: ({ row }) => (
       <Tooltip>
-        <AddMovementDialog
-          trigger={
-            <TooltipTrigger asChild>
-              <Button variant='secondary' size='sm'>
-                <ArrowUpFromDot />
-              </Button>
-            </TooltipTrigger>
-          }
-          initialData={{
-            tipo: 'salida',
-            items: [{ producto_id: row.original.producto.id, cantidad: 0, lote_id: row.original.id }],
-          }}
-        />
+        <TooltipTrigger asChild>
+          <Button variant='secondary' size='sm' asChild>
+            <Link
+              to='/movements/new'
+              search={{
+                initialData: {
+                  tipo: 'salida',
+                  items: [
+                    { producto_id: row.original.producto.id, cantidad: 0, lote_id: row.original.id },
+                  ],
+                },
+              }}
+            >
+              <ArrowUpFromDot />
+            </Link>
+          </Button>
+        </TooltipTrigger>
         <TooltipContent>Registrar salida</TooltipContent>
       </Tooltip>
     ),
@@ -391,18 +394,20 @@ const ProductMovementsCard = () => {
     <Card className='mb-6'>
       <CardHeader className='grid items-center md:flex md:justify-between'>
         <CardTitle className='text-lg'>Movimientos</CardTitle>
-        <AddMovementDialog
-          trigger={
-            <Button size='sm'>
-              <ArrowDownToDot />
-              Registrar entrada
-            </Button>
-          }
-          initialData={{
-            tipo: 'entrada',
-            items: [{ producto_id: producto.id, cantidad: 0 }],
-          }}
-        />
+        <Button size='sm' asChild>
+          <Link
+            to='/movements/new'
+            search={{
+              initialData: {
+                tipo: 'entrada',
+                items: [{ producto_id: producto.id, cantidad: 0 }],
+              },
+            }}
+          >
+            <ArrowDownToDot />
+            Registrar entrada
+          </Link>
+        </Button>
       </CardHeader>
       <CardContent>
         <DateRangePicker

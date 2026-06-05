@@ -6,7 +6,6 @@ import { ArrowLeft, ArrowUpFromDot, CheckCircle, Gauge, Loader2, Printer, Trash2
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { AddMovementDialog } from '@/components/add-movement-dialog';
 import { AssignEquipoDialog } from '@/components/assign-equipo-dialog';
 import { DataTable } from '@/components/data-table';
 import { DateRangePicker } from '@/components/date-range-pickers';
@@ -192,18 +191,20 @@ const ClientMovementsCard = () => {
     <Card className='mb-6'>
       <CardHeader className='grid items-center md:flex md:justify-between'>
         <CardTitle>Movimientos de salida</CardTitle>{' '}
-        <AddMovementDialog
-          trigger={
-            <Button size='sm'>
-              <ArrowUpFromDot />
-              Registrar salida
-            </Button>
-          }
-          initialData={{
-            tipo: 'salida',
-            detalle_salida: { cliente_id: cliente.id },
-          }}
-        />
+        <Button size='sm' asChild>
+          <Link
+            to='/movements/new'
+            search={{
+              initialData: {
+                tipo: 'salida',
+                detalle_salida: { cliente_id: cliente.id },
+              },
+            }}
+          >
+            <ArrowUpFromDot />
+            Registrar salida
+          </Link>
+        </Button>
       </CardHeader>
       <CardContent>
         <DateRangePicker

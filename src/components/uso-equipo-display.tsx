@@ -70,7 +70,9 @@ export default function UsoEquipoDisplay({
         transition={{ duration: 0.15 }}
         className='space-y-1 text-sm'
       >
-        <span>{onlyEquipo.equipo_nombre}</span>
+        <span className='block truncate' title={onlyEquipo.equipo_nombre}>
+          {onlyEquipo.equipo_nombre}
+        </span>
         <div className='text-xs text-muted-foreground'>Uso: {onlyEquipo.contador_uso}</div>
       </motion.div>
     );

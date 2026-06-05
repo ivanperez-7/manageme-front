@@ -21,6 +21,7 @@ import { Route as AppActividadesRouteImport } from './routes/_app/actividades'
 import { Route as AppMovementsIndexRouteImport } from './routes/_app/movements/index'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients/index'
 import { Route as AppCatalogoIndexRouteImport } from './routes/_app/catalogo/index'
+import { Route as AppMovementsNewRouteImport } from './routes/_app/movements/new'
 import { Route as AppMovementsIdRouteImport } from './routes/_app/movements/$id'
 import { Route as AppClientsIdRouteImport } from './routes/_app/clients/$id'
 import { Route as AppCatalogoIdRouteImport } from './routes/_app/catalogo/$id'
@@ -84,6 +85,11 @@ const AppCatalogoIndexRoute = AppCatalogoIndexRouteImport.update({
   path: '/catalogo/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMovementsNewRoute = AppMovementsNewRouteImport.update({
+  id: '/movements/new',
+  path: '/movements/new',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMovementsIdRoute = AppMovementsIdRouteImport.update({
   id: '/movements/$id',
   path: '/movements/$id',
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/catalogo/$id': typeof AppCatalogoIdRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/movements/$id': typeof AppMovementsIdRoute
+  '/movements/new': typeof AppMovementsNewRoute
   '/catalogo': typeof AppCatalogoIndexRoute
   '/clients': typeof AppClientsIndexRoute
   '/movements': typeof AppMovementsIndexRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByTo {
   '/catalogo/$id': typeof AppCatalogoIdRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/movements/$id': typeof AppMovementsIdRoute
+  '/movements/new': typeof AppMovementsNewRoute
   '/catalogo': typeof AppCatalogoIndexRoute
   '/clients': typeof AppClientsIndexRoute
   '/movements': typeof AppMovementsIndexRoute
@@ -146,6 +154,7 @@ export interface FileRoutesById {
   '/_app/catalogo/$id': typeof AppCatalogoIdRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
   '/_app/movements/$id': typeof AppMovementsIdRoute
+  '/_app/movements/new': typeof AppMovementsNewRoute
   '/_app/catalogo/': typeof AppCatalogoIndexRoute
   '/_app/clients/': typeof AppClientsIndexRoute
   '/_app/movements/': typeof AppMovementsIndexRoute
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/catalogo/$id'
     | '/clients/$id'
     | '/movements/$id'
+    | '/movements/new'
     | '/catalogo'
     | '/clients'
     | '/movements'
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/catalogo/$id'
     | '/clients/$id'
     | '/movements/$id'
+    | '/movements/new'
     | '/catalogo'
     | '/clients'
     | '/movements'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/_app/catalogo/$id'
     | '/_app/clients/$id'
     | '/_app/movements/$id'
+    | '/_app/movements/new'
     | '/_app/catalogo/'
     | '/_app/clients/'
     | '/_app/movements/'
@@ -294,6 +306,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCatalogoIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/movements/new': {
+      id: '/_app/movements/new'
+      path: '/movements/new'
+      fullPath: '/movements/new'
+      preLoaderRoute: typeof AppMovementsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/movements/$id': {
       id: '/_app/movements/$id'
       path: '/movements/$id'
@@ -328,6 +347,7 @@ interface AppRouteChildren {
   AppCatalogoIdRoute: typeof AppCatalogoIdRoute
   AppClientsIdRoute: typeof AppClientsIdRoute
   AppMovementsIdRoute: typeof AppMovementsIdRoute
+  AppMovementsNewRoute: typeof AppMovementsNewRoute
   AppCatalogoIndexRoute: typeof AppCatalogoIndexRoute
   AppClientsIndexRoute: typeof AppClientsIndexRoute
   AppMovementsIndexRoute: typeof AppMovementsIndexRoute
@@ -343,6 +363,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCatalogoIdRoute: AppCatalogoIdRoute,
   AppClientsIdRoute: AppClientsIdRoute,
   AppMovementsIdRoute: AppMovementsIdRoute,
+  AppMovementsNewRoute: AppMovementsNewRoute,
   AppCatalogoIndexRoute: AppCatalogoIndexRoute,
   AppClientsIndexRoute: AppClientsIndexRoute,
   AppMovementsIndexRoute: AppMovementsIndexRoute,

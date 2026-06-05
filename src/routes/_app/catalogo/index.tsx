@@ -63,7 +63,8 @@ const columns: ColumnDef<ProductoResponse>[] = [
           {statusFromStock(row.getValue('cantidad_disponible'), row.original.min_stock)}
         </TooltipTrigger>
         <TooltipContent>
-          <span className='font-medium'>Min requerido</span>: {plural('unidad', row.original.min_stock)}
+          <span className='font-medium'>Min requerido</span>:{' '}
+          {plural('unidad', row.original.min_stock)}
         </TooltipContent>
       </Tooltip>
     ),
@@ -103,7 +104,13 @@ const columns: ColumnDef<ProductoResponse>[] = [
   },
 ];
 
-type CatalogoSearch = { text?: string; categoria?: number; marca?: number; equipo?: number; page?: number };
+type CatalogoSearch = {
+  text?: string;
+  categoria?: number;
+  marca?: number;
+  equipo?: number;
+  page?: number;
+};
 
 export const Route = createFileRoute('/_app/catalogo/')({
   staticData: { headerBreadcrumb: [{ label: 'Productos' }] },

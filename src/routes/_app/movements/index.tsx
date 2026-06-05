@@ -4,7 +4,6 @@ import { format } from 'date-fns';
 import { CheckCircle, EllipsisVertical, Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { AddMovementDialog } from '@/components/add-movement-dialog';
 import { DataTable } from '@/components/data-table';
 import { DateRangePicker } from '@/components/date-range-pickers';
 import { MovementsSkeleton } from '@/components/route-skeletons';
@@ -202,13 +201,11 @@ function MovementsListPage() {
       />
 
       <div className='fixed bottom-4 right-3 md:bottom-8 md:right-8'>
-        <AddMovementDialog
-          trigger={
-            <Button className='rounded-full' size='icon-lg' variant='default'>
-              <Plus />
-            </Button>
-          }
-        />
+        <Button className='rounded-full' size='icon-lg' variant='default' asChild>
+          <Link to='/movements/new'>
+            <Plus />
+          </Link>
+        </Button>
       </div>
     </div>
   );
