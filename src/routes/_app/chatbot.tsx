@@ -28,7 +28,7 @@ const suggestions = [
   '¿Qué productos tienen bajo stock?',
   '¿Cuál es el producto más caro?',
   '¿Qué proveedores tenemos registrados?',
-  '¿Cuántos clientes hay registrados?',
+  // '¿Cuántos clientes hay registrados?',
   // '¿Qué movimientos de entrada hubo recientemente?',
   // '¿Cuántas categorías de productos existen?',
   // '¿Qué equipos están disponibles?',
@@ -42,15 +42,15 @@ function ChatbotPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const sendMessage = async (text?: string) => {
-    const msg = text ?? input.trim();
-    if (!msg || loading) return;
+    const pregunta = text ?? input.trim();
+    if (!pregunta || loading) return;
 
     setInput('');
-    setMessages((prev) => [...prev, { role: 'user', content: msg }]);
+    setMessages((prev) => [...prev, { role: 'user', content: pregunta }]);
     setLoading(true);
 
     try {
-      const res = await withAuth.post(ENDPOINTS.chat, { pregunta: text });
+      const res = await withAuth.post(ENDPOINTS.chat, { pregunta });
       setMessages((prev) => [...prev, { role: 'assistant', content: res.data.respuesta ?? '' }]);
     } catch (error: unknown) {
       const detail =
@@ -80,12 +80,15 @@ function ChatbotPage() {
   };
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    const viewport = scrollRef.current?.querySelector<HTMLDivElement>(
+      '[data-slot="scroll-area-viewport"]'
+    );
+    viewport?.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
   return (
-    <div className='flex h-[calc(100dvh-8rem)] flex-col overflow-hidden'>
-      <div className='flex items-center gap-3 border-b px-6 py-4'>
+    <div className='flex h-full w-full flex-col overflow-hidden'>
+      <div className='flex items-center gap-3 border-b px-6'>
         <div className='relative'>
           <div className='flex items-center justify-center size-10 rounded-xl bg-primary/10 text-primary'>
             <Bot className='size-5' />
@@ -98,7 +101,7 @@ function ChatbotPage() {
         </div>
       </div>
 
-      <ScrollArea ref={scrollRef} className='flex-1 px-6 py-4'>
+      <ScrollArea ref={scrollRef} className='flex-1 min-h-0 min-w-0 px-6 py-4'>
         {messages.length === 0 && !loading && (
           <div className='flex h-full flex-col items-center justify-center gap-3 text-center'>
             <div className='flex items-center justify-center size-16 rounded-2xl bg-primary/5 text-primary'>
@@ -159,9 +162,10 @@ function ChatbotPage() {
           </Button>
         </form>
 
+        {/* Suggestion scrollbar */}
         <div className='min-w-0'>
-          <div className='overflow-x-auto scrollbar-none'>
-            <div className='flex w-max gap-2 pb-1'>
+          <div className='max-w-full scrollbar-none'>
+            <div className='flex gap-2 pb-1'>
               {suggestions.map((s) => (
                 <button
                   key={s}
@@ -233,7 +237,9 @@ function ErrorText({ detail }: { detail?: string }) {
           ))}
       </button>
       {detail && expandedError && (
-        <pre className='whitespace-pre-wrap bg-muted rounded-md p-3 text-xs text-red-500'>{detail}</pre>
+        <pre className='whitespace-pre-wrap bg-muted rounded-md p-3 text-xs text-red-500'>
+          {detail}
+        </pre>
       )}
     </div>
   );

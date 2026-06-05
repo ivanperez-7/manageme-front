@@ -1,7 +1,7 @@
 import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { formatDate } from 'date-fns';
-import { ArrowLeft, CheckCircle, Download, PackageOpen, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Download, Info, PackageOpen, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -22,22 +22,49 @@ import type { MovimientoItemResponse } from '@/lib/types';
 import { firstUpperCase, humanDate, humanTime } from '@/lib/utils';
 import { userStore } from '@/stores/userStore';
 
-const lotesColumns: ColumnDef<MovimientoItemResponse>[] = [
-  {
-    header: 'Producto',
-    cell: ({ row }) => (
-      <Link to='/catalogo/$id' params={{ id: String(row.original.producto.id) }} className='font-medium'>
-        {row.original.producto.codigo_interno}
-      </Link>
-    ),
-  },
-  { accessorKey: 'producto.descripcion', header: 'Descripción' },
-  { accessorKey: 'lote.codigo_lote', header: 'Código de lote asociado' },
-  {
-    header: 'Cantidad',
-    cell: ({ row }) => row.original.cantidad.toLocaleString('es-MX'),
-  },
-];
+const makeColumns = (tipo: 'entrada' | 'salida'): ColumnDef<MovimientoItemResponse>[] => {
+  const base: ColumnDef<MovimientoItemResponse>[] = [
+    {
+      header: 'Producto',
+      cell: ({ row }) => (
+        <Link
+          to='/catalogo/$id'
+          params={{ id: String(row.original.producto.id) }}
+          className='font-medium'
+        >
+          {row.original.producto.codigo_interno}
+        </Link>
+      ),
+    },
+    { accessorKey: 'producto.descripcion', header: 'Descripción' },
+    { accessorKey: 'lote.codigo_lote', header: 'Código de lote asociado' },
+    {
+      header: 'Cantidad',
+      cell: ({ row }) => row.original.cantidad.toLocaleString('es-MX'),
+    },
+  ];
+
+  if (tipo === 'salida') {
+    base.push(
+      {
+        header: 'Ant.',
+        cell: ({ row }) =>
+          row.original.cambio_anticipado ? (
+            <span className='text-green-600 font-medium'>✓</span>
+          ) : (
+            <span className='text-muted-foreground'>—</span>
+          ),
+      },
+      {
+        header: 'Motivo',
+        cell: ({ row }) =>
+          row.original.motivo_cambio ?? <span className='text-muted-foreground'>—</span>,
+      }
+    );
+  }
+
+  return base;
+};
 
 type Search = { itemsPage?: number };
 type MovimientoLoaderData = Awaited<ReturnType<typeof fetchMovimientoById>>;
@@ -75,6 +102,7 @@ function MovementDetailPage() {
 
   const detalleEntrada = movimiento.detalle_entrada;
   const detalleSalida = movimiento.detalle_salida;
+  const hasAnticipado = movimiento.items.some((i) => i.cambio_anticipado);
 
   const approveSalida = () => {
     if (isApproving) return;
@@ -138,6 +166,15 @@ function MovementDetailPage() {
         </div>
       </header>
 
+      {hasAnticipado && (
+        <div className='my-6 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400'>
+          <Info className='size-4 shrink-0' />
+          <span>
+            Este movimiento contiene productos marcados como cambio anticipado. Revisar detenidamente.
+          </span>
+        </div>
+      )}
+
       {/* INFORMACIÓN GENERAL */}
       <Card className='my-6'>
         <CardHeader>
@@ -179,8 +216,8 @@ function MovementDetailPage() {
                       <CheckCircle className='h-4 w-4' /> Sí
                     </span>
                     <span className='ml-4 text-sm text-muted-foreground'>
-                      {formatDate(new Date(movimiento.aprobado_fecha as string), 'dd/MM/yyyy HH:mm')} por{' '}
-                      {movimiento.user_aprueba?.full_name || '—'}
+                      {formatDate(new Date(movimiento.aprobado_fecha as string), 'dd/MM/yyyy HH:mm')}{' '}
+                      por {movimiento.user_aprueba?.full_name || '—'}
                     </span>
 
                     {movimiento.tipo === 'entrada' && (
@@ -278,7 +315,7 @@ function MovementDetailPage() {
         <CardContent>
           <DataTable
             data={movimiento.items}
-            columns={lotesColumns}
+            columns={makeColumns(movimiento.tipo)}
             transparent
             initialPage={itemsPage ?? 0}
             onChangePage={(pageIndex) =>

@@ -102,12 +102,24 @@ export type UserResponse = {
 };
 
 // ── MovimientoItem (keep zod schema) ──
-export const movimientoItemCreateSchema = z.object({
-  producto_id: z.number(),
-  cantidad: z.number().min(1),
-  lote_id: z.number().optional(),
-  equipo_cliente_id: z.number().optional(),
-});
+export const movimientoItemCreateSchema = z
+  .object({
+    producto_id: z.number(),
+    cantidad: z.number().min(1),
+    lote_id: z.number().optional(),
+    equipo_cliente_id: z.number().optional(),
+    cambio_anticipado: z.boolean().optional(),
+    motivo_cambio: z.string().nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.cambio_anticipado && !data.motivo_cambio?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Especifique el motivo del cambio anticipado',
+        path: ['motivo_cambio'],
+      });
+    }
+  });
 
 // ── DetalleEntrada (keep zod schema) ──
 export const detalleEntradaCreateSchema = z.object({
@@ -157,6 +169,8 @@ export type MovimientoItemResponse = {
   cantidad: number;
   lote_id?: number | undefined;
   equipo_cliente_id?: number | undefined;
+  cambio_anticipado: boolean;
+  motivo_cambio: string | null | undefined;
   id: number;
   producto: Pick<ProductoResponse, 'id' | 'codigo_interno' | 'descripcion'>;
   lote?: { id: number; codigo_lote: string; fecha_entrada: string } | undefined;

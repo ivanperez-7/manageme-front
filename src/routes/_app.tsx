@@ -45,7 +45,7 @@ function AppLayout() {
         <SidebarInset>
           <Toaster position='top-right' richColors theme={theme} />
           <SiteHeader />
-          <div className='p-4 md:pt-7 md:px-11'>
+          <div className='flex min-h-0 flex-1 flex-col p-4 md:pt-7 md:px-11'>
             <AnimatePresence mode='wait'>
               <motion.div
                 key={router.state.location.pathname}
@@ -53,6 +53,7 @@ function AppLayout() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
+                className='flex min-h-0 flex-1 flex-col'
               >
                 <Outlet />
               </motion.div>

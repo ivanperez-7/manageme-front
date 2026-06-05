@@ -142,11 +142,11 @@ export function AddMovementDialog({
     scan.handleScanSubmit(e, tipo, {
       onProductoScanned: (producto) => {
         cache.addProducto(producto);
-        form.pushFieldValue('items', { producto_id: producto.id, cantidad: 1 });
+        form.pushFieldValue('items', { producto_id: producto.id, cantidad: 1, cambio_anticipado: false, motivo_cambio: null });
       },
       onLoteScanned: (lote) => {
         cache.addLote(lote);
-        form.pushFieldValue('items', { producto_id: lote.producto.id, cantidad: 1, lote_id: lote.id });
+        form.pushFieldValue('items', { producto_id: lote.producto.id, cantidad: 1, lote_id: lote.id, cambio_anticipado: false, motivo_cambio: null });
       },
     });
   };
@@ -235,9 +235,9 @@ export function AddMovementDialog({
           <TableHead>Código</TableHead>
           <TableHead>Descripción</TableHead>
           <TableHead hidden={tipo !== 'salida'}>Lote</TableHead>
-          <TableHead>Cantidad</TableHead>
-          <TableHead hidden={!clienteId}>Equipo</TableHead>
-          <TableHead className='w-10' />
+        <TableHead>Cantidad</TableHead>
+        <TableHead hidden={!clienteId}>Equipo</TableHead>
+        <TableHead className='w-10' />
         </TableRow>
       </TableHeader>
 
@@ -265,7 +265,7 @@ export function AddMovementDialog({
 
             return (
               <AnimatePresence initial={false}>
-                {field.state.value.map(({ producto_id, lote_id }, index) => {
+                {field.state.value.map(({ producto_id, lote_id, cambio_anticipado }, index) => {
                   const producto = cache.productosMap[producto_id];
                   const lote = lote_id ? cache.lotesMap[lote_id] : undefined;
 
@@ -276,63 +276,107 @@ export function AddMovementDialog({
                     getMatchingEquipos(producto_id).length === 0;
 
                   return (
-                    <motion.tr
-                      key={`${producto_id}-${index}`}
-                      initial={{ opacity: 0, x: -12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 12, height: 0, padding: 0 }}
-                      transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.3), ease: 'easeOut' }}
-                      className={cn(
-                        'border-b transition-colors hover:bg-muted/50',
-                        noMatching && 'bg-destructive/10 hover:bg-destructive/15'
-                      )}
-                    >
-                      <TableCell>
-                        {isLoading ? <Skeleton className='h-5 w-20' /> : producto?.codigo_interno}
-                      </TableCell>
-                      <TableCell>
-                        {isLoading ? <Skeleton className='h-5 w-48' /> : producto?.descripcion}
-                      </TableCell>
-                      <TableCell hidden={tipo !== 'salida'}>
-                        {cache.initialLoading ? (
-                          <Skeleton className='h-5 w-28' />
-                        ) : (
-                          <span className='text-sm font-mono'>{lote?.codigo_lote ?? '—'}</span>
+                    <>
+                      <motion.tr
+                        key={`${producto_id}-${index}`}
+                        initial={{ opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 12, height: 0, padding: 0 }}
+                        transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.3), ease: 'easeOut' }}
+                        className={cn(
+                          'border-b transition-colors hover:bg-muted/50',
+                          noMatching && 'bg-destructive/10 hover:bg-destructive/15'
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <form.Field name={`items[${index}].cantidad`}>
-                          {(subfield) => (
-                            <Input
-                              className='h-8 w-20'
-                              ghost
-                              value={subfield.state.value}
-                              onChange={(e) => subfield.handleChange(Number(e.target.value))}
-                            />
+                      >
+                        <TableCell>
+                          {isLoading ? <Skeleton className='h-5 w-20' /> : producto?.codigo_interno}
+                        </TableCell>
+                        <TableCell>
+                          {isLoading ? <Skeleton className='h-5 w-48' /> : producto?.descripcion}
+                        </TableCell>
+                        <TableCell hidden={tipo !== 'salida'}>
+                          {cache.initialLoading ? (
+                            <Skeleton className='h-5 w-28' />
+                          ) : (
+                            <span className='text-sm font-mono'>{lote?.codigo_lote ?? '—'}</span>
                           )}
-                        </form.Field>
-                      </TableCell>
-                      <TableCell hidden={!clienteId}>
-                        {clientEquipos.loadingClientEquipos ? (
-                          <Skeleton className='h-5 w-24' />
-                        ) : (
-                          <form.AppField name={`items[${index}].equipo_cliente_id`}>
+                        </TableCell>
+                        <TableCell>
+                          <form.Field name={`items[${index}].cantidad`}>
                             {(subfield) => (
-                              <UsoEquipoDisplay
-                                matchingEquipos={getMatchingEquipos(producto_id)}
+                              <Input
+                                className='h-8 w-20'
+                                ghost
                                 value={subfield.state.value}
-                                onChange={subfield.handleChange}
+                                onChange={(e) => subfield.handleChange(Number(e.target.value))}
                               />
                             )}
-                          </form.AppField>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant='ghost' size='icon-sm' onClick={() => field.removeValue(index)}>
-                          <X />
-                        </Button>
-                      </TableCell>
-                    </motion.tr>
+                          </form.Field>
+                        </TableCell>
+                        <TableCell hidden={!clienteId}>
+                          {clientEquipos.loadingClientEquipos ? (
+                            <Skeleton className='h-5 w-24' />
+                          ) : (
+                            <form.AppField name={`items[${index}].equipo_cliente_id`}>
+                              {(subfield) => (
+                                <UsoEquipoDisplay
+                                  matchingEquipos={getMatchingEquipos(producto_id)}
+                                  value={subfield.state.value}
+                                  onChange={subfield.handleChange}
+                                />
+                              )}
+                            </form.AppField>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant='ghost' size='icon-sm' onClick={() => field.removeValue(index)}>
+                            <X />
+                          </Button>
+                        </TableCell>
+                      </motion.tr>
+                      {tipo === 'salida' && (
+                        <motion.tr
+                          key={`${producto_id}-${index}-ant`}
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className='border-b bg-muted/20'
+                        >
+                          <TableCell
+                            colSpan={4 + (tipo === 'salida' ? 1 : 0) + (clienteId ? 1 : 0)}
+                            className='py-2'
+                          >
+                            <div className='flex items-center gap-4 pl-4'>
+                              <form.Field name={`items[${index}].cambio_anticipado`}>
+                                {(subfield) => (
+                                  <label className='flex items-center gap-2 text-sm cursor-pointer select-none'>
+                                    <input
+                                      type='checkbox'
+                                      checked={subfield.state.value}
+                                      onChange={(e) => subfield.handleChange(e.target.checked)}
+                                      className='size-4 accent-primary'
+                                    />
+                                    Cambio anticipado
+                                  </label>
+                                )}
+                              </form.Field>
+                              <form.Field name={`items[${index}].motivo_cambio`}>
+                                {(subfield) => (
+                                  <Input
+                                    className={cn('h-8 w-64', !cambio_anticipado && 'hidden')}
+                                    ghost
+                                    value={subfield.state.value ?? ''}
+                                    onChange={(e) => subfield.handleChange(e.target.value || null)}
+                                    placeholder='Motivo del cambio anticipado...'
+                                  />
+                                )}
+                              </form.Field>
+                            </div>
+                          </TableCell>
+                        </motion.tr>
+                      )}
+                    </>
                   );
                 })}
               </AnimatePresence>
