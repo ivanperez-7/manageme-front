@@ -1,6 +1,6 @@
 import { createFileRoute, ErrorComponent, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { EllipsisVertical, FunnelX, Package2, Plus, Search } from 'lucide-react';
+import { Download, EllipsisVertical, FunnelX, Package2, Plus, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -26,9 +26,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 // OTRAS UTILIDADES
 import { fetchAllProductos } from '@/api/catalogo';
+import { ENDPOINTS } from '@/api/endpoints';
 import { useCatalogs } from '@/hooks/use-catalogs';
+import { downloadBlob } from '@/lib/download-blob';
 import type { ProductoResponse } from '@/lib/types';
 import { plural, statusFromStock } from '@/lib/utils';
+import { Spinner } from '@/components/ui/spinner';
 
 const columns: ColumnDef<ProductoResponse>[] = [
   { id: 'check', header: () => <Checkbox />, cell: () => <Checkbox /> },
@@ -135,6 +138,7 @@ function ProductListPage() {
   const navigate = Route.useNavigate();
 
   const { categorias, marcas, equipos } = useCatalogs();
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const [_localText, setLocalText] = useState(text);
   const [localText] = useDebounce(_localText, 800);
@@ -181,11 +185,30 @@ function ProductListPage() {
     navigate({ search: (prev) => ({ ...prev, text: localText }), replace: true });
   }, [localText]);
 
+  const downloadExistencias = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    await downloadBlob(ENDPOINTS.products.exportExistencias, 'existencias.xlsx');
+    setIsDownloading(false);
+  };
+
   return (
     <div className='space-y-4'>
-      <div className='space-y-1'>
-        <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>Buscar productos</h1>
-        <p className='text-muted-foreground'>Explora y administra el catálogo de productos.</p>
+      <div className='flex items-start justify-between gap-4'>
+        <div className='space-y-1'>
+          <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>Buscar productos</h1>
+          <p className='text-muted-foreground'>Explora y administra el catálogo de productos.</p>
+        </div>
+        <Button
+          variant='outline'
+          size='sm'
+          className='shrink-0'
+          onClick={downloadExistencias}
+          disabled={isDownloading}
+        >
+          {isDownloading ? <Spinner /> : <Download className='h-4 w-4' />}
+          Exportar existencias
+        </Button>
       </div>
       <div className='flex flex-col gap-2 items-stretch md:flex-row md:items-center'>
         <InputGroup>

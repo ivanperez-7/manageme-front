@@ -261,6 +261,16 @@ export type SucursalResponse = {
   activo: boolean;
 };
 
+export type ProductoRendimiento = {
+  producto_id: number;
+  codigo_interno: string;
+  descripcion: string;
+  vida_util: number | null;
+  ciclos: number;
+  uso_promedio: number;
+  ratio: number;
+};
+
 export type DashboardData = {
   stats: {
     productos: number;
@@ -300,4 +310,22 @@ export type AlertasRefrescarResponse = {
   creadas: number;
   resueltas: number;
   no_leidas: number;
+};
+
+// ── Reorden ──
+export type ReordenProducto = {
+  producto_id: number;
+  codigo_interno: string;
+  descripcion: string;
+  cantidad_disponible: number;
+  min_stock: number;
+  consumo_mensual: number | null;
+  dias_cobertura: number | null;
+  cantidad_sugerida: number;
+};
+
+export type ReordenProveedor = {
+  proveedor_id: number;
+  proveedor_nombre: string;
+  productos: ReordenProducto[];
 };

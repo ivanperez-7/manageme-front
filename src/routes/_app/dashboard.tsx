@@ -1,14 +1,17 @@
 import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
-import { Layers, Package2, Truck, Users } from 'lucide-react';
+import { useState } from 'react';
+import { Download, Layers, Package2, Truck, Users } from 'lucide-react';
 import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Legend,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -16,12 +19,15 @@ import {
 } from 'recharts';
 
 import { DataTable } from '@/components/data-table';
-import { DeficitProgress } from '@/components/deficit-progress';
 import { DashboardSkeleton } from '@/components/route-skeletons';
+import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { getDashboardData } from '@/api/dashboard';
-import type { DashboardData } from '@/lib/types';
+import { getDashboardData, getRendimientoData } from '@/api/dashboard';
+import { ENDPOINTS } from '@/api/endpoints';
+import { downloadBlob } from '@/lib/download-blob';
+import type { DashboardData, ProductoRendimiento } from '@/lib/types';
 
 const lowStockColumns: ColumnDef<DashboardData['productosBajos'][0]>[] = [
   {
@@ -34,17 +40,14 @@ const lowStockColumns: ColumnDef<DashboardData['productosBajos'][0]>[] = [
     ),
   },
   { accessorKey: 'categoria__nombre', header: 'Categoría' },
-  {
-    header: 'Stock',
-    cell: ({ row }) => (
-      <DeficitProgress value={row.original.cantidad_disponible} minRequired={row.original.min_stock} />
-    ),
-  },
 ];
 
 export const Route = createFileRoute('/_app/dashboard')({
   staticData: { headerBreadcrumb: [{ label: 'Dashboard' }] },
-  loader: getDashboardData,
+  loader: async () => {
+    const [dashboard, rendimiento] = await Promise.all([getDashboardData(), getRendimientoData()]);
+    return { ...dashboard, rendimiento };
+  },
   component: DashboardPage,
   pendingComponent: DashboardSkeleton,
   pendingMs: 200,
@@ -52,9 +55,17 @@ export const Route = createFileRoute('/_app/dashboard')({
 });
 
 function DashboardPage() {
-  const { stats, categoriasChart, movimientosChart, productosBajos, topProductosChart } =
+  const { stats, categoriasChart, movimientosChart, productosBajos, topProductosChart, rendimiento } =
     Route.useLoaderData();
   const router = useRouter();
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const downloadRendimiento = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    await downloadBlob(ENDPOINTS.products.exportRendimiento, 'rendimiento.xlsx');
+    setIsDownloading(false);
+  };
 
   return (
     <div className='space-y-4'>
@@ -139,8 +150,11 @@ function DashboardPage() {
         animate='visible'
         variants={{ visible: { transition: { staggerChildren: 0.1, delayChildren: 0.3 } } }}
       >
-        <motion.div variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } }}>
-          <Card>
+        <motion.div
+          className='h-full'
+          variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } }}
+        >
+          <Card className='h-full flex flex-col'>
             <CardHeader>
               <CardTitle>Productos por categoría</CardTitle>
             </CardHeader>
@@ -150,10 +164,23 @@ function DashboardPage() {
                   <XAxis dataKey='nombre' />
                   <YAxis />
                   <Tooltip
-                    cursor={{ fill: 'var(--muted)', stroke: 'var(--border)' }}
+                    cursor={{ fill: 'var(--muted)' }}
                     contentStyle={{
                       backgroundColor: 'var(--card)',
                       borderColor: 'var(--border)',
+                      fontSize: 13,
+                    }}
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const d = payload[0].payload as { nombre: string; cantidad: number };
+                      return (
+                        <div className='rounded-lg border bg-card p-3 shadow-sm text-sm space-y-1'>
+                          <p className='font-medium'>{d.nombre}</p>
+                          <p>
+                            Cantidad: <strong>{d.cantidad}</strong>
+                          </p>
+                        </div>
+                      );
                     }}
                   />
                   <Bar dataKey='cantidad' fill='#3b82f6' />
@@ -162,8 +189,11 @@ function DashboardPage() {
             </CardContent>
           </Card>
         </motion.div>
-        <motion.div variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } }}>
-          <Card>
+        <motion.div
+          className='h-full'
+          variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } }}
+        >
+          <Card className='h-full flex flex-col'>
             <CardHeader>
               <CardTitle>Productos con más movimientos en los últimos 30 días</CardTitle>
             </CardHeader>
@@ -173,10 +203,23 @@ function DashboardPage() {
                   <XAxis dataKey='codigo_interno' />
                   <YAxis />
                   <Tooltip
-                    cursor={{ fill: 'var(--muted)', stroke: 'var(--border)' }}
+                    cursor={{ fill: 'var(--muted)' }}
                     contentStyle={{
                       backgroundColor: 'var(--card)',
                       borderColor: 'var(--border)',
+                      fontSize: 13,
+                    }}
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const d = payload[0].payload as DashboardData['topProductosChart'][0];
+                      return (
+                        <div className='rounded-lg border bg-card p-3 shadow-sm text-sm space-y-1'>
+                          <p className='font-medium'>{d.codigo_interno}</p>
+                          <p>
+                            Movimientos: <strong>{d.total_movimientos}</strong>
+                          </p>
+                        </div>
+                      );
                     }}
                   />
                   <Bar
@@ -205,8 +248,11 @@ function DashboardPage() {
         animate='visible'
         variants={{ visible: { transition: { staggerChildren: 0.1, delayChildren: 0.5 } } }}
       >
-        <motion.div variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } }}>
-          <Card>
+        <motion.div
+          className='h-full'
+          variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } }}
+        >
+          <Card className='h-full flex flex-col'>
             <CardHeader>
               <CardTitle>Movimientos en los últimos 30 días</CardTitle>
             </CardHeader>
@@ -222,6 +268,23 @@ function DashboardPage() {
                     contentStyle={{
                       backgroundColor: 'var(--card)',
                       borderColor: 'var(--border)',
+                      fontSize: 13,
+                    }}
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload?.length) return null;
+                      const ent = payload.find((p) => p.dataKey === 'entradas');
+                      const sal = payload.find((p) => p.dataKey === 'salidas');
+                      return (
+                        <div className='rounded-lg border bg-card p-3 shadow-sm text-sm space-y-1'>
+                          <p className='font-medium'>{label}</p>
+                          <p style={{ color: '#3b82f6' }}>
+                            Entradas: <strong>{ent?.value}</strong>
+                          </p>
+                          <p style={{ color: '#10b981' }}>
+                            Salidas: <strong>{sal?.value}</strong>
+                          </p>
+                        </div>
+                      );
                     }}
                   />
                   <Line type='monotone' dataKey='entradas' stroke='#3b82f6' strokeWidth={2} />
@@ -231,17 +294,122 @@ function DashboardPage() {
             </CardContent>
           </Card>
         </motion.div>
-        <motion.div variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } }}>
-          <Card>
+        <motion.div
+          className='h-full'
+          variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } }}
+        >
+          <Card className='h-full flex flex-col'>
             <CardHeader>
               <CardTitle>Productos con bajo inventario</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className='flex-1 min-h-0'>
               <DataTable transparent data={productosBajos} columns={lowStockColumns} pageSize={5} />
             </CardContent>
             <CardFooter>
               <p className='text-sm text-muted-foreground'>
                 Haga clic en un producto para ver los detalles de este.
+              </p>
+            </CardFooter>
+          </Card>
+        </motion.div>
+      </motion.div>
+
+      <motion.div
+        className='grid lg:grid-cols-2 gap-6'
+        initial='hidden'
+        animate='visible'
+        variants={{ visible: { transition: { staggerChildren: 0.1, delayChildren: 0.7 } } }}
+      >
+        <motion.div
+          className='lg:col-span-2'
+          variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } }}
+        >
+          <Card>
+            <CardHeader className='grid items-center md:flex md:justify-between'>
+              <CardTitle>Rendimiento de productos</CardTitle>
+              <Button
+                variant='outline'
+                size='sm'
+                className='shrink-0 self-start sm:self-auto'
+                onClick={downloadRendimiento}
+                disabled={isDownloading}
+              >
+                {isDownloading ? <Spinner /> : <Download className='h-4 w-4' />}
+                Exportar rendimiento
+              </Button>
+            </CardHeader>
+            <CardContent className='h-[350px]'>
+              <ResponsiveContainer width='100%' height='100%'>
+                <BarChart data={rendimiento} margin={{ bottom: 60, left: 0, right: 0 }}>
+                  <XAxis
+                    dataKey='codigo_interno'
+                    angle={-30}
+                    textAnchor='end'
+                    tick={{ fontSize: 11 }}
+                    interval={0}
+                  />
+                  <YAxis
+                    domain={[0, 'auto']}
+                    tick={{ fontSize: 12 }}
+                    label={{
+                      value: 'Ratio',
+                      angle: -90,
+                      position: 'insideLeft',
+                      style: { fontSize: 12 },
+                    }}
+                  />
+                  <ReferenceLine
+                    y={1}
+                    stroke='#ef4444'
+                    strokeDasharray='4 4'
+                    label={{ value: 'Esperado (1.0)', position: 'right', fontSize: 11 }}
+                  />
+                  <Tooltip
+                    cursor={{ fill: 'var(--muted)' }}
+                    contentStyle={{
+                      backgroundColor: 'var(--card)',
+                      borderColor: 'var(--border)',
+                      fontSize: 13,
+                    }}
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const d = payload[0].payload as ProductoRendimiento;
+                      return (
+                        <div className='rounded-lg border bg-card p-3 shadow-sm text-sm space-y-1'>
+                          <p className='font-medium'>
+                            {d.codigo_interno} — {d.descripcion}
+                          </p>
+                          <p>
+                            Vida útil: <strong>{d.vida_util ?? '—'}</strong>
+                          </p>
+                          <p>
+                            Ciclos: <strong>{d.ciclos}</strong>
+                          </p>
+                          <p>
+                            Uso promedio: <strong>{d.uso_promedio}</strong>
+                          </p>
+                          <p>
+                            Ratio: <strong>{d.ratio.toFixed(2)}</strong>
+                          </p>
+                        </div>
+                      );
+                    }}
+                  />
+                  <Bar dataKey='ratio' radius={[4, 4, 0, 0]}>
+                    {rendimiento.map((entry, idx) => (
+                      <Cell key={idx} fill={entry.ratio < 1 ? '#ef4444' : '#10b981'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+            <CardFooter className='flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between'>
+              <p className='text-sm text-muted-foreground leading-relaxed'>
+                Para cada producto se calcula el uso real consumido entre cada entrega de pieza
+                (ciclo).
+                <strong> Ratio</strong> = uso promedio / vida útil esperada. Un ratio &lt; 1 (rojo)
+                indica que la pieza se consume antes de lo esperado (rinde menos); ratio &gt; 1 (verde)
+                indica que dura más de lo esperado.
               </p>
             </CardFooter>
           </Card>

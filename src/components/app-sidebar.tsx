@@ -29,7 +29,7 @@ export function AppSidebar({
   loadingLogout,
   ...props
 }: {
-  onLogout: React.MouseEventHandler<HTMLDivElement>;
+  onLogout: () => void;
   loadingLogout: boolean;
 } & React.ComponentProps<typeof Sidebar>) {
   const { setOpenMobile } = useSidebar();

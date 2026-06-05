@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Package2,
   Printer,
+  RefreshCw,
   Sparkles,
   TruckIcon,
 } from 'lucide-react';
@@ -42,7 +43,15 @@ const navigation: NavSection[] = [
   },
   {
     title: 'Movimientos',
-    items: [{ to: '/movements', content: 'Ver movimientos', icon: <ArrowLeftRight /> }],
+    items: [
+      { to: '/movements', content: 'Ver movimientos', icon: <ArrowLeftRight /> },
+      {
+        to: '/reorden',
+        content: 'Pedidos sugeridos',
+        icon: <RefreshCw />,
+        canRender: (user) => user.profile?.rol === 'admin',
+      },
+    ],
   },
   {
     title: 'Sistema',

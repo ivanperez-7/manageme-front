@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSuppliersRouteImport } from './routes/_app/suppliers'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppReordenRouteImport } from './routes/_app/reorden'
 import { Route as AppEquiposRouteImport } from './routes/_app/equipos'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppChatbotRouteImport } from './routes/_app/chatbot'
@@ -48,6 +49,11 @@ const AppSuppliersRoute = AppSuppliersRouteImport.update({
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReordenRoute = AppReordenRouteImport.update({
+  id: '/reorden',
+  path: '/reorden',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEquiposRoute = AppEquiposRouteImport.update({
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/chatbot': typeof AppChatbotRoute
   '/dashboard': typeof AppDashboardRoute
   '/equipos': typeof AppEquiposRoute
+  '/reorden': typeof AppReordenRoute
   '/settings': typeof AppSettingsRoute
   '/suppliers': typeof AppSuppliersRoute
   '/catalogo/$id': typeof AppCatalogoIdRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/chatbot': typeof AppChatbotRoute
   '/dashboard': typeof AppDashboardRoute
   '/equipos': typeof AppEquiposRoute
+  '/reorden': typeof AppReordenRoute
   '/settings': typeof AppSettingsRoute
   '/suppliers': typeof AppSuppliersRoute
   '/catalogo/$id': typeof AppCatalogoIdRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/_app/chatbot': typeof AppChatbotRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/equipos': typeof AppEquiposRoute
+  '/_app/reorden': typeof AppReordenRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/suppliers': typeof AppSuppliersRoute
   '/_app/catalogo/$id': typeof AppCatalogoIdRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/chatbot'
     | '/dashboard'
     | '/equipos'
+    | '/reorden'
     | '/settings'
     | '/suppliers'
     | '/catalogo/$id'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/chatbot'
     | '/dashboard'
     | '/equipos'
+    | '/reorden'
     | '/settings'
     | '/suppliers'
     | '/catalogo/$id'
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '/_app/chatbot'
     | '/_app/dashboard'
     | '/_app/equipos'
+    | '/_app/reorden'
     | '/_app/settings'
     | '/_app/suppliers'
     | '/_app/catalogo/$id'
@@ -255,6 +267,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reorden': {
+      id: '/_app/reorden'
+      path: '/reorden'
+      fullPath: '/reorden'
+      preLoaderRoute: typeof AppReordenRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/equipos': {
@@ -342,6 +361,7 @@ interface AppRouteChildren {
   AppChatbotRoute: typeof AppChatbotRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppEquiposRoute: typeof AppEquiposRoute
+  AppReordenRoute: typeof AppReordenRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSuppliersRoute: typeof AppSuppliersRoute
   AppCatalogoIdRoute: typeof AppCatalogoIdRoute
@@ -358,6 +378,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppChatbotRoute: AppChatbotRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppEquiposRoute: AppEquiposRoute,
+  AppReordenRoute: AppReordenRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSuppliersRoute: AppSuppliersRoute,
   AppCatalogoIdRoute: AppCatalogoIdRoute,

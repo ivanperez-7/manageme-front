@@ -17,6 +17,7 @@ import UserTag from '@/components/user-tag';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { fetchMovimientoById } from '@/api/movimientos';
+import { downloadBlob } from '@/lib/download-blob';
 import { withAuth } from '@/lib/auth';
 import type { MovimientoItemResponse } from '@/lib/types';
 import { firstUpperCase, humanDate, humanTime } from '@/lib/utils';
@@ -125,30 +126,11 @@ function MovementDetailPage() {
   const downloadEtiquetas = async () => {
     if (isDownloading) return;
     setIsDownloading(true);
-
-    await withAuth
-      .get(ENDPOINTS.movimientos.etiquetas(movimiento.id), { responseType: 'blob' })
-      .then((res) => res.data as Blob)
-      .then((data) => {
-        const url = URL.createObjectURL(data);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `etiquetas-entrada-${movimiento.id}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      })
-      .catch(async (error) => {
-        let msg = 'No se pudieron descargar las etiquetas';
-        if (error?.response?.data instanceof Blob)
-          try {
-            const body = JSON.parse(await error.response.data.text());
-            msg = body.detail || msg;
-          } catch {}
-        toast.error(msg);
-      })
-      .finally(() => setIsDownloading(false));
+    await downloadBlob(
+      ENDPOINTS.movimientos.etiquetas(movimiento.id),
+      `etiquetas-entrada-${movimiento.id}.pdf`
+    );
+    setIsDownloading(false);
   };
 
   return (

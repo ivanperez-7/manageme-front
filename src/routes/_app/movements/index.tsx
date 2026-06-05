@@ -1,7 +1,7 @@
 import { createFileRoute, ErrorComponent, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { CheckCircle, EllipsisVertical, Plus, Search } from 'lucide-react';
+import { CheckCircle, Download, EllipsisVertical, Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { DataTable } from '@/components/data-table';
@@ -22,8 +22,11 @@ import { Label } from '@/components/ui/label';
 import UserTag from '@/components/user-tag';
 
 import { fetchMovimientos } from '@/api/movimientos';
+import { ENDPOINTS } from '@/api/endpoints';
+import { downloadBlob } from '@/lib/download-blob';
 import type { MovimientoResponse } from '@/lib/types';
 import { humanDate, humanTime } from '@/lib/utils';
+import { Spinner } from '@/components/ui/spinner';
 
 type MovimientoSearch = { fechaInicio?: string; fechaFin?: string; page?: number };
 
@@ -128,6 +131,17 @@ function MovementsListPage() {
   const navigate = Route.useNavigate();
 
   const [search, setSearch] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const downloadMovimientos = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    await downloadBlob(ENDPOINTS.movimientos.exportMovimientos, 'movimientos.xlsx', {
+      fechaInicio,
+      fechaFin,
+    });
+    setIsDownloading(false);
+  };
   const [filterEntrada, setFilterEntrada] = useState(true);
   const [filterSalida, setFilterSalida] = useState(true);
 
@@ -170,25 +184,37 @@ function MovementsListPage() {
         </div>
       </div>
 
-      <DateRangePicker
-        minDate={oldestDate ? new Date(oldestDate) : undefined}
-        defaultStartDate={fechaInicio ? new Date(fechaInicio) : undefined}
-        defaultEndDate={fechaFin ? new Date(fechaFin) : undefined}
-        onStartDateChange={(date) =>
-          navigate({
-            search: (prev) => ({ ...prev, fechaInicio: format(date, 'yyyy-MM-dd') }),
-            replace: true,
-            resetScroll: false,
-          })
-        }
-        onEndDateChange={(date) =>
-          navigate({
-            search: (prev) => ({ ...prev, fechaFin: format(date, 'yyyy-MM-dd') }),
-            replace: true,
-            resetScroll: false,
-          })
-        }
-      />
+      <div className='flex flex-col sm:flex-row gap-4 items-start sm:items-center'>
+        <DateRangePicker
+          minDate={oldestDate ? new Date(oldestDate) : undefined}
+          defaultStartDate={fechaInicio ? new Date(fechaInicio) : undefined}
+          defaultEndDate={fechaFin ? new Date(fechaFin) : undefined}
+          onStartDateChange={(date) =>
+            navigate({
+              search: (prev) => ({ ...prev, fechaInicio: format(date, 'yyyy-MM-dd') }),
+              replace: true,
+              resetScroll: false,
+            })
+          }
+          onEndDateChange={(date) =>
+            navigate({
+              search: (prev) => ({ ...prev, fechaFin: format(date, 'yyyy-MM-dd') }),
+              replace: true,
+              resetScroll: false,
+            })
+          }
+        />
+
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={downloadMovimientos}
+          disabled={isDownloading}
+        >
+          {isDownloading ? <Spinner /> : <Download className='h-4 w-4' />}
+          Exportar
+        </Button>
+      </div>
 
       <DataTable
         columns={columns}

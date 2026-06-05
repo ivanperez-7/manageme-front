@@ -17,9 +17,12 @@ export const ENDPOINTS = {
     detail: (id: IdLike) => `/organizacion/users/${id}/`,
   },
   dashboard: '/productos/dashboard/',
+  rendimiento: '/productos/rendimiento/',
   products: {
     list: '/productos/productos/',
     detail: (id: IdLike) => `/productos/productos/${id}/`,
+    exportExistencias: '/productos/exportar/existencias/',
+    exportRendimiento: '/productos/exportar/rendimiento/',
   },
   lotes: {
     list: '/productos/lotes/',
@@ -47,6 +50,7 @@ export const ENDPOINTS = {
     list: '/movimientos/movimientos/',
     detail: (id: IdLike) => `/movimientos/movimientos/${id}/`,
     etiquetas: (id: IdLike) => `/movimientos/movimientos/${id}/etiquetas/`,
+    exportMovimientos: '/movimientos/movimientos/exportar/',
   },
   sysvars: {
     list: '/system/configuracion/',
@@ -60,4 +64,8 @@ export const ENDPOINTS = {
     detail: (id: IdLike) => `/organizacion/sucursales/${id}/`,
   },
   chat: '/chat/',
+  reorden: {
+    sugerencias: '/productos/reorden/',
+    exportReorden: '/productos/exportar/reorden/',
+  },
 } as const;

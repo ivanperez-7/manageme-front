@@ -384,6 +384,48 @@ export const SettingsSkeleton = () => (
   </div>
 );
 
+export const ReordenSkeleton = () => (
+  <div className='space-y-4'>
+    <div className='space-y-1'>
+      <Skeleton className='h-8 w-48' />
+      <Skeleton className='h-4 w-64' />
+    </div>
+    <div className='flex gap-4'>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Card key={i} className='flex-1'>
+          <CardHeader className='pb-2'>
+            <Skeleton className='h-4 w-20' />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className='h-7 w-16' />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+    {Array.from({ length: 3 }).map((_, i) => (
+      <Card key={i}>
+        <CardHeader>
+          <Skeleton className='h-5 w-56' />
+        </CardHeader>
+        <CardContent className='space-y-2'>
+          <div className='flex gap-4 p-2 border-b'>
+            {Array.from({ length: 7 }).map((_, j) => (
+              <Skeleton key={j} className='h-4 flex-1' />
+            ))}
+          </div>
+          {Array.from({ length: 3 }).map((_, j) => (
+            <div key={j} className='flex gap-4 p-2'>
+              {Array.from({ length: 7 }).map((_, k) => (
+                <Skeleton key={k} className='h-4 flex-1' />
+              ))}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+);
+
 export const ClientDetailSkeleton = () => (
   <div className='space-y-4'>
     <div className='flex items-center gap-4'>
