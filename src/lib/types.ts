@@ -134,6 +134,7 @@ export const detalleEntradaCreateSchema = z.object({
 export const detalleSalidaCreateSchema = z.object({
   cliente_id: z.number().gt(0, 'Seleccione un cliente válido'),
   tecnico: z.string().nullable().optional(),
+  subtipo: z.enum(['venta', 'renta']),
 });
 
 // ── Movimiento (keep zod schema) ──
@@ -159,6 +160,32 @@ export const movimientoCreateSchema = z
         message: 'Detalle de salida requerido',
         path: ['detalle_salida'],
       });
+      return;
+    }
+    if (data.tipo === 'salida' && data.detalle_salida) {
+      const subtipo = data.detalle_salida.subtipo;
+      if (subtipo === 'renta') {
+        data.items.forEach((item, idx) => {
+          if (!item.equipo_cliente_id) {
+            ctx.addIssue({
+              code: 'custom',
+              message: 'Los productos para renta requieren un equipo del cliente',
+              path: [`items[${idx}].equipo_cliente_id`],
+            });
+          }
+        });
+      }
+      if (subtipo === 'venta') {
+        data.items.forEach((item, idx) => {
+          if (item.cambio_anticipado) {
+            ctx.addIssue({
+              code: 'custom',
+              message: 'Cambio anticipado solo aplica a renta',
+              path: [`items[${idx}].cambio_anticipado`],
+            });
+          }
+        });
+      }
     }
   });
 
@@ -186,6 +213,7 @@ type DetalleEntradaResponse = {
 type DetalleSalidaResponse = {
   cliente_id: number;
   tecnico: string | null | undefined;
+  subtipo: 'venta' | 'renta';
   id: number;
   cliente: ClienteResponse;
 };

@@ -84,6 +84,9 @@ function AddMovementPage() {
   const clienteId = useStore(form.store, ({ values }) =>
     tipo === 'salida' ? values.detalle_salida?.cliente_id : undefined
   );
+  const subtipo = useStore(form.store, ({ values }) =>
+    tipo === 'salida' ? values.detalle_salida?.subtipo : undefined
+  );
 
   useEffect(() => {
     if (!clienteId) return;
@@ -131,6 +134,7 @@ function AddMovementPage() {
       form.setFieldValue('detalle_salida', {
         cliente_id: 0,
         tecnico: '',
+        subtipo: 'venta',
       });
     }
     form.setFieldValue('items', []);
@@ -147,8 +151,11 @@ function AddMovementPage() {
   );
 
   const hasClientWarnings = useMemo(
-    () => !!clienteId && items.some(({ producto_id }) => getMatchingEquipos(producto_id).length === 0),
-    [clienteId, items, getMatchingEquipos]
+    () =>
+      subtipo === 'renta' &&
+      !!clienteId &&
+      items.some(({ producto_id }) => getMatchingEquipos(producto_id).length === 0),
+    [subtipo, clienteId, items, getMatchingEquipos]
   );
 
   const renderTipoSelector = () => (
@@ -204,7 +211,7 @@ function AddMovementPage() {
           <TableHead>Descripción</TableHead>
           <TableHead hidden={tipo !== 'salida'}>Lote</TableHead>
           <TableHead>Cantidad</TableHead>
-          <TableHead className='w-56' hidden={!clienteId}>
+          <TableHead className='w-56' hidden={!clienteId || subtipo === 'venta'}>
             Equipo
           </TableHead>
           <TableHead className='w-10' />
@@ -218,7 +225,7 @@ function AddMovementPage() {
               return (
                 <TableRow>
                   <TableCell
-                    colSpan={4 + (tipo === 'salida' ? 1 : 0) + (clienteId ? 1 : 0)}
+                    colSpan={4 + (tipo === 'salida' ? 1 : 0) + (clienteId && subtipo !== 'venta' ? 1 : 0)}
                     className='p-10'
                   >
                     <Empty>
@@ -292,7 +299,7 @@ function AddMovementPage() {
                         </TableCell>
                         <TableCell
                           className='w-56 max-w-56 [&_button]:w-full [&_button]:min-w-0'
-                          hidden={!clienteId}
+                          hidden={!clienteId || subtipo === 'venta'}
                         >
                           {clientEquipos.loadingClientEquipos ? (
                             <Skeleton className='h-5 w-24' />
@@ -318,7 +325,7 @@ function AddMovementPage() {
                           </Button>
                         </TableCell>
                       </motion.tr>
-                      {tipo === 'salida' && (
+                      {tipo === 'salida' && subtipo === 'renta' && (
                         <motion.tr
                           key={`${producto_id}-${index}-ant`}
                           initial={{ opacity: 0, height: 0 }}
@@ -403,6 +410,31 @@ function AddMovementPage() {
     >
       <FieldSet>
         <FieldGroup className='grid grid-cols-1 gap-4'>
+          <form.Field name='detalle_salida.subtipo'>
+            {(field) => (
+              <Field>
+                <FieldLabel>Tipo de salida</FieldLabel>
+                <div className='flex bg-muted rounded-lg p-1'>
+                  {(['venta', 'renta'] as const).map((value) => (
+                    <button
+                      key={value}
+                      type='button'
+                      className={cn(
+                        'flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
+                        field.state.value === value
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                      onClick={() => field.handleChange(value)}
+                    >
+                      {value === 'venta' ? 'Venta' : 'Renta'}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            )}
+          </form.Field>
+
           <form.AppField name='detalle_salida.cliente_id'>
             {(field) => (
               <field.NumberSelectField

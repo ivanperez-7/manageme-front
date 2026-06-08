@@ -282,6 +282,10 @@ function MovementDetailPage() {
                 </Link>
               </span>
               <span>
+                <p className='text-sm text-muted-foreground'>Tipo de salida</p>{' '}
+                {detalleSalida.subtipo === 'venta' ? 'Venta' : 'Renta'}
+              </span>
+              <span>
                 <p className='text-sm text-muted-foreground'>Técnico</p> {detalleSalida.tecnico || '—'}
               </span>
             </div>

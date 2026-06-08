@@ -197,7 +197,7 @@ const ClientMovementsCard = () => {
             search={{
               initialData: {
                 tipo: 'salida',
-                detalle_salida: { cliente_id: cliente.id },
+                detalle_salida: { cliente_id: cliente.id, subtipo: 'venta' },
               },
             }}
           >
