@@ -1,12 +1,8 @@
 import { Store } from '@tanstack/store';
 
-export const authStore = new Store({ accessToken: '', loggedOut: false });
+export const authStore = new Store({ accessToken: '' });
 
 export const authActions = {
-  setAccessToken: (token: string) =>
-    authStore.setState((state) => ({ ...state, accessToken: token, loggedOut: false })),
-  clear: () =>
-    authStore.setState((state) => ({ ...state, accessToken: '' })),
-  setLoggedOut: () =>
-    authStore.setState((state) => ({ ...state, accessToken: '', loggedOut: true })),
+  setAccessToken: (token: string) => authStore.setState({ accessToken: token }),
+  clear: () => authStore.setState({ accessToken: '' }),
 };
