@@ -17,7 +17,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { API_BASE, ENDPOINTS } from '@/api/endpoints';
 import { getSucursales } from '@/api/organizacion';
 import { useAppForm } from '@/hooks/use-app-form';
-import { authGuardSilent, withAuth } from '@/lib/auth';
+import { checkAuth, withAuth } from '@/lib/auth';
 import { authActions } from '@/stores/authStore';
 import { userActions } from '@/stores/userStore';
 
@@ -29,7 +29,7 @@ const loginSchema = z.object({
 
 export const Route = createFileRoute('/login')({
   beforeLoad: async () => {
-    const logged = await authGuardSilent();
+    const logged = await checkAuth();
     if (logged) throw redirect({ to: '/dashboard' });
   },
   loader: async () => await getSucursales(),
@@ -105,6 +105,7 @@ function LoginForm() {
       onChange: loginSchema,
     },
     onSubmit: async ({ value }) => {
+      Cookies.set('branch', value.branch.toString(), { path: '/' });
       try {
         await axios
           .post(ENDPOINTS.auth.login, value, { baseURL: API_BASE, withCredentials: true })
@@ -199,13 +200,7 @@ function LoginForm() {
                   <FieldLabel htmlFor={field.name}>Sucursal</FieldLabel>
                   <div className='relative'>
                     <Building2 className='absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none z-10' />
-                    <Select
-                      value={String(field.state.value || '')}
-                      onValueChange={(v) => {
-                        field.handleChange(Number(v));
-                        Cookies.set('branch', v, { path: '/' });
-                      }}
-                    >
+                    <Select value={String(field.state.value || '')}>
                       <SelectTrigger id={field.name} className='pl-9 w-full'>
                         <SelectValue placeholder='Pensiones' />
                       </SelectTrigger>

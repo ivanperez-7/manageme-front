@@ -39,16 +39,15 @@ export function authRoleGuard(allowedRoles: string[]) {
   }
 }
 
-export async function authGuard() {
+export async function checkAuth(): Promise<boolean> {
   const token = authStore.state.accessToken;
+  if (token && !isTokenExpired(token)) return true;
+  return await tryRefresh();
+}
 
-  if (token && !isTokenExpired(token)) return;
+export async function authGuard() {
+  if (await checkAuth()) return;
 
-  // If token expired or missing, try to refresh
-  const refreshed = await tryRefresh();
-  if (refreshed) return;
-
-  // If refresh failed, force logout
   authActions.clear();
   throw redirect({
     to: '/login',
@@ -57,18 +56,10 @@ export async function authGuard() {
   });
 }
 
-export async function authGuardSilent() {
-  const token = authStore.state.accessToken;
-  if (token && !isTokenExpired(token)) return true;
-
-  const refreshed = await tryRefresh();
-  return !!refreshed;
-}
-
 export const withAuth = axios.create({
   baseURL: API_BASE,
   withCredentials: true,
-  headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+  headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
 });
 
 withAuth.interceptors.request.use((config) => {

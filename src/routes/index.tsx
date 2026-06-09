@@ -3,11 +3,11 @@ import { useEffect } from 'react';
 
 import { Spinner } from '@/components/ui/spinner';
 
-import { authGuardSilent } from '@/lib/auth';
+import { checkAuth } from '@/lib/auth';
 
 export const Route = createFileRoute('/')({
   loader: async () => {
-    const logged = await authGuardSilent();
+    const logged = await checkAuth();
     return { logged };
   },
   pendingMs: 200,
