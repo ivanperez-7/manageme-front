@@ -1,10 +1,10 @@
 import { useMask } from '@react-input/mask';
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { ArrowLeft, ArrowUpFromDot, CheckCircle, Gauge, Loader2, Printer, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { AssignEquipoDialog } from '@/components/assign-equipo-dialog';
@@ -34,9 +34,8 @@ import UserTag from '@/components/user-tag';
 import { ENDPOINTS } from '@/api/endpoints';
 import { fetchMovimientos } from '@/api/movimientos';
 import { fetchClientById } from '@/api/organizacion';
-
-type ClienteLoaderData = Awaited<ReturnType<typeof fetchClientById>>;
 import { useAppForm } from '@/hooks/use-app-form';
+import { useCatalogs } from '@/hooks/use-catalogs';
 import { withAuth } from '@/lib/auth';
 import {
   type ClienteResponse,
@@ -45,6 +44,8 @@ import {
   type MovimientoResponse,
 } from '@/lib/types';
 import { humanDate, humanTime } from '@/lib/utils';
+
+type ClienteLoaderData = Awaited<ReturnType<typeof fetchClientById>>;
 
 const movementsColumns: ColumnDef<MovimientoResponse>[] = [
   {
@@ -108,6 +109,7 @@ export const Route = createFileRoute('/_app/clients/$id')({
 
 function ClienteDetailPage() {
   const { cliente, equiposCliente } = Route.useLoaderData();
+  const { reloadCatalogs } = useCatalogs();
   const router = useRouter();
 
   return (
@@ -120,7 +122,13 @@ function ClienteDetailPage() {
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-[400px_1fr] gap-6'>
-        <ClienteForm cliente={cliente} onSuccess={router.invalidate} />
+        <ClienteForm
+          cliente={cliente}
+          onSuccess={() => {
+            router.invalidate();
+            reloadCatalogs(['clientes']);
+          }}
+        />
 
         <Card>
           <CardHeader>
@@ -409,7 +417,9 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
             <Gauge className='size-3.5' />
             <span>
               Contador de uso:{' '}
-              <strong className='text-foreground'>{equipo.contador_uso.toLocaleString('es-MX')}</strong>
+              <strong className='text-foreground'>
+                {equipo.contador_uso.toLocaleString('es-MX')}
+              </strong>
             </span>
           </div>
         </PopoverTrigger>
