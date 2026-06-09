@@ -32,7 +32,7 @@ export const Route = createFileRoute('/login')({
     const logged = await checkAuth();
     if (logged) throw redirect({ to: '/dashboard' });
   },
-  loader: async () => await getSucursales(),
+  loader: getSucursales,
   validateSearch: ({ redirect }) => ({
     redirect: (redirect as string) || undefined,
   }),

@@ -30,7 +30,7 @@ function AppLayout() {
     withAuth
       .post(ENDPOINTS.auth.logout)
       .then(() => {
-        authActions.clear();
+        authActions.setLoggedOut();
         router.navigate({ to: '/login', search: { redirect: undefined } });
       })
       .catch((error) => toast.error(error.message))

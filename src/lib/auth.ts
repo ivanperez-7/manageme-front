@@ -16,8 +16,11 @@ function isTokenExpired(token: string): boolean {
   }
 }
 
-const tryRefresh = async (): Promise<boolean> =>
-  axios
+let refreshAttempted = false;
+
+const tryRefresh = async (): Promise<boolean> => {
+  refreshAttempted = true;
+  return axios
     .post(ENDPOINTS.auth.refresh, undefined, { baseURL: API_BASE, withCredentials: true })
     .then((res) => {
       if (res.status !== 200) return false;
@@ -31,6 +34,7 @@ const tryRefresh = async (): Promise<boolean> =>
       return true;
     })
     .catch(() => false);
+};
 
 export function authRoleGuard(allowedRoles: string[]) {
   const rol = userStore.state.profile?.rol;
@@ -40,8 +44,10 @@ export function authRoleGuard(allowedRoles: string[]) {
 }
 
 export async function checkAuth(): Promise<boolean> {
+  if (authStore.state.loggedOut) return false;
   const token = authStore.state.accessToken;
   if (token && !isTokenExpired(token)) return true;
+  if (refreshAttempted) return false;
   return await tryRefresh();
 }
 
