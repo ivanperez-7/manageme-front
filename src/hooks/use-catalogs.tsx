@@ -1,41 +1,32 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 
-import { fetchCatalogs } from '@/api/catalogo';
-
-type CatalogsProps = Awaited<ReturnType<typeof fetchCatalogs>>;
-
-const CatalogsContext = createContext<
-  (CatalogsProps & { reloadCatalogs: () => Promise<void> }) | undefined
->(undefined);
+import { catalogFetchers, CATALOG_KEYS, type CatalogKey, type CatalogsData } from '@/api/catalogo';
 
 export function useCatalogs() {
-  const ctx = useContext(CatalogsContext);
-  if (!ctx) throw new Error('useCatalogs must be used inside a CatalogsProvider.');
-  return ctx;
-}
+  const queryClient = useQueryClient();
 
-export function CatalogsProvider({ children }: React.PropsWithChildren) {
-  const [catalogs, setCatalogs] = useState<CatalogsProps>({
-    categorias: [],
-    marcas: [],
-    equipos: [],
-    proveedores: [],
-    users: [],
-    clientes: [],
+  const results = useQueries({
+    queries: CATALOG_KEYS.map((key) => ({
+      queryKey: ['catalogs', key],
+      queryFn: catalogFetchers[key],
+    })),
   });
 
-  const load = async () => {
-    const data = await fetchCatalogs();
-    setCatalogs(data);
+  const data = Object.fromEntries(
+    CATALOG_KEYS.map((key, i) => [key, results[i].data ?? []])
+  ) as CatalogsData;
+
+  /** Refetch the given catalogs (defaults to all). */
+  const reloadCatalogs = (keys: CatalogKey[] = CATALOG_KEYS) =>
+    Promise.all(
+      keys.map((key) => queryClient.invalidateQueries({ queryKey: ['catalogs', key] }))
+    ).then(() => undefined);
+
+  /** True if any of the given catalogs is loading (no args = any catalog). */
+  const isLoading = (...keys: CatalogKey[]) => {
+    const target = keys.length ? keys : CATALOG_KEYS;
+    return target.some((key) => results[CATALOG_KEYS.indexOf(key)].isLoading);
   };
 
-  useEffect(() => {
-    load();
-  }, []);
-
-  return (
-    <CatalogsContext.Provider value={{ ...catalogs, reloadCatalogs: load }}>
-      {children}
-    </CatalogsContext.Provider>
-  );
+  return { ...data, reloadCatalogs, isLoading };
 }

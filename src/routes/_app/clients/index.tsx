@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Spinner } from '@/components/ui/spinner';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { useCatalogs } from '@/hooks/use-catalogs';
@@ -62,7 +63,7 @@ export const Route = createFileRoute('/_app/clients/')({
 });
 
 function ClientesPage() {
-  const { clientes, reloadCatalogs } = useCatalogs();
+  const { clientes, reloadCatalogs, isLoading } = useCatalogs();
   const { page } = Route.useSearch();
   const navigate = Route.useNavigate();
 
@@ -73,29 +74,36 @@ function ClientesPage() {
         <p className='text-muted-foreground'>Administra los clientes registrados en el sistema.</p>
       </div>
 
-      <DataTable
-        data={clientes}
-        columns={clientesColumns}
-        hiddenColumnIds={['check', 'direccion']}
-        initialPage={page ?? 0}
-        onChangePage={(pageIndex) =>
-          navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true, resetScroll: false })
-        }
-        emptyComponent={
-          <Empty className='my-0 py-0'>
-            <EmptyHeader>
-              <EmptyMedia variant='decorative'>
-                <PackageOpen />
-              </EmptyMedia>
-              <EmptyTitle>No hay clientes registrados</EmptyTitle>
-            </EmptyHeader>
-          </Empty>
-        }
-      />
+      {isLoading('clientes') && !clientes.length ? (
+        <div className='flex items-center justify-center gap-2 py-16 text-muted-foreground'>
+          <Spinner />
+          <span className='text-sm'>Cargando clientes...</span>
+        </div>
+      ) : (
+        <DataTable
+          data={clientes}
+          columns={clientesColumns}
+          hiddenColumnIds={['check', 'direccion']}
+          initialPage={page ?? 0}
+          onChangePage={(pageIndex) =>
+            navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true, resetScroll: false })
+          }
+          emptyComponent={
+            <Empty className='my-0 py-0'>
+              <EmptyHeader>
+                <EmptyMedia variant='decorative'>
+                  <PackageOpen />
+                </EmptyMedia>
+                <EmptyTitle>No hay clientes registrados</EmptyTitle>
+              </EmptyHeader>
+            </Empty>
+          }
+        />
+      )}
 
       <div className='fixed bottom-4 right-3 md:bottom-8 md:right-8'>
         <CreateClienteDialog
-          onSuccess={reloadCatalogs}
+          onSuccess={() => reloadCatalogs(['clientes'])}
           trigger={
             <Button className='rounded-full' size='icon-lg' variant='default'>
               <Plus />
@@ -134,7 +142,9 @@ function ClientTableDropdown({ clientId }: { clientId: number }) {
         <DropdownMenuItem
           variant='destructive'
           onClick={() =>
-            withAuth.patch(ENDPOINTS.clientes.detail(clientId), { activo: false }).then(reloadCatalogs)
+            withAuth
+              .patch(ENDPOINTS.clientes.detail(clientId), { activo: false })
+              .then(() => reloadCatalogs(['clientes']))
           }
         >
           Eliminar

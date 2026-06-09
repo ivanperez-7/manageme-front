@@ -31,6 +31,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Spinner } from '@/components/ui/spinner';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { useCatalogs } from '@/hooks/use-catalogs';
@@ -44,7 +45,7 @@ export const Route = createFileRoute('/_app/equipos')({
 });
 
 function EquiposPage() {
-  const { marcas, equipos, reloadCatalogs } = useCatalogs();
+  const { marcas, equipos, reloadCatalogs, isLoading } = useCatalogs();
 
   const [selectedMarca, setSelectedMarca] = useState<number | null>(null);
   const [search, setSearch] = useState('');
@@ -75,7 +76,7 @@ function EquiposPage() {
           <p className='text-muted-foreground'>Administra marcas y equipos registrados.</p>
         </div>
 
-        <CreateMarcaPopover onSuccess={reloadCatalogs} />
+        <CreateMarcaPopover onSuccess={() => reloadCatalogs(['marcas'])} />
       </div>
 
       {/* CONTENT */}
@@ -94,6 +95,13 @@ function EquiposPage() {
 
           <ScrollArea className='flex-1'>
             <div className='space-y-1 p-2'>
+              {isLoading('marcas') && !marcas.length && (
+                <div className='flex items-center justify-center gap-2 py-16 text-muted-foreground'>
+                  <Spinner />
+                  <span className='text-sm'>Cargando marcas...</span>
+                </div>
+              )}
+
               {marcasFiltradas.map((marca) => {
                 const count = equipos.filter((e) => e.marca.id === marca.id).length;
 
@@ -140,14 +148,14 @@ function EquiposPage() {
                           setSelectedMarca(null);
                         }
 
-                        reloadCatalogs();
+                        reloadCatalogs(['marcas', 'equipos']);
                       }}
                     />
                   </div>
                 );
               })}
 
-              {marcasFiltradas.length === 0 && (
+              {!isLoading('marcas') && marcasFiltradas.length === 0 && (
                 <div className='flex flex-col items-center justify-center py-16 text-center'>
                   <Printer className='mb-4 h-10 w-10 text-muted-foreground' />
                   <h3 className='font-medium'>No hay marcas</h3>
@@ -165,21 +173,31 @@ function EquiposPage() {
               {/* HEADER */}
               <div className='flex items-start justify-between border-b p-6'>
                 <div className='space-y-2'>
-                  <EditableMarcaNombre marca={selectedMarcaData} onRename={reloadCatalogs} />
+                  <EditableMarcaNombre
+                    marca={selectedMarcaData}
+                    onRename={() => reloadCatalogs(['marcas'])}
+                  />
 
                   <p className='text-sm text-muted-foreground'>
                     {equiposFiltrados.length} equipos registrados
                   </p>
                 </div>
 
-                <CreateEquipoPopover marcaId={selectedMarcaData.id} onSuccess={reloadCatalogs} />
+                <CreateEquipoPopover
+                  marcaId={selectedMarcaData.id}
+                  onSuccess={() => reloadCatalogs(['equipos'])}
+                />
               </div>
 
               {/* EQUIPOS */}
               <ScrollArea className='flex-1'>
                 <div className='space-y-3 p-6'>
                   {equiposFiltrados.map((equipo) => (
-                    <EquipoCard key={equipo.id} equipo={equipo} onDeleted={reloadCatalogs} />
+                    <EquipoCard
+                      key={equipo.id}
+                      equipo={equipo}
+                      onDeleted={() => reloadCatalogs(['equipos'])}
+                    />
                   ))}
 
                   {equiposFiltrados.length === 0 && (
@@ -194,7 +212,10 @@ function EquiposPage() {
                         </p>
 
                         <div className='mt-4'>
-                          <CreateEquipoPopover marcaId={selectedMarcaData.id} onSuccess={reloadCatalogs} />
+                          <CreateEquipoPopover
+                            marcaId={selectedMarcaData.id}
+                            onSuccess={() => reloadCatalogs(['equipos'])}
+                          />
                         </div>
                       </CardContent>
                     </Card>

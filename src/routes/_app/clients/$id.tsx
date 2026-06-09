@@ -3,7 +3,8 @@ import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/reac
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { ArrowLeft, ArrowUpFromDot, CheckCircle, Gauge, Loader2, Printer, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { AssignEquipoDialog } from '@/components/assign-equipo-dialog';
@@ -158,34 +159,20 @@ function ClienteDetailPage() {
 }
 
 const ClientMovementsCard = () => {
-  const { cliente, equiposCliente } = Route.useLoaderData();
+  const { cliente } = Route.useLoaderData();
   const { fechaInicio, fechaFin, movPage } = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const [movimientos, setMovimientos] = useState<MovimientoResponse[]>([]);
-  const [oldestDate, setOldestDate] = useState('');
-  const [loading, setLoading] = useState(false);
+  const inicio = fechaInicio || format(new Date(), 'yyyy-MM-dd');
+  const fin = fechaFin || format(new Date(), 'yyyy-MM-dd');
 
-  useEffect(() => {
-    let ignore = false;
-    setLoading(true);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['movimientos', { clienteId: cliente.id, inicio, fin }],
+    queryFn: () => fetchMovimientos({ clienteId: cliente.id, fechaInicio: inicio, fechaFin: fin }),
+  });
 
-    fetchMovimientos({
-      clienteId: cliente.id,
-      fechaInicio: fechaInicio || format(new Date(), 'yyyy-MM-dd'),
-      fechaFin: fechaFin || format(new Date(), 'yyyy-MM-dd'),
-    }).then(({ movimientos: data, oldestDate: od }) => {
-      if (!ignore) {
-        setMovimientos(data);
-        setOldestDate(od);
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      ignore = true;
-    };
-  }, [fechaInicio, fechaFin, cliente.id, equiposCliente]);
+  const movimientos = data?.movimientos ?? [];
+  const oldestDate = data?.oldestDate ?? '';
 
   return (
     <Card className='mb-6'>

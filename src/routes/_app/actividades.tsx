@@ -8,6 +8,7 @@ import { DataTable } from '@/components/data-table';
 import { DateRangePicker } from '@/components/date-range-pickers';
 import { ActividadesSkeleton } from '@/components/route-skeletons';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
 
 import { fetchActividades } from '@/api/actividades';
 import { useCatalogs } from '@/hooks/use-catalogs';
@@ -130,7 +131,7 @@ function ActividadesListPage() {
   const actividades = Route.useLoaderData();
   const { fechaInicio, fechaFin, usuario, accion, page } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const { users } = useCatalogs();
+  const { users, isLoading } = useCatalogs();
 
   const [search, setSearch] = useState('');
 
@@ -176,6 +177,7 @@ function ActividadesListPage() {
           }
         >
           <SelectTrigger className='w-full md:w-auto'>
+            {isLoading('users') && <Spinner className='mr-1' />}
             <SelectValue placeholder='Usuario' />
           </SelectTrigger>
           <SelectContent>

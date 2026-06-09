@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { ENDPOINTS } from '@/api/endpoints';
@@ -120,23 +121,19 @@ export function useItemLookup(
   };
 }
 
-export function useClientEquipos() {
-  const [clientEquipos, setClientEquipos] = useState<EquipoClienteResponse[]>([]);
-  const [loadingClientEquipos, setLoadingClientEquipos] = useState(false);
+export function useClientEquipos(clienteId?: number, productoIds: number[] = []) {
+  const ids = [...productoIds].sort((a, b) => a - b);
 
-  const check = async (clienteId: string | number, selectedProductos: number[]) => {
-    if (!selectedProductos.length) return;
-    setLoadingClientEquipos(true);
-
-    try {
-      const { data } = await withAuth.get(ENDPOINTS.clientes.detail(clienteId) + 'equipos/', {
-        params: { productos: selectedProductos },
+  const { data, isLoading } = useQuery({
+    queryKey: ['clientEquipos', clienteId, ids],
+    enabled: clienteId != null && ids.length > 0,
+    queryFn: async () => {
+      const { data } = await withAuth.get(ENDPOINTS.clientes.detail(clienteId!) + 'equipos/', {
+        params: { productos: ids },
       });
-      setClientEquipos(data as EquipoClienteResponse[]);
-    } finally {
-      setLoadingClientEquipos(false);
-    }
-  };
+      return data as EquipoClienteResponse[];
+    },
+  });
 
-  return { clientEquipos, loadingClientEquipos, check };
+  return { clientEquipos: data ?? [], loadingClientEquipos: isLoading };
 }

@@ -1,3 +1,4 @@
+import { useMutation } from '@tanstack/react-query';
 import { createFileRoute, ErrorComponent } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -51,33 +52,23 @@ function SettingsPage() {
 
 function SysvarRow({ sysvar }: { sysvar: VariableSistemaResponse }) {
   const [value, setValue] = useState(sysvar.valor);
-  const [saving, setSaving] = useState(false);
 
   const isDirty = value !== sysvar.valor;
 
-  const handleSave = async () => {
-    try {
-      setSaving(true);
-      const res = await withAuth.patch(ENDPOINTS.sysvars.detail(sysvar.id), { valor: value });
-
-      if (res.status === 200) {
-        toast.success(`Guardado: ${sysvar.clave}`);
-        setValue(sysvar.valor);
-      } else {
-        toast.error('No se pudo guardar.');
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Error guardando variable');
-    } finally {
-      setSaving(false);
-    }
-  };
+  const saveMutation = useMutation({
+    mutationFn: () => withAuth.patch(ENDPOINTS.sysvars.detail(sysvar.id), { valor: value }),
+    onSuccess: () => {
+      toast.success(`Guardado: ${sysvar.clave}`);
+      setValue(sysvar.valor);
+    },
+    onError: (err: any) => toast.error(err.message || 'Error guardando variable'),
+  });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's' && isDirty) {
         e.preventDefault();
-        handleSave();
+        saveMutation.mutate();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -100,8 +91,8 @@ function SysvarRow({ sysvar }: { sysvar: VariableSistemaResponse }) {
           />
 
           {isDirty && (
-            <Button size='sm' onClick={handleSave} disabled={saving}>
-              {saving ? 'Guardando...' : 'Guardar'}
+            <Button size='sm' onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? 'Guardando...' : 'Guardar'}
             </Button>
           )}
         </div>

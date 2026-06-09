@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-form';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -47,10 +48,10 @@ function AddMovementPage() {
   const { initialData } = Route.useSearch();
 
   const scan = useMovementScan();
-  const clientEquipos = useClientEquipos();
   const cache = useItemLookup(initialData, true);
-  const { clientes } = useCatalogs();
+  const { clientes, isLoading } = useCatalogs();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const currentUserId = userStore.state.id;
   const initialTipo = initialData?.tipo ?? 'entrada';
@@ -74,6 +75,7 @@ function AddMovementPage() {
 
           scan.setScanCode('');
           router.invalidate();
+          queryClient.invalidateQueries({ queryKey: ['movimientos'] });
           router.navigate({ to: '/movements/$id', params: { id: mov.id.toString() } });
         })
         .catch((error) => toast.error(error.response?.data?.non_field_errors?.[0] || error.message)),
@@ -88,11 +90,10 @@ function AddMovementPage() {
     tipo === 'salida' ? values.detalle_salida?.subtipo : undefined
   );
 
-  useEffect(() => {
-    if (!clienteId) return;
-    const ids = items.map((item) => item.producto_id);
-    if (ids.length > 0) clientEquipos.check(clienteId, ids);
-  }, [clienteId, items.length]);
+  const clientEquipos = useClientEquipos(
+    clienteId,
+    items.map((item) => item.producto_id)
+  );
 
   useEffect(() => {
     scan.scanInputRef.current?.focus();
@@ -440,6 +441,7 @@ function AddMovementPage() {
               <field.NumberSelectField
                 label='Cliente'
                 placeholder='Seleccione un cliente'
+                loading={isLoading('clientes')}
                 options={clientes.map((cli) => ({
                   key: cli.id,
                   value: cli.id,

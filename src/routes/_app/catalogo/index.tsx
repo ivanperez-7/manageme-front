@@ -137,7 +137,7 @@ function ProductListPage() {
   const { text, categoria, marca, equipo, page } = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const { categorias, marcas, equipos } = useCatalogs();
+  const { categorias, marcas, equipos, isLoading } = useCatalogs();
   const [isDownloading, setIsDownloading] = useState(false);
 
   const [_localText, setLocalText] = useState(text);
@@ -229,6 +229,7 @@ function ProductListPage() {
           }
         >
           <SelectTrigger className='w-full md:w-auto'>
+            {isLoading('categorias') && <Spinner className='mr-1' />}
             <SelectValue placeholder='Categoría' />
           </SelectTrigger>
           <SelectContent>
@@ -247,6 +248,7 @@ function ProductListPage() {
           }
         >
           <SelectTrigger className='w-full md:w-auto'>
+            {isLoading('marcas') && <Spinner className='mr-1' />}
             <SelectValue placeholder='Marca' />
           </SelectTrigger>
           <SelectContent>
@@ -265,6 +267,7 @@ function ProductListPage() {
           }
         >
           <SelectTrigger className='w-full md:w-auto'>
+            {isLoading('equipos') && <Spinner className='mr-1' />}
             <SelectValue placeholder='Modelo' />
           </SelectTrigger>
           <SelectContent>

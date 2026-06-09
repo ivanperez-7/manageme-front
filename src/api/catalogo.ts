@@ -33,51 +33,40 @@ export const fetchProductoById = async (id: string | number) => {
   return { producto, lotes };
 };
 
-export const fetchCatalogs = async () => {
-  const [categorias, marcas, equipos, proveedores, users, clientes] = await Promise.all([
-    withAuth
-      .get(ENDPOINTS.categorias.list)
-      .then((res) => res.data as Types.CategoriaResponse[])
-      .catch((error) => {
-        console.error(`Error al cargar categorías: ${error.message}`);
-        return [] as Types.CategoriaResponse[];
-      }),
-    withAuth
-      .get(ENDPOINTS.marcas.list)
-      .then((res) => res.data as Types.MarcaResponse[])
-      .catch((error) => {
-        console.error(`Error al cargar marcas: ${error.message}`);
-        return [] as Types.MarcaResponse[];
-      }),
-    withAuth
-      .get(ENDPOINTS.equipos.list)
-      .then((res) => res.data as Types.EquipoResponse[])
-      .catch((error) => {
-        console.error(`Error al cargar equipos: ${error.message}`);
-        return [] as Types.EquipoResponse[];
-      }),
-    withAuth
-      .get(ENDPOINTS.proveedores.list)
-      .then((res) => res.data as Types.ProveedorResponse[])
-      .catch((error) => {
-        console.error(`Error al cargar proveedores: ${error.message}`);
-        return [] as Types.ProveedorResponse[];
-      }),
-    withAuth
-      .get(ENDPOINTS.users.list)
-      .then((res) => res.data as Types.UserResponse[])
-      .catch((error) => {
-        console.error(`Error al cargar usuarios: ${error.message}`);
-        return [] as Types.UserResponse[];
-      }),
-    withAuth
-      .get(ENDPOINTS.clientes.list)
-      .then((res) => res.data as Types.ClienteResponse[])
-      .catch((error) => {
-        console.error(`Error al cargar clientes: ${error.message}`);
-        return [] as Types.ClienteResponse[];
-      }),
-  ]);
+export type CatalogsData = {
+  categorias: Types.CategoriaResponse[];
+  marcas: Types.MarcaResponse[];
+  equipos: Types.EquipoResponse[];
+  proveedores: Types.ProveedorResponse[];
+  users: Types.UserResponse[];
+  clientes: Types.ClienteResponse[];
+};
 
-  return { categorias, marcas, equipos, proveedores, users, clientes };
+export type CatalogKey = keyof CatalogsData;
+
+const _makeFetcher =
+  <K extends CatalogKey>(url: string, label: string) =>
+  async (): Promise<CatalogsData[K]> =>
+    await withAuth
+      .get(url)
+      .then((res) => res.data as CatalogsData[K])
+      .catch((error) => {
+        console.error(`Error al cargar ${label}: ${error.message}`);
+        return [] as unknown as CatalogsData[K];
+      });
+
+export const catalogFetchers: { [K in CatalogKey]: () => Promise<CatalogsData[K]> } = {
+  categorias: _makeFetcher<'categorias'>(ENDPOINTS.categorias.list, 'categorías'),
+  marcas: _makeFetcher<'marcas'>(ENDPOINTS.marcas.list, 'marcas'),
+  equipos: _makeFetcher<'equipos'>(ENDPOINTS.equipos.list, 'equipos'),
+  proveedores: _makeFetcher<'proveedores'>(ENDPOINTS.proveedores.list, 'proveedores'),
+  users: _makeFetcher<'users'>(ENDPOINTS.users.list, 'usuarios'),
+  clientes: _makeFetcher<'clientes'>(ENDPOINTS.clientes.list, 'clientes'),
+};
+
+export const CATALOG_KEYS = Object.keys(catalogFetchers) as CatalogKey[];
+
+export const fetchCatalogs = async (): Promise<CatalogsData> => {
+  const results = await Promise.all(CATALOG_KEYS.map((k) => catalogFetchers[k]()));
+  return Object.fromEntries(CATALOG_KEYS.map((k, i) => [k, results[i]])) as CatalogsData;
 };

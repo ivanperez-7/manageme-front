@@ -1,3 +1,4 @@
+import { useMutation } from '@tanstack/react-query';
 import { createFileRoute, ErrorComponent } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, Bot, ChevronDown, ChevronUp, Send, User } from 'lucide-react';
@@ -37,39 +38,32 @@ const suggestions = [
 function ChatbotPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const sendMessage = async (text?: string) => {
-    const pregunta = text ?? input.trim();
-    if (!pregunta || loading) return;
-
-    setInput('');
-    setMessages((prev) => [...prev, { role: 'user', content: pregunta }]);
-    setLoading(true);
-
-    try {
-      const res = await withAuth.post(ENDPOINTS.chat, { pregunta });
-      setMessages((prev) => [...prev, { role: 'assistant', content: res.data.respuesta ?? '' }]);
-    } catch (error: unknown) {
+  const chatMutation = useMutation({
+    mutationFn: (pregunta: string) => withAuth.post(ENDPOINTS.chat, { pregunta }).then((res) => res.data),
+    onSuccess: (data) =>
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.respuesta ?? '' }]),
+    onError: (error: unknown) => {
       const detail =
         error instanceof Object && 'response' in error
           ? (error as { response?: { data?: { detail?: string } } }).response?.data?.detail
           : undefined;
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: '',
-          isError: true,
-          errorDetail: detail,
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
+      setMessages((prev) => [...prev, { role: 'assistant', content: '', isError: true, errorDetail: detail }]);
+    },
+  });
+
+  const loading = chatMutation.isPending;
+
+  const sendMessage = (text?: string) => {
+    const pregunta = text ?? input.trim();
+    if (!pregunta || loading) return;
+
+    setInput('');
+    setMessages((prev) => [...prev, { role: 'user', content: pregunta }]);
+    chatMutation.mutate(pregunta);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

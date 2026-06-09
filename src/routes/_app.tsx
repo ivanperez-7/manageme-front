@@ -10,7 +10,6 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 
 import { ENDPOINTS } from '@/api/endpoints';
-import { CatalogsProvider } from '@/hooks/use-catalogs';
 import { authGuard, withAuth } from '@/lib/auth';
 import { authActions } from '@/stores/authStore';
 
@@ -40,26 +39,24 @@ function AppLayout() {
 
   return (
     <SidebarProvider>
-      <CatalogsProvider>
-        <AppSidebar onLogout={onLogout} loadingLogout={loadingLogout} />
-        <SidebarInset>
-          <Toaster position='top-right' richColors theme={theme} />
-          <SiteHeader />
-          <div className='p-4 md:pt-7 md:px-11'>
-            <AnimatePresence mode='wait'>
-              <motion.div
-                key={router.state.location.pathname}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-              >
-                <Outlet />
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </SidebarInset>
-      </CatalogsProvider>
+      <AppSidebar onLogout={onLogout} loadingLogout={loadingLogout} />
+      <SidebarInset>
+        <Toaster position='top-right' richColors theme={theme} />
+        <SiteHeader />
+        <div className='p-4 md:pt-7 md:px-11'>
+          <AnimatePresence mode='wait'>
+            <motion.div
+              key={router.state.location.pathname}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </SidebarInset>
     </SidebarProvider>
   );
 }

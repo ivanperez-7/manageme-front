@@ -50,6 +50,7 @@ export function NumberSelectField({
   options,
   onValueChange,
   disabled,
+  loading,
   hideErrors,
 }: {
   label?: string;
@@ -57,6 +58,7 @@ export function NumberSelectField({
   options: { key: Key; value: number; label: string }[];
   onValueChange?: (v: string) => void;
   disabled?: boolean;
+  loading?: boolean;
   hideErrors?: boolean;
 }) {
   const field = useFieldContext<number>();
@@ -69,9 +71,10 @@ export function NumberSelectField({
           field.handleChange(Number(v));
           if (onValueChange) onValueChange(v);
         }}
-        disabled={disabled}
+        disabled={disabled || loading}
       >
         <SelectTrigger id={field.name}>
+          {loading && <Spinner className='mr-1' />}
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>

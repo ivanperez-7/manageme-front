@@ -1,3 +1,4 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { formatDate } from 'date-fns';
@@ -93,35 +94,30 @@ export const Route = createFileRoute('/_app/movements/$id')({
 });
 
 function MovementDetailPage() {
-  const [isApproving, setIsApproving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const movimiento = Route.useLoaderData();
   const { itemsPage } = Route.useSearch();
   const router = useRouter();
   const navigate = Route.useNavigate();
+  const queryClient = useQueryClient();
 
   const detalleEntrada = movimiento.detalle_entrada;
   const detalleSalida = movimiento.detalle_salida;
   const hasAnticipado = movimiento.items.some((i) => i.cambio_anticipado);
 
-  const approveSalida = () => {
-    if (isApproving) return;
-    setIsApproving(true);
-
-    withAuth
-      .post(ENDPOINTS.movimientos.detail(movimiento.id) + 'aprobar/')
-      .then(() => {
-        router.invalidate();
-        toast.success(`${firstUpperCase(movimiento.tipo)} aprobada exitosamente`);
-      })
-      .catch((err) =>
-        toast.error(
-          `No se pudo aprobar la ${movimiento.tipo}. ` + (err.response?.data?.detail || err.message)
-        )
-      )
-      .finally(() => setIsApproving(false));
-  };
+  const approveMutation = useMutation({
+    mutationFn: () => withAuth.post(ENDPOINTS.movimientos.detail(movimiento.id) + 'aprobar/'),
+    onSuccess: () => {
+      router.invalidate();
+      queryClient.invalidateQueries({ queryKey: ['movimientos'] });
+      toast.success(`${firstUpperCase(movimiento.tipo)} aprobada exitosamente`);
+    },
+    onError: (err: any) =>
+      toast.error(
+        `No se pudo aprobar la ${movimiento.tipo}. ` + (err.response?.data?.detail || err.message)
+      ),
+  });
 
   const downloadEtiquetas = async () => {
     if (isDownloading) return;
@@ -223,10 +219,10 @@ function MovementDetailPage() {
                         variant='secondary'
                         className='text-sm ml-3'
                         size='sm'
-                        onClick={approveSalida}
-                        disabled={isApproving}
+                        onClick={() => approveMutation.mutate()}
+                        disabled={approveMutation.isPending}
                       >
-                        {isApproving && <Spinner />} Aprobar
+                        {approveMutation.isPending && <Spinner />} Aprobar
                       </Button>
                     )}
                   </span>

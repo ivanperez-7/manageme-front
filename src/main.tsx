@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createRouteMask, createRouter } from '@tanstack/react-router';
 import ReactDOM from 'react-dom/client';
 
@@ -5,6 +6,10 @@ import { ThemeProvider } from './components/theme-provider.tsx';
 import { routeTree } from './routeTree.gen';
 
 import './styles.css';
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 5 * 60_000 } },
+});
 
 const catalogsMask = createRouteMask({
   routeTree,
@@ -79,7 +84,9 @@ if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
-      <RouterProvider router={router} />
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     </ThemeProvider>
   );
 }

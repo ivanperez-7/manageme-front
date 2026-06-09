@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Spinner } from '@/components/ui/spinner';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { useAppForm } from '@/hooks/use-app-form';
@@ -25,7 +26,7 @@ import { cn } from '@/lib/utils';
 
 export function AssignEquipoDialog({ clienteId, onSuccess }: { clienteId: number; onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
-  const { equipos, marcas } = useCatalogs();
+  const { equipos, marcas, isLoading } = useCatalogs();
 
   const [search, setSearch] = useState('');
   const [selectedMarca, setSelectedMarca] = useState<number | undefined>();
@@ -98,7 +99,10 @@ export function AssignEquipoDialog({ clienteId, onSuccess }: { clienteId: number
             <DialogTitle>Asignar equipo a cliente</DialogTitle>
           </DialogHeader>
 
-          <div className='flex flex-wrap gap-2'>
+          <div className='flex flex-wrap items-center gap-2'>
+            {isLoading('marcas') && !marcas.length && (
+              <Spinner className='mt-6 mb-4 text-muted-foreground' />
+            )}
             {marcas.map((m) => (
               <Badge
                 key={m.id}
@@ -122,8 +126,15 @@ export function AssignEquipoDialog({ clienteId, onSuccess }: { clienteId: number
 
           <ScrollArea className='h-48 rounded-md border mt-4'>
             <div className='space-y-1 p-3'>
-              {equiposFiltrados.length === 0 && (
-                <p className='text-sm text-muted-foreground'>No hay resultados.</p>
+              {isLoading('equipos') && !equipos.length ? (
+                <div className='flex items-center justify-center gap-2 py-12 text-muted-foreground'>
+                  <Spinner />
+                  <span className='text-sm'>Cargando equipos...</span>
+                </div>
+              ) : (
+                equiposFiltrados.length === 0 && (
+                  <p className='text-sm text-muted-foreground'>No hay resultados.</p>
+                )
               )}
 
               {equiposFiltrados.map((eq) => (

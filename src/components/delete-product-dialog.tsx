@@ -1,5 +1,5 @@
+import { useMutation } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
-import { useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -24,24 +24,16 @@ export function DeleteProductDialog({
   trigger: React.ReactNode;
   productId: number;
 }) {
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleDelete = () => {
-    if (loading) return;
-    setLoading(true);
-
-    withAuth
-      .patch(ENDPOINTS.products.detail(productId), { status: 'inactivo' })
-      .then((res) => {
-        if (res.status === 200) {
-          toast.success('El producto se eliminó exitosamente');
-          router.invalidate();
-        }
-      })
-      .catch((error) => toast.error(error.response?.data?.detail || error.message))
-      .finally(() => setLoading(false));
-  };
+  const deleteMutation = useMutation({
+    mutationFn: () => withAuth.patch(ENDPOINTS.products.detail(productId), { status: 'inactivo' }),
+    onSuccess: () => {
+      toast.success('El producto se eliminó exitosamente');
+      router.invalidate();
+    },
+    onError: (error: any) => toast.error(error.response?.data?.detail || error.message),
+  });
 
   return (
     <AlertDialog>
@@ -55,7 +47,12 @@ export function DeleteProductDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete}>Continuar</AlertDialogAction>
+          <AlertDialogAction
+            onClick={() => deleteMutation.mutate()}
+            disabled={deleteMutation.isPending}
+          >
+            Continuar
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

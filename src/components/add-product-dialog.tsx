@@ -21,6 +21,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from './ui/input-group';
 import { ScrollArea } from './ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Separator } from './ui/separator';
+import { Spinner } from './ui/spinner';
 
 // OTRAS UTILIDADES
 import { ENDPOINTS } from '@/api/endpoints';
@@ -38,7 +39,7 @@ export function AddProductDialog({
   producto?: ProductoResponse;
 }) {
   const [open, setOpen] = useState(false);
-  const { categorias, proveedores } = useCatalogs();
+  const { categorias, proveedores, isLoading } = useCatalogs();
   const router = useRouter();
 
   const form = useAppForm({
@@ -109,6 +110,7 @@ export function AddProductDialog({
                 <field.NumberSelectField
                   label='Categoría'
                   placeholder='Seleccione una categoría'
+                  loading={isLoading('categorias')}
                   options={categorias.map((cat) => ({
                     key: cat.id,
                     value: cat.id,
@@ -168,6 +170,7 @@ export function AddProductDialog({
                     onValueChange={(v) => field.handleChange(Number(v) || null)}
                   >
                     <SelectTrigger id={field.name}>
+                      {isLoading('proveedores') && <Spinner className='mr-1' />}
                       <SelectValue placeholder='Seleccione un proveedor' />
                     </SelectTrigger>
                     <SelectContent>
@@ -220,7 +223,7 @@ function EquipoSelector({
 }) {
   const [search, setSearch] = useState('');
   const [selectedMarca, setSelectedMarca] = useState<number | undefined>();
-  const { marcas, equipos } = useCatalogs();
+  const { marcas, equipos, isLoading } = useCatalogs();
 
   const equiposFiltrados = useMemo(
     () =>
@@ -235,7 +238,8 @@ function EquipoSelector({
   return (
     <div className='space-y-4'>
       {/* Selector de marcas */}
-      <div className='flex flex-wrap gap-2'>
+      <div className='flex flex-wrap items-center gap-2'>
+        {isLoading('marcas') && !marcas.length && <Spinner className='text-muted-foreground' />}
         {marcas.map((m) => (
           <Badge
             key={m.id}
@@ -260,8 +264,15 @@ function EquipoSelector({
       {/* Selector de equipos */}
       <ScrollArea className='h-48 rounded-md border p-3'>
         <div className='space-y-2'>
-          {equiposFiltrados.length === 0 && (
-            <p className='text-sm text-muted-foreground'>No hay resultados.</p>
+          {isLoading('equipos') && !equipos.length ? (
+            <div className='flex items-center justify-center gap-2 py-12 text-muted-foreground'>
+              <Spinner />
+              <span className='text-sm'>Cargando equipos...</span>
+            </div>
+          ) : (
+            equiposFiltrados.length === 0 && (
+              <p className='text-sm text-muted-foreground'>No hay resultados.</p>
+            )
           )}
 
           {equiposFiltrados.map((eq) => (
