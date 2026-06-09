@@ -98,7 +98,7 @@ function LoginForm() {
     defaultValues: {
       username: '',
       password: '',
-      branch: 0,
+      branch: 1,
     },
     validators: {
       onSubmit: loginSchema,
