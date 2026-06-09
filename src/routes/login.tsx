@@ -1,13 +1,13 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router';
+import { createFileRoute, redirect, useRouter } from '@tanstack/react-router';
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import { motion } from 'framer-motion';
+import Cookies from 'js-cookie';
 import { Building2, Lock, PackageOpen, User } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 import z from 'zod';
 
-import { useTheme } from '@/components/theme-provider';
 import { LoginSkeleton } from '@/components/route-skeletons';
+import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -17,7 +17,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { API_BASE, ENDPOINTS } from '@/api/endpoints';
 import { getSucursales } from '@/api/organizacion';
 import { useAppForm } from '@/hooks/use-app-form';
-import { withAuth } from '@/lib/auth';
+import { authGuardSilent, withAuth } from '@/lib/auth';
 import { authActions } from '@/stores/authStore';
 import { userActions } from '@/stores/userStore';
 
@@ -28,6 +28,10 @@ const loginSchema = z.object({
 });
 
 export const Route = createFileRoute('/login')({
+  beforeLoad: async () => {
+    const logged = await authGuardSilent();
+    if (logged) throw redirect({ to: '/dashboard' });
+  },
   loader: async () => await getSucursales(),
   validateSearch: ({ redirect }) => ({
     redirect: (redirect as string) || undefined,

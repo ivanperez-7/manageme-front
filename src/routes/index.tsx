@@ -1,18 +1,31 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { useEffect } from 'react';
 
+import { Spinner } from '@/components/ui/spinner';
+
 import { authGuardSilent } from '@/lib/auth';
 
 export const Route = createFileRoute('/')({
-  component: () => {
-    const router = useRouter();
-
-    useEffect(() => {
-      const check = async () => {
-        const logged = await authGuardSilent();
-        router.navigate({ to: logged ? '/dashboard' : '/login' });
-      };
-      check();
-    }, []);
+  loader: async () => {
+    const logged = await authGuardSilent();
+    return { logged };
   },
+  pendingMs: 200,
+  pendingComponent: () => (
+    <div className='flex items-center justify-center min-h-svh'>
+      <Spinner />
+    </div>
+  ),
+  component: IndexPage,
 });
+
+function IndexPage() {
+  const { logged } = Route.useLoaderData();
+  const router = useRouter();
+
+  useEffect(() => {
+    router.navigate({ to: logged ? '/dashboard' : '/login' });
+  }, [logged]);
+
+  return null;
+}
