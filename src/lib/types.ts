@@ -40,6 +40,15 @@ export type EquipoResponse = {
 };
 
 // ── Proveedor ──
+export const proveedorCreateSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es obligatorio').max(200),
+  nombre_contacto: z.string().max(200).optional().nullable(),
+  telefono: z.string().max(20).optional().nullable(),
+  correo: z.email('Correo inválido').optional().nullable().or(z.literal('')),
+  direccion: z.string().optional().nullable(),
+  activo: z.boolean().default(true),
+});
+
 export type ProveedorResponse = {
   nombre: string;
   nombre_contacto: string | null | undefined;

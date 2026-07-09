@@ -13,16 +13,17 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppSuppliersRouteImport } from './routes/_app/suppliers'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppReordenRouteImport } from './routes/_app/reorden'
 import { Route as AppEquiposRouteImport } from './routes/_app/equipos'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppChatbotRouteImport } from './routes/_app/chatbot'
 import { Route as AppActividadesRouteImport } from './routes/_app/actividades'
+import { Route as AppSuppliersIndexRouteImport } from './routes/_app/suppliers/index'
 import { Route as AppMovementsIndexRouteImport } from './routes/_app/movements/index'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients/index'
 import { Route as AppCatalogoIndexRouteImport } from './routes/_app/catalogo/index'
+import { Route as AppSuppliersIdRouteImport } from './routes/_app/suppliers/$id'
 import { Route as AppMovementsNewRouteImport } from './routes/_app/movements/new'
 import { Route as AppMovementsIdRouteImport } from './routes/_app/movements/$id'
 import { Route as AppClientsIdRouteImport } from './routes/_app/clients/$id'
@@ -46,11 +47,6 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AppSuppliersRoute = AppSuppliersRouteImport.update({
-  id: '/suppliers',
-  path: '/suppliers',
-  getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
@@ -82,6 +78,11 @@ const AppActividadesRoute = AppActividadesRouteImport.update({
   path: '/actividades',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSuppliersIndexRoute = AppSuppliersIndexRouteImport.update({
+  id: '/suppliers/',
+  path: '/suppliers/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMovementsIndexRoute = AppMovementsIndexRouteImport.update({
   id: '/movements/',
   path: '/movements/',
@@ -95,6 +96,11 @@ const AppClientsIndexRoute = AppClientsIndexRouteImport.update({
 const AppCatalogoIndexRoute = AppCatalogoIndexRouteImport.update({
   id: '/catalogo/',
   path: '/catalogo/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSuppliersIdRoute = AppSuppliersIdRouteImport.update({
+  id: '/suppliers/$id',
+  path: '/suppliers/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMovementsNewRoute = AppMovementsNewRouteImport.update({
@@ -128,14 +134,15 @@ export interface FileRoutesByFullPath {
   '/equipos': typeof AppEquiposRoute
   '/reorden': typeof AppReordenRoute
   '/settings': typeof AppSettingsRoute
-  '/suppliers': typeof AppSuppliersRoute
   '/catalogo/$id': typeof AppCatalogoIdRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/movements/$id': typeof AppMovementsIdRoute
   '/movements/new': typeof AppMovementsNewRoute
+  '/suppliers/$id': typeof AppSuppliersIdRoute
   '/catalogo': typeof AppCatalogoIndexRoute
   '/clients': typeof AppClientsIndexRoute
   '/movements': typeof AppMovementsIndexRoute
+  '/suppliers': typeof AppSuppliersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -147,14 +154,15 @@ export interface FileRoutesByTo {
   '/equipos': typeof AppEquiposRoute
   '/reorden': typeof AppReordenRoute
   '/settings': typeof AppSettingsRoute
-  '/suppliers': typeof AppSuppliersRoute
   '/catalogo/$id': typeof AppCatalogoIdRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/movements/$id': typeof AppMovementsIdRoute
   '/movements/new': typeof AppMovementsNewRoute
+  '/suppliers/$id': typeof AppSuppliersIdRoute
   '/catalogo': typeof AppCatalogoIndexRoute
   '/clients': typeof AppClientsIndexRoute
   '/movements': typeof AppMovementsIndexRoute
+  '/suppliers': typeof AppSuppliersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -168,14 +176,15 @@ export interface FileRoutesById {
   '/_app/equipos': typeof AppEquiposRoute
   '/_app/reorden': typeof AppReordenRoute
   '/_app/settings': typeof AppSettingsRoute
-  '/_app/suppliers': typeof AppSuppliersRoute
   '/_app/catalogo/$id': typeof AppCatalogoIdRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
   '/_app/movements/$id': typeof AppMovementsIdRoute
   '/_app/movements/new': typeof AppMovementsNewRoute
+  '/_app/suppliers/$id': typeof AppSuppliersIdRoute
   '/_app/catalogo/': typeof AppCatalogoIndexRoute
   '/_app/clients/': typeof AppClientsIndexRoute
   '/_app/movements/': typeof AppMovementsIndexRoute
+  '/_app/suppliers/': typeof AppSuppliersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -189,14 +198,15 @@ export interface FileRouteTypes {
     | '/equipos'
     | '/reorden'
     | '/settings'
-    | '/suppliers'
     | '/catalogo/$id'
     | '/clients/$id'
     | '/movements/$id'
     | '/movements/new'
+    | '/suppliers/$id'
     | '/catalogo'
     | '/clients'
     | '/movements'
+    | '/suppliers'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -208,14 +218,15 @@ export interface FileRouteTypes {
     | '/equipos'
     | '/reorden'
     | '/settings'
-    | '/suppliers'
     | '/catalogo/$id'
     | '/clients/$id'
     | '/movements/$id'
     | '/movements/new'
+    | '/suppliers/$id'
     | '/catalogo'
     | '/clients'
     | '/movements'
+    | '/suppliers'
   id:
     | '__root__'
     | '/'
@@ -228,14 +239,15 @@ export interface FileRouteTypes {
     | '/_app/equipos'
     | '/_app/reorden'
     | '/_app/settings'
-    | '/_app/suppliers'
     | '/_app/catalogo/$id'
     | '/_app/clients/$id'
     | '/_app/movements/$id'
     | '/_app/movements/new'
+    | '/_app/suppliers/$id'
     | '/_app/catalogo/'
     | '/_app/clients/'
     | '/_app/movements/'
+    | '/_app/suppliers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -274,13 +286,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_app/suppliers': {
-      id: '/_app/suppliers'
-      path: '/suppliers'
-      fullPath: '/suppliers'
-      preLoaderRoute: typeof AppSuppliersRouteImport
-      parentRoute: typeof AppRoute
     }
     '/_app/settings': {
       id: '/_app/settings'
@@ -324,6 +329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppActividadesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/suppliers/': {
+      id: '/_app/suppliers/'
+      path: '/suppliers'
+      fullPath: '/suppliers'
+      preLoaderRoute: typeof AppSuppliersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/movements/': {
       id: '/_app/movements/'
       path: '/movements'
@@ -343,6 +355,13 @@ declare module '@tanstack/react-router' {
       path: '/catalogo'
       fullPath: '/catalogo'
       preLoaderRoute: typeof AppCatalogoIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/suppliers/$id': {
+      id: '/_app/suppliers/$id'
+      path: '/suppliers/$id'
+      fullPath: '/suppliers/$id'
+      preLoaderRoute: typeof AppSuppliersIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/movements/new': {
@@ -383,14 +402,15 @@ interface AppRouteChildren {
   AppEquiposRoute: typeof AppEquiposRoute
   AppReordenRoute: typeof AppReordenRoute
   AppSettingsRoute: typeof AppSettingsRoute
-  AppSuppliersRoute: typeof AppSuppliersRoute
   AppCatalogoIdRoute: typeof AppCatalogoIdRoute
   AppClientsIdRoute: typeof AppClientsIdRoute
   AppMovementsIdRoute: typeof AppMovementsIdRoute
   AppMovementsNewRoute: typeof AppMovementsNewRoute
+  AppSuppliersIdRoute: typeof AppSuppliersIdRoute
   AppCatalogoIndexRoute: typeof AppCatalogoIndexRoute
   AppClientsIndexRoute: typeof AppClientsIndexRoute
   AppMovementsIndexRoute: typeof AppMovementsIndexRoute
+  AppSuppliersIndexRoute: typeof AppSuppliersIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -400,14 +420,15 @@ const AppRouteChildren: AppRouteChildren = {
   AppEquiposRoute: AppEquiposRoute,
   AppReordenRoute: AppReordenRoute,
   AppSettingsRoute: AppSettingsRoute,
-  AppSuppliersRoute: AppSuppliersRoute,
   AppCatalogoIdRoute: AppCatalogoIdRoute,
   AppClientsIdRoute: AppClientsIdRoute,
   AppMovementsIdRoute: AppMovementsIdRoute,
   AppMovementsNewRoute: AppMovementsNewRoute,
+  AppSuppliersIdRoute: AppSuppliersIdRoute,
   AppCatalogoIndexRoute: AppCatalogoIndexRoute,
   AppClientsIndexRoute: AppClientsIndexRoute,
   AppMovementsIndexRoute: AppMovementsIndexRoute,
+  AppSuppliersIndexRoute: AppSuppliersIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
