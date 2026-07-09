@@ -1,4 +1,4 @@
-import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
@@ -18,6 +18,7 @@ import {
   YAxis,
 } from 'recharts';
 
+import { ErrorState } from '@/components/error-state';
 import { DataTable } from '@/components/data-table';
 import { DashboardSkeleton } from '@/components/route-skeletons';
 import { Spinner } from '@/components/ui/spinner';
@@ -51,7 +52,7 @@ export const Route = createFileRoute('/_app/dashboard')({
   component: DashboardPage,
   pendingComponent: DashboardSkeleton,
   pendingMs: 200,
-  errorComponent: ({ error }) => <ErrorComponent error={error} />,
+  errorComponent: ErrorState,
 });
 
 function DashboardPage() {

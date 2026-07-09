@@ -1,9 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
-import { createFileRoute, ErrorComponent } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, Bot, ChevronDown, ChevronUp, Send, User } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { ErrorState } from '@/components/error-state';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -21,7 +22,7 @@ interface Message {
 export const Route = createFileRoute('/_app/chatbot')({
   staticData: { headerBreadcrumb: [{ label: 'Chatbot' }] },
   component: ChatbotPage,
-  errorComponent: ({ error }) => <ErrorComponent error={error} />,
+  errorComponent: ErrorState,
 });
 
 const suggestions = [

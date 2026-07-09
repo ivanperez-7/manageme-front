@@ -1,9 +1,10 @@
-import { createFileRoute, ErrorComponent } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
+import { ErrorState } from '@/components/error-state';
 
 export const Route = createFileRoute('/_app/suppliers')({
   staticData: { headerBreadcrumb: [{ label: 'Proveedores' }] },
   component: SuppliersPage,
-  errorComponent: ({ error }) => <ErrorComponent error={error} />,
+  errorComponent: ErrorState,
 });
 
 function SuppliersPage() {

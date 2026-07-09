@@ -1,4 +1,4 @@
-import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import {
@@ -17,6 +17,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 // COMPONENTES DEL PROYECTO
+import { ErrorState } from '@/components/error-state';
 import { AddProductDialog } from '@/components/add-product-dialog';
 import { DataTable } from '@/components/data-table';
 import { DateRangePicker } from '@/components/date-range-pickers';
@@ -165,7 +166,7 @@ export const Route = createFileRoute('/_app/catalogo/$id')({
   component: ProductDetailPage,
   pendingComponent: ProductDetailSkeleton,
   pendingMs: 200,
-  errorComponent: ({ error }) => <ErrorComponent error={error} />,
+  errorComponent: ErrorState,
 });
 
 function ProductDetailPage() {

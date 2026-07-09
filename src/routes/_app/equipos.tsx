@@ -1,8 +1,9 @@
-import { createFileRoute, ErrorComponent } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { Check, ChevronsUpDown, MoreVertical, Pencil, Printer, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { ErrorState } from '@/components/error-state';
 import { CreateEquipoPopover } from '@/components/create-equipo-popover';
 import { CreateMarcaPopover } from '@/components/create-marca-popover';
 import { DeleteMarcaDialog } from '@/components/delete-marca-dialog';
@@ -41,7 +42,7 @@ import type { EquipoResponse, MarcaResponse } from '@/lib/types';
 export const Route = createFileRoute('/_app/equipos')({
   staticData: { headerBreadcrumb: [{ label: 'Equipos' }] },
   component: EquiposPage,
-  errorComponent: ({ error }) => <ErrorComponent error={error} />,
+  errorComponent: ErrorState,
 });
 
 function EquiposPage() {

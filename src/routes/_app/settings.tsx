@@ -1,8 +1,9 @@
 import { useMutation } from '@tanstack/react-query';
-import { createFileRoute, ErrorComponent } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import { ErrorState } from '@/components/error-state';
 import { SettingsSkeleton } from '@/components/route-skeletons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +23,7 @@ export const Route = createFileRoute('/_app/settings')({
   component: SettingsPage,
   pendingComponent: SettingsSkeleton,
   pendingMs: 200,
-  errorComponent: ({ error }) => <ErrorComponent error={error} />,
+  errorComponent: ErrorState,
 });
 
 function SettingsPage() {

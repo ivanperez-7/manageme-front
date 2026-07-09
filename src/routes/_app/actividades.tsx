@@ -1,9 +1,10 @@
-import { createFileRoute, ErrorComponent, Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { ErrorState } from '@/components/error-state';
 import { DataTable } from '@/components/data-table';
 import { DateRangePicker } from '@/components/date-range-pickers';
 import { ActividadesSkeleton } from '@/components/route-skeletons';
@@ -124,7 +125,7 @@ export const Route = createFileRoute('/_app/actividades')({
   component: ActividadesListPage,
   pendingComponent: ActividadesSkeleton,
   pendingMs: 200,
-  errorComponent: ({ error }) => <ErrorComponent error={error} />,
+  errorComponent: ErrorState,
 });
 
 function ActividadesListPage() {

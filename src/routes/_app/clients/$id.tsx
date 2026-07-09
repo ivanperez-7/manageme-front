@@ -1,12 +1,13 @@
 import { useMask } from '@react-input/mask';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { ArrowLeft, ArrowUpFromDot, CheckCircle, Gauge, Loader2, Printer, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { ErrorState } from '@/components/error-state';
 import { AssignEquipoDialog } from '@/components/assign-equipo-dialog';
 import { DataTable } from '@/components/data-table';
 import { DateRangePicker } from '@/components/date-range-pickers';
@@ -104,7 +105,7 @@ export const Route = createFileRoute('/_app/clients/$id')({
   component: ClienteDetailPage,
   pendingComponent: ClientDetailSkeleton,
   pendingMs: 200,
-  errorComponent: ({ error }) => <ErrorComponent error={error} />,
+  errorComponent: ErrorState,
 });
 
 function ClienteDetailPage() {

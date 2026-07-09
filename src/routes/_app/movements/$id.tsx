@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute, ErrorComponent, Link, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { formatDate } from 'date-fns';
 import { ArrowLeft, CheckCircle, Download, Info, PackageOpen, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { ErrorState } from '@/components/error-state';
 import { DataTable } from '@/components/data-table';
 import { MovementDetailSkeleton } from '@/components/route-skeletons';
 import TipoMovimientoBadge from '@/components/tipo-movimiento-badge';
@@ -90,7 +91,7 @@ export const Route = createFileRoute('/_app/movements/$id')({
   component: MovementDetailPage,
   pendingComponent: MovementDetailSkeleton,
   pendingMs: 200,
-  errorComponent: ({ error }) => <ErrorComponent error={error} />,
+  errorComponent: ErrorState,
 });
 
 function MovementDetailPage() {

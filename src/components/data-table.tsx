@@ -1,12 +1,14 @@
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
+import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -50,13 +52,15 @@ export function DataTable<TData, TValue>({
     pageIndex: initialPage ?? 0,
     pageSize: pageSize ?? 10,
   });
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   const animateRowsRef = useRef(true);
 
   const table = useReactTable({
     data,
     columns,
-    state: { pagination },
+    state: { pagination, sorting },
+    onSortingChange: setSorting,
     onPaginationChange: (updater) => {
       animateRowsRef.current = false;
       setPagination((prev) => {
@@ -69,6 +73,7 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   });
 
   useEffect(() => {
@@ -96,9 +101,24 @@ export function DataTable<TData, TValue>({
                     key={header.id}
                     className={cn(hiddenColumnIds?.includes(header.column.id) && 'hidden md:table-cell')}
                   >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                      <button
+                        type='button'
+                        onClick={header.column.getToggleSortingHandler()}
+                        className='-ml-1 flex items-center gap-1 rounded px-1 hover:text-foreground'
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getIsSorted() === 'asc' ? (
+                          <ArrowUp className='size-3.5' />
+                        ) : header.column.getIsSorted() === 'desc' ? (
+                          <ArrowDown className='size-3.5' />
+                        ) : (
+                          <ChevronsUpDown className='size-3.5 opacity-40' />
+                        )}
+                      </button>
+                    ) : (
+                      flexRender(header.column.columnDef.header, header.getContext())
+                    )}
                   </TableHead>
                 ))}
               </TableRow>

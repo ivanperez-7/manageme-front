@@ -1,17 +1,17 @@
-import { createFileRoute, ErrorComponent, Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Download, EllipsisVertical, FunnelX, Package2, Plus, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
 // COMPONENTES DEL PROYECTO
+import { ErrorState } from '@/components/error-state';
 import { AddProductDialog } from '@/components/add-product-dialog';
 import { DataTable } from '@/components/data-table';
 import { DeleteProductDialog } from '@/components/delete-product-dialog';
 import { CatalogoSkeleton } from '@/components/route-skeletons';
 
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,7 +34,6 @@ import { plural, statusFromStock } from '@/lib/utils';
 import { Spinner } from '@/components/ui/spinner';
 
 const columns: ColumnDef<ProductoResponse>[] = [
-  { id: 'check', header: () => <Checkbox />, cell: () => <Checkbox /> },
   {
     accessorKey: 'descripcion',
     header: 'Descripción',
@@ -91,7 +90,6 @@ const columns: ColumnDef<ProductoResponse>[] = [
             trigger={<DropdownMenuItem onSelect={(e) => e.preventDefault()}>Editar</DropdownMenuItem>}
             producto={row.original}
           />
-          <DropdownMenuItem>Marcar favorito</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DeleteProductDialog
             trigger={
@@ -128,7 +126,7 @@ export const Route = createFileRoute('/_app/catalogo/')({
   component: ProductListPage,
   pendingComponent: CatalogoSkeleton,
   pendingMs: 200,
-  errorComponent: ({ error }) => <ErrorComponent error={error} />,
+  errorComponent: ErrorState,
   staleTime: 30_000,
 });
 
@@ -295,7 +293,7 @@ function ProductListPage() {
       <DataTable
         columns={columns}
         data={filtered}
-        hiddenColumnIds={['check', 'codigo_interno', 'proveedor.nombre']}
+        hiddenColumnIds={['codigo_interno', 'proveedor.nombre']}
         emptyComponent={emptyComponent}
         initialPage={page ?? 0}
         onChangePage={(pageIndex) =>

@@ -1,9 +1,10 @@
-import { createFileRoute, ErrorComponent, Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, Download, Info, Package2, Plus, Truck } from 'lucide-react';
 import { useState } from 'react';
 
+import { ErrorState } from '@/components/error-state';
 import { DataTable } from '@/components/data-table';
 import { ReordenSkeleton } from '@/components/route-skeletons';
 import {
@@ -127,7 +128,7 @@ export const Route = createFileRoute('/_app/reorden')({
   component: ReordenPage,
   pendingComponent: ReordenSkeleton,
   pendingMs: 200,
-  errorComponent: ({ error }) => <ErrorComponent error={error} />,
+  errorComponent: ErrorState,
   staleTime: 30_000,
 });
 

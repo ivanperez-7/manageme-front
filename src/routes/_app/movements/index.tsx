@@ -1,22 +1,16 @@
-import { createFileRoute, ErrorComponent, Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { CheckCircle, Download, EllipsisVertical, Plus, Search } from 'lucide-react';
+import { CheckCircle, Download, Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { ErrorState } from '@/components/error-state';
 import { DataTable } from '@/components/data-table';
 import { DateRangePicker } from '@/components/date-range-pickers';
 import { MovementsSkeleton } from '@/components/route-skeletons';
 import TipoMovimientoBadge from '@/components/tipo-movimiento-badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 import UserTag from '@/components/user-tag';
@@ -47,15 +41,10 @@ export const Route = createFileRoute('/_app/movements/')({
   component: MovementsListPage,
   pendingComponent: MovementsSkeleton,
   pendingMs: 200,
-  errorComponent: ({ error }) => <ErrorComponent error={error} />,
+  errorComponent: ErrorState,
 });
 
 const columns: ColumnDef<MovimientoResponse>[] = [
-  {
-    id: 'check',
-    header: () => <Checkbox />,
-    cell: () => <Checkbox />,
-  },
   {
     accessorKey: 'id',
     header: 'Folio',
@@ -97,31 +86,6 @@ const columns: ColumnDef<MovimientoResponse>[] = [
           <span className='text-muted-foreground'>{row.original.user_aprueba?.full_name}</span>
         </div>
       ),
-  },
-  {
-    id: 'actions',
-    cell: () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant='ghost'
-            className='data-[state=open]:bg-muted text-muted-foreground size-8'
-            size='icon'
-          >
-            <EllipsisVertical />
-            <span className='sr-only'>Open menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align='end' className='w-32'>
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Editar</DropdownMenuItem>
-          <DropdownMenuItem>Marcar favorito</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()} variant='destructive'>
-            Eliminar
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
   },
 ];
 
@@ -219,7 +183,7 @@ function MovementsListPage() {
       <DataTable
         columns={columns}
         data={filtered}
-        hiddenColumnIds={['check', 'hora', 'comentarios']}
+        hiddenColumnIds={['hora', 'comentarios']}
         initialPage={page ?? 0}
         onChangePage={(pageIndex) =>
           navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true, resetScroll: false })

@@ -1,9 +1,21 @@
-import { createFileRoute, ErrorComponent, Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { EllipsisVertical, PackageOpen, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { DataTable } from '@/components/data-table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +26,7 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empt
 import { Spinner } from '@/components/ui/spinner';
 
 import { ENDPOINTS } from '@/api/endpoints';
+import { ErrorState } from '@/components/error-state';
 import { useCatalogs } from '@/hooks/use-catalogs';
 import { withAuth } from '@/lib/auth';
 import type { ClienteResponse } from '@/lib/types';
@@ -22,11 +35,6 @@ import { CreateClienteDialog } from '@/components/create-client-dialog';
 const prettierTypes: Record<ClienteResponse['tipo'], string> = { fisica: 'Física', moral: 'Moral' };
 
 const clientesColumns: ColumnDef<ClienteResponse>[] = [
-  {
-    id: 'check',
-    header: () => <Checkbox />,
-    cell: () => <Checkbox />,
-  },
   {
     header: 'Nombre',
     accessorKey: 'nombre',
@@ -59,7 +67,7 @@ export const Route = createFileRoute('/_app/clients/')({
   }),
   component: ClientesPage,
   staleTime: 30_000,
-  errorComponent: ({ error }) => <ErrorComponent error={error} />,
+  errorComponent: ErrorState,
 });
 
 function ClientesPage() {
@@ -83,7 +91,7 @@ function ClientesPage() {
         <DataTable
           data={clientes}
           columns={clientesColumns}
-          hiddenColumnIds={['check', 'direccion']}
+          hiddenColumnIds={['direccion']}
           initialPage={page ?? 0}
           onChangePage={(pageIndex) =>
             navigate({ search: (prev) => ({ ...prev, page: pageIndex }), replace: true, resetScroll: false })
@@ -118,38 +126,63 @@ function ClientesPage() {
 function ClientTableDropdown({ clientId }: { clientId: number }) {
   const navigate = Route.useNavigate();
   const { reloadCatalogs } = useCatalogs();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const deleteMutation = useMutation({
+    mutationFn: () => withAuth.patch(ENDPOINTS.clientes.detail(clientId), { activo: false }),
+    onSuccess: () => {
+      toast.success('El cliente se eliminó exitosamente');
+      reloadCatalogs(['clientes']);
+    },
+    onError: (error: any) => toast.error(error.response?.data?.detail || error.message),
+  });
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant='ghost' size='icon'>
-          <EllipsisVertical className='w-5 h-5' />
-        </Button>
-      </DropdownMenuTrigger>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant='ghost' size='icon' aria-label='Acciones'>
+            <EllipsisVertical className='w-5 h-5' />
+          </Button>
+        </DropdownMenuTrigger>
 
-      <DropdownMenuContent align='end'>
-        <DropdownMenuItem
-          onClick={() =>
-            navigate({
-              to: '/clients/$id',
-              params: { id: String(clientId) },
-            })
-          }
-        >
-          Ver / Editar
-        </DropdownMenuItem>
+        <DropdownMenuContent align='end'>
+          <DropdownMenuItem
+            onClick={() =>
+              navigate({
+                to: '/clients/$id',
+                params: { id: String(clientId) },
+              })
+            }
+          >
+            Ver / Editar
+          </DropdownMenuItem>
 
-        <DropdownMenuItem
-          variant='destructive'
-          onClick={() =>
-            withAuth
-              .patch(ENDPOINTS.clientes.detail(clientId), { activo: false })
-              .then(() => reloadCatalogs(['clientes']))
-          }
-        >
-          Eliminar
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuItem variant='destructive' onSelect={() => setConfirmOpen(true)}>
+            Eliminar
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar cliente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Está a punto de eliminar este cliente. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+            >
+              Continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
