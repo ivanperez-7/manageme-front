@@ -51,17 +51,24 @@ export type ProveedorResponse = {
 };
 
 // ── Producto (keep zod schema) ──
-export const productoCreateSchema = z.object({
-  codigo_interno: z.string().min(1, 'El código interno es obligatorio').max(50, 'Máximo 50 caracteres'),
-  descripcion: z.string().min(1, 'La descripción es obligatoria'),
-  categoria_id: z.number('La categoría es obligatoria'),
-  equipos_id: z.array(z.number()),
-  min_stock: z.number(),
-  proveedor_id: z.number().nullable(),
-  sku: z.string().min(1, 'El SKU es obligatorio'),
-  status: z.enum(['activo', 'inactivo']),
-  vida_util: z.number().int('Debe ser un número entero'),
-});
+export const productoCreateSchema = z
+  .object({
+    codigo_interno: z.string().min(1, 'El código interno es obligatorio').max(50, 'Máximo 50 caracteres'),
+    descripcion: z.string().min(1, 'La descripción es obligatoria'),
+    categoria_id: z.number('La categoría es obligatoria'),
+    equipos_id: z.array(z.number()),
+    min_stock: z.number(),
+    proveedor_id: z.number().nullable(),
+    sku: z.string().min(1, 'El SKU es obligatorio'),
+    status: z.enum(['activo', 'inactivo']),
+    // Vida útil por unidades y/o por días; lo que ocurra primero. Al menos una.
+    vida_util_unidades: z.number().int('Debe ser un número entero').nullable(),
+    vida_util_dias: z.number().int('Debe ser un número entero').nullable(),
+  })
+  .refine((d) => d.vida_util_unidades != null || d.vida_util_dias != null, {
+    message: 'Defina vida útil por unidades o por días (al menos una)',
+    path: ['vida_util_unidades'],
+  });
 type ProductoCreate = z.infer<typeof productoCreateSchema>;
 
 export type ProductoResponse = ProductoCreate & {
@@ -293,10 +300,14 @@ export type ProductoRendimiento = {
   producto_id: number;
   codigo_interno: string;
   descripcion: string;
-  vida_util: number | null;
+  vida_util_unidades: number | null;
   ciclos: number;
-  uso_promedio: number;
-  ratio: number;
+  uso_promedio: number | null;
+  ratio: number | null;
+  vida_util_dias: number | null;
+  ciclos_dias: number;
+  dias_promedio: number | null;
+  ratio_dias: number | null;
 };
 
 export type DashboardData = {

@@ -379,25 +379,54 @@ function DashboardPage() {
                           <p className='font-medium'>
                             {d.codigo_interno} — {d.descripcion}
                           </p>
-                          <p>
-                            Vida útil: <strong>{d.vida_util ?? '—'}</strong>
-                          </p>
-                          <p>
-                            Ciclos: <strong>{d.ciclos}</strong>
-                          </p>
-                          <p>
-                            Uso promedio: <strong>{d.uso_promedio}</strong>
-                          </p>
-                          <p>
-                            Ratio: <strong>{d.ratio.toFixed(2)}</strong>
-                          </p>
+                          {d.ratio != null && (
+                            <>
+                              <p>
+                                Vida útil: <strong>{d.vida_util_unidades} unid.</strong>
+                              </p>
+                              <p>
+                                Uso promedio: <strong>{d.uso_promedio}</strong> ({d.ciclos} ciclos)
+                              </p>
+                              <p>
+                                Ratio unidades: <strong>{d.ratio.toFixed(2)}</strong>
+                              </p>
+                            </>
+                          )}
+                          {d.ratio_dias != null && (
+                            <>
+                              <p>
+                                Vida útil: <strong>{d.vida_util_dias} días</strong>
+                              </p>
+                              <p>
+                                Días promedio: <strong>{d.dias_promedio}</strong> ({d.ciclos_dias}{' '}
+                                ciclos)
+                              </p>
+                              <p>
+                                Ratio días: <strong>{d.ratio_dias.toFixed(2)}</strong>
+                              </p>
+                            </>
+                          )}
                         </div>
                       );
                     }}
                   />
-                  <Bar dataKey='ratio' radius={[4, 4, 0, 0]}>
+                  <Legend />
+                  <Bar dataKey='ratio' name='Ratio unidades' fill='#10b981' radius={[4, 4, 0, 0]}>
                     {rendimiento.map((entry, idx) => (
-                      <Cell key={idx} fill={entry.ratio < 1 ? '#ef4444' : '#10b981'} />
+                      <Cell
+                        key={idx}
+                        fill={entry.ratio == null ? 'transparent' : entry.ratio < 1 ? '#ef4444' : '#10b981'}
+                      />
+                    ))}
+                  </Bar>
+                  <Bar dataKey='ratio_dias' name='Ratio días' fill='#3b82f6' radius={[4, 4, 0, 0]}>
+                    {rendimiento.map((entry, idx) => (
+                      <Cell
+                        key={idx}
+                        fill={
+                          entry.ratio_dias == null ? 'transparent' : entry.ratio_dias < 1 ? '#ef4444' : '#3b82f6'
+                        }
+                      />
                     ))}
                   </Bar>
                 </BarChart>
@@ -405,11 +434,11 @@ function DashboardPage() {
             </CardContent>
             <CardFooter className='flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between'>
               <p className='text-sm text-muted-foreground leading-relaxed'>
-                Para cada producto se calcula el uso real consumido entre cada entrega de pieza
-                (ciclo).
-                <strong> Ratio</strong> = uso promedio / vida útil esperada. Un ratio &lt; 1 (rojo)
-                indica que la pieza se consume antes de lo esperado (rinde menos); ratio &gt; 1 (verde)
-                indica que dura más de lo esperado.
+                Para cada producto se mide entre entregas consecutivas el uso consumido (unidades) y
+                el tiempo transcurrido (días).
+                <strong> Ratio</strong> = promedio observado / vida útil esperada, por unidades
+                (verde/rojo) y por días (azul/rojo). Un ratio &lt; 1 (rojo) indica que la pieza se
+                agota antes de lo esperado (rinde menos); &gt; 1 indica que dura más.
               </p>
             </CardFooter>
           </Card>

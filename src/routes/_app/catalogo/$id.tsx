@@ -249,11 +249,16 @@ const ProductInfoCard = ({ producto }: { producto: ProductoResponse }) => (
                   </span>
                 </TooltipTrigger>
                 <TooltipContent side='right' className='max-w-56 text-xs'>
-                  Unidades en promedio que rinde este producto antes de necesitar ser reemplazado.
+                  Vida útil esperada entre reemplazos, por unidades de uso y/o por días; lo que
+                  ocurra primero.
                 </TooltipContent>
               </Tooltip>
             </p>
-            <p>{plural('unidad', producto.vida_util)}</p>
+            <p>
+              {producto.vida_util_unidades != null && plural('unidad', producto.vida_util_unidades)}
+              {producto.vida_util_unidades != null && producto.vida_util_dias != null && ' · '}
+              {producto.vida_util_dias != null && plural('día', producto.vida_util_dias)}
+            </p>
           </div>
           <div>
             <p className='text-sm text-muted-foreground '>Equipos compatibles</p>

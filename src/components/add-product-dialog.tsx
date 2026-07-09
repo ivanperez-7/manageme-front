@@ -52,7 +52,8 @@ export function AddProductDialog({
       sku: producto?.sku ?? '',
       min_stock: producto?.min_stock ?? 0,
       status: producto?.status ?? 'activo',
-      vida_util: producto?.vida_util ?? 0,
+      vida_util_unidades: producto?.vida_util_unidades ?? null,
+      vida_util_dias: producto?.vida_util_dias ?? null,
     },
     validators: { onSubmit: productoCreateSchema },
     onSubmit: async ({ value }) => {
@@ -120,17 +121,38 @@ export function AddProductDialog({
               )}
             </form.AppField>
 
-            <form.Field name='vida_util'>
+            <form.Field name='vida_util_unidades'>
               {(field) => (
                 <Field className='space-y-1'>
-                  <FieldLabel htmlFor={field.name}>Vida útil</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>Vida útil (unidades)</FieldLabel>
                   <InputGroup>
                     <InputGroupInput
                       id={field.name}
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(Number(e.target.value))}
+                      value={field.state.value ?? ''}
+                      onChange={(e) =>
+                        field.handleChange(e.target.value === '' ? null : Number(e.target.value))
+                      }
                     />
                     <InputGroupAddon align='inline-end'>unidades</InputGroupAddon>
+                  </InputGroup>
+                  <FieldError errors={field.state.meta.errors} />
+                </Field>
+              )}
+            </form.Field>
+
+            <form.Field name='vida_util_dias'>
+              {(field) => (
+                <Field className='space-y-1'>
+                  <FieldLabel htmlFor={field.name}>Vida útil (días)</FieldLabel>
+                  <InputGroup>
+                    <InputGroupInput
+                      id={field.name}
+                      value={field.state.value ?? ''}
+                      onChange={(e) =>
+                        field.handleChange(e.target.value === '' ? null : Number(e.target.value))
+                      }
+                    />
+                    <InputGroupAddon align='inline-end'>días</InputGroupAddon>
                   </InputGroup>
                   <FieldError errors={field.state.meta.errors} />
                 </Field>

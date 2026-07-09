@@ -7,7 +7,6 @@ import {
   Package2,
   Printer,
   RefreshCw,
-  Sparkles,
   TruckIcon,
 } from 'lucide-react';
 
@@ -29,7 +28,7 @@ const navigation: NavSection[] = [
     title: '',
     items: [
       { to: '/dashboard', content: 'Dashboard', icon: <LayoutDashboard /> },
-      { to: '/chatbot', content: 'Asistente IA', icon: <Sparkles /> },
+      // { to: '/chatbot', content: 'Asistente IA', icon: <Sparkles /> },
     ],
   },
   {
