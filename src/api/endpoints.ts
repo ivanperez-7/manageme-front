@@ -58,6 +58,9 @@ export const ENDPOINTS = {
   },
   system: {
     actividades: '/system/actividades/',
+    alertas: '/system/alertas/',
+    alertaDetail: (id: IdLike) => `/system/alertas/${id}/`,
+    alertasRefrescar: '/system/alertas/refrescar/',
   },
   sucursales: {
     list: '/organizacion/sucursales/',

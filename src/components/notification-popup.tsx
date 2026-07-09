@@ -1,6 +1,8 @@
-import { Bell, Check, X } from 'lucide-react';
-import { useState } from 'react';
+import { Bell, Check, RefreshCw } from 'lucide-react';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { getAlertas, refrescarAlertas, resolverAlerta } from '@/api/alertas';
 import { Button } from '@/components/ui/button';
 import {
   Item,
@@ -13,23 +15,30 @@ import {
   ItemTitle,
 } from '@/components/ui/item';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import type { AlertaInventario } from '@/lib/types';
+
+const TIPO_LABEL: Record<AlertaInventario['tipo_alerta'], string> = {
+  low_stock: 'Stock bajo',
+  old_product: 'Producto sin rotación',
+  unusual_movement: 'Movimiento inusual',
+  high_rotation: 'Alta rotación',
+};
 
 export function NotificationPopup() {
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'Nueva tarea', description: 'Tienes una tarea pendiente', read: false },
-    { id: 2, title: 'Actualización', description: 'Se actualizó tu reporte', read: true },
-    { id: 3, title: 'Recordatorio', description: 'Tu cita es mañana', read: false },
-  ]);
+  const queryClient = useQueryClient();
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const { data } = useQuery({
+    queryKey: ['alertas'],
+    queryFn: getAlertas,
+    refetchInterval: 60_000,
+  });
 
-  const markAsRead = (id: number) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  };
+  const notifications = data?.results ?? [];
+  const unreadCount = data?.no_leidas ?? 0;
 
-  const removeNotification = (id: number) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  };
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['alertas'] });
+  const resolver = useMutation({ mutationFn: resolverAlerta, onSuccess: invalidate });
+  const refrescar = useMutation({ mutationFn: refrescarAlertas, onSuccess: invalidate });
 
   return (
     <Popover>
@@ -43,6 +52,18 @@ export function NotificationPopup() {
       </PopoverTrigger>
 
       <PopoverContent className='w-80 p-0'>
+        <div className='flex items-center justify-between border-b px-3 py-2'>
+          <span className='text-sm font-medium'>Notificaciones</span>
+          <Button
+            variant='ghost'
+            size='icon'
+            disabled={refrescar.isPending}
+            onClick={() => refrescar.mutate()}
+          >
+            <RefreshCw className={`size-4 ${refrescar.isPending ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+
         <ItemGroup>
           {notifications.length === 0 && (
             <div className='text-center py-6 text-sm text-muted-foreground'>
@@ -52,39 +73,27 @@ export function NotificationPopup() {
 
           {notifications.map((n, index) => (
             <div key={n.id}>
-              <Item variant={n.read ? 'muted' : 'default'} size='sm'>
+              <Item size='sm'>
                 <ItemMedia variant='icon'>
                   <Bell className='size-4' />
                 </ItemMedia>
 
                 <ItemContent>
-                  <ItemTitle>{n.title}</ItemTitle>
-                  <ItemDescription>{n.description}</ItemDescription>
+                  <ItemTitle>{TIPO_LABEL[n.tipo_alerta] ?? n.tipo_alerta}</ItemTitle>
+                  <ItemDescription className='line-clamp-none'>{n.mensaje}</ItemDescription>
                 </ItemContent>
 
                 <ItemActions>
-                  {!n.read && (
-                    <Button
-                      variant='ghost'
-                      size='icon'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        markAsRead(n.id);
-                      }}
-                    >
-                      <Check className='size-4' />
-                    </Button>
-                  )}
-
                   <Button
                     variant='ghost'
                     size='icon'
+                    disabled={resolver.isPending}
                     onClick={(e) => {
                       e.stopPropagation();
-                      removeNotification(n.id);
+                      resolver.mutate(n.id);
                     }}
                   >
-                    <X className='size-4 text-muted-foreground hover:text-red-500' />
+                    <Check className='size-4' />
                   </Button>
                 </ItemActions>
               </Item>
