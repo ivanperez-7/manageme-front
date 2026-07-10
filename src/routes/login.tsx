@@ -168,12 +168,7 @@ function LoginForm() {
             <form.Field name='password'>
               {(field) => (
                 <Field>
-                  <div className='flex items-center'>
-                    <FieldLabel htmlFor={field.name}>Contraseña</FieldLabel>
-                    <a href='#' className='ml-auto text-sm underline-offset-2 hover:underline'>
-                      ¿Olvidó su contraseña?
-                    </a>
-                  </div>
+                  <FieldLabel htmlFor={field.name}>Contraseña</FieldLabel>
                   <div className='relative'>
                     <Lock className='absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none' />
                     <Input
