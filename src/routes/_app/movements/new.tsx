@@ -320,6 +320,8 @@ function AddMovementPage() {
                           <Button
                             variant='ghost'
                             size='icon-sm'
+                            title='Quitar producto'
+                            aria-label='Quitar producto'
                             onClick={() => field.removeValue(index)}
                           >
                             <X />
@@ -471,7 +473,7 @@ function AddMovementPage() {
       {/* HEADER */}
       <header className='flex items-center justify-between gap-4'>
         <div className='flex items-center gap-4'>
-          <Button type='button' variant='ghost' size='icon' onClick={() => router.history.back()}>
+          <Button type='button' variant='ghost' size='icon' title='Volver' aria-label='Volver' onClick={() => router.history.back()}>
             <ArrowLeft className='h-4 w-4' />
           </Button>
           <div>

@@ -80,6 +80,7 @@ const columns: ColumnDef<ProductoResponse>[] = [
             variant='ghost'
             className='data-[state=open]:bg-muted text-muted-foreground size-8'
             size='icon'
+            title='Acciones'
           >
             <EllipsisVertical />
             <span className='sr-only'>Open menu</span>
@@ -304,7 +305,7 @@ function ProductListPage() {
       <div className='fixed bottom-4 right-3 md:bottom-8 md:right-8'>
         <AddProductDialog
           trigger={
-            <Button className='rounded-full' size='icon-lg' variant='default'>
+            <Button className='rounded-full' size='icon-lg' variant='default' title='Nuevo producto' aria-label='Nuevo producto'>
               <Plus />
             </Button>
           }

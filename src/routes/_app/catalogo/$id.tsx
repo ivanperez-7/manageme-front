@@ -178,7 +178,7 @@ function ProductDetailPage() {
       {/* Header con título y botones de editar y eliminar */}
       <header className='grid md:flex justify-between'>
         <div className='flex items-center gap-4'>
-          <Button variant='ghost' size='icon' onClick={() => router.history.back()}>
+          <Button variant='ghost' size='icon' title='Volver' aria-label='Volver' onClick={() => router.history.back()}>
             <ArrowLeft className='h-4 w-4' />
           </Button>
           <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>{producto.descripcion}</h1>

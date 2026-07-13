@@ -59,7 +59,7 @@ function ProveedorDetailPage() {
   return (
     <div className='space-y-4'>
       <div className='flex items-center gap-4'>
-        <Button variant='ghost' size='icon' aria-label='Volver' onClick={() => router.history.back()}>
+        <Button variant='ghost' size='icon' aria-label='Volver' title='Volver' onClick={() => router.history.back()}>
           <ArrowLeft className='h-4 w-4' />
         </Button>
         <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>{proveedor.nombre}</h1>

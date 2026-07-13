@@ -38,7 +38,7 @@ export function CreateMarcaPopover({ onSuccess }: { onSuccess: () => void }) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button size='icon-sm' variant='outline'>
+        <Button size='icon-sm' variant='outline' title='Agregar marca' aria-label='Agregar marca'>
           <Plus />
         </Button>
       </PopoverTrigger>

@@ -108,7 +108,7 @@ function SuppliersPage() {
         <CreateProveedorDialog
           onSuccess={() => reloadCatalogs(['proveedores'])}
           trigger={
-            <Button className='rounded-full' size='icon-lg' variant='default'>
+            <Button className='rounded-full' size='icon-lg' variant='default' title='Nuevo proveedor' aria-label='Nuevo proveedor'>
               <Plus />
             </Button>
           }
@@ -136,7 +136,7 @@ function ProveedorTableDropdown({ proveedorId }: { proveedorId: number }) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant='ghost' size='icon' aria-label='Acciones'>
+          <Button variant='ghost' size='icon' aria-label='Acciones' title='Acciones'>
             <EllipsisVertical className='w-5 h-5' />
           </Button>
         </DropdownMenuTrigger>

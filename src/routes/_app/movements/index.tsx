@@ -191,7 +191,7 @@ function MovementsListPage() {
       />
 
       <div className='fixed bottom-4 right-3 md:bottom-8 md:right-8'>
-        <Button className='rounded-full' size='icon-lg' variant='default' asChild>
+        <Button className='rounded-full' size='icon-lg' variant='default' asChild title='Registrar movimiento' aria-label='Registrar movimiento'>
           <Link to='/movements/new'>
             <Plus />
           </Link>

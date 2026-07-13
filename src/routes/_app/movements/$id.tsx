@@ -135,7 +135,7 @@ function MovementDetailPage() {
       {/* HEADER */}
       <header className='grid md:flex justify-between items-center'>
         <div className='flex items-center gap-4'>
-          <Button variant='ghost' size='icon' onClick={() => router.history.back()}>
+          <Button variant='ghost' size='icon' title='Volver' aria-label='Volver' onClick={() => router.history.back()}>
             <ArrowLeft className='h-4 w-4' />
           </Button>
 

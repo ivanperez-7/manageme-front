@@ -116,7 +116,7 @@ function ClienteDetailPage() {
   return (
     <div className='space-y-4'>
       <div className='flex items-center gap-4'>
-        <Button variant='ghost' size='icon' onClick={() => router.history.back()}>
+        <Button variant='ghost' size='icon' title='Volver' aria-label='Volver' onClick={() => router.history.back()}>
           <ArrowLeft className='h-4 w-4' />
         </Button>
         <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>{cliente.nombre}</h1>
@@ -388,7 +388,7 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
 
         <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <DialogTrigger asChild>
-            <Button variant='ghost' size='icon' className='size-7 shrink-0 -mr-1 -mt-1'>
+            <Button variant='ghost' size='icon' className='size-7 shrink-0 -mr-1 -mt-1' title='Eliminar equipo' aria-label='Eliminar equipo'>
               <Trash2 className='size-3.5 text-muted-foreground hover:text-destructive transition-colors' />
             </Button>
           </DialogTrigger>

@@ -152,7 +152,7 @@ function ChatbotPage() {
             disabled={loading}
             className='bg-muted/50 border-muted focus-visible:bg-background transition-colors'
           />
-          <Button type='submit' size='icon' disabled={loading || !input.trim()}>
+          <Button type='submit' size='icon' title='Enviar' aria-label='Enviar' disabled={loading || !input.trim()}>
             <Send />
           </Button>
         </form>

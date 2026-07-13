@@ -139,6 +139,8 @@ function EquiposPage() {
                           variant='ghost'
                           size='icon'
                           className='h-8 w-8 opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100'
+                          title='Eliminar marca'
+                          aria-label='Eliminar marca'
                         >
                           <Trash2 className='h-4 w-4 text-destructive' />
                         </Button>
@@ -348,7 +350,7 @@ function EquipoCard({ equipo, onDeleted }: { equipo: EquipoResponse; onDeleted: 
             onSuccess={onDeleted}
           >
             <DropdownMenuTrigger asChild>
-              <Button variant='ghost' size='icon'>
+              <Button variant='ghost' size='icon' title='Acciones' aria-label='Acciones'>
                 <MoreVertical className='h-5 w-5' />
               </Button>
             </DropdownMenuTrigger>
