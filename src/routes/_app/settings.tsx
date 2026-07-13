@@ -13,12 +13,13 @@ import { Separator } from '@/components/ui/separator';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { fetchAllSysvars } from '@/api/system';
-import { withAuth } from '@/lib/auth';
+import { authRoleGuard, withAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import type { VariableSistemaResponse } from '@/lib/types';
 
 export const Route = createFileRoute('/_app/settings')({
   staticData: { headerBreadcrumb: [{ label: 'Configuración' }] },
+  beforeLoad: () => authRoleGuard(['admin']),
   loader: fetchAllSysvars,
   component: SettingsPage,
   pendingComponent: SettingsSkeleton,
