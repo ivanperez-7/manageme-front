@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { Download, Layers, Package2, Truck, Users } from 'lucide-react';
+import { AlertTriangle, ArrowLeftRight, Bell, Download, Package2 } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -25,6 +26,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
+import { getAlertas } from '@/api/alertas';
 import { getDashboardData, getRendimientoData } from '@/api/dashboard';
 import { ENDPOINTS } from '@/api/endpoints';
 import { downloadBlob } from '@/lib/download-blob';
@@ -61,6 +63,11 @@ function DashboardPage() {
   const router = useRouter();
   const [isDownloading, setIsDownloading] = useState(false);
 
+  const { data: alertasData } = useQuery({ queryKey: ['alertas'], queryFn: getAlertas });
+  const alertasNoLeidas = alertasData?.no_leidas ?? 0;
+  const lowStockCount = productosBajos.length;
+  const movimientos30d = movimientosChart.reduce((sum, d) => sum + d.entradas + d.salidas, 0);
+
   const downloadRendimiento = async () => {
     if (isDownloading) return;
     setIsDownloading(true);
@@ -81,6 +88,58 @@ function DashboardPage() {
         variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
       >
         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+          <Link to='/reorden'>
+            <Card className='relative overflow-hidden transition-shadow hover:shadow-md'>
+              <div className='absolute top-0 left-0 w-full h-0.5 bg-chart-4' />
+              <CardHeader className='flex flex-row items-center justify-between pb-2'>
+                <CardTitle className='text-sm font-medium'>Bajo stock mínimo</CardTitle>
+                <div className='size-9 rounded-lg bg-chart-4/10 flex items-center justify-center'>
+                  <AlertTriangle className='size-4 text-chart-4' />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${lowStockCount > 0 ? 'text-destructive' : ''}`}>
+                  {lowStockCount}
+                </div>
+                <p className='text-xs text-muted-foreground'>Productos por reordenar</p>
+              </CardContent>
+            </Card>
+          </Link>
+        </motion.div>
+
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+          <Card className='relative overflow-hidden'>
+            <div className='absolute top-0 left-0 w-full h-0.5 bg-chart-5' />
+            <CardHeader className='flex flex-row items-center justify-between pb-2'>
+              <CardTitle className='text-sm font-medium'>Alertas</CardTitle>
+              <div className='size-9 rounded-lg bg-chart-5/10 flex items-center justify-center'>
+                <Bell className='size-4 text-chart-5' />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold'>{alertasNoLeidas}</div>
+              <p className='text-xs text-muted-foreground'>Sin resolver</p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+          <Card className='relative overflow-hidden'>
+            <div className='absolute top-0 left-0 w-full h-0.5 bg-chart-2' />
+            <CardHeader className='flex flex-row items-center justify-between pb-2'>
+              <CardTitle className='text-sm font-medium'>Movimientos</CardTitle>
+              <div className='size-9 rounded-lg bg-chart-2/10 flex items-center justify-center'>
+                <ArrowLeftRight className='size-4 text-chart-2' />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold'>{movimientos30d}</div>
+              <p className='text-xs text-muted-foreground'>Últimos 30 días</p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
           <Card className='relative overflow-hidden'>
             <div className='absolute top-0 left-0 w-full h-0.5 bg-chart-3' />
             <CardHeader className='flex flex-row items-center justify-between pb-2'>
@@ -92,54 +151,6 @@ function DashboardPage() {
             <CardContent>
               <div className='text-2xl font-bold'>{stats.productos}</div>
               <p className='text-xs text-muted-foreground'>Total en catálogo</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-          <Card className='relative overflow-hidden'>
-            <div className='absolute top-0 left-0 w-full h-0.5 bg-chart-2' />
-            <CardHeader className='flex flex-row items-center justify-between pb-2'>
-              <CardTitle className='text-sm font-medium'>Lotes</CardTitle>
-              <div className='size-9 rounded-lg bg-chart-2/10 flex items-center justify-center'>
-                <Layers className='size-4 text-chart-2' />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl font-bold'>{stats.lotes}</div>
-              <p className='text-xs text-muted-foreground'>Lotes registrados</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-          <Card className='relative overflow-hidden'>
-            <div className='absolute top-0 left-0 w-full h-0.5 bg-chart-1' />
-            <CardHeader className='flex flex-row items-center justify-between pb-2'>
-              <CardTitle className='text-sm font-medium'>Clientes</CardTitle>
-              <div className='size-9 rounded-lg bg-chart-1/10 flex items-center justify-center'>
-                <Users className='size-4 text-chart-1' />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl font-bold'>{stats.clientes}</div>
-              <p className='text-xs text-muted-foreground'>Clientes activos</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-          <Card className='relative overflow-hidden'>
-            <div className='absolute top-0 left-0 w-full h-0.5 bg-chart-5' />
-            <CardHeader className='flex flex-row items-center justify-between pb-2'>
-              <CardTitle className='text-sm font-medium'>Proveedores</CardTitle>
-              <div className='size-9 rounded-lg bg-chart-5/10 flex items-center justify-center'>
-                <Truck className='size-4 text-chart-5' />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl font-bold'>{stats.proveedores}</div>
-              <p className='text-xs text-muted-foreground'>Proveedores registrados</p>
             </CardContent>
           </Card>
         </motion.div>
