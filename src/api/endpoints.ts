@@ -14,7 +14,6 @@ export const ENDPOINTS = {
   },
   users: {
     list: '/organizacion/users/',
-    detail: (id: IdLike) => `/organizacion/users/${id}/`,
   },
   dashboard: '/productos/dashboard/',
   rendimiento: '/productos/rendimiento/',
@@ -30,7 +29,6 @@ export const ENDPOINTS = {
   },
   categorias: {
     list: '/productos/categorias/',
-    detail: (id: IdLike) => `/productos/categorias/${id}/`,
   },
   marcas: {
     list: '/productos/marcas/',
@@ -64,7 +62,6 @@ export const ENDPOINTS = {
   },
   sucursales: {
     list: '/organizacion/sucursales/',
-    detail: (id: IdLike) => `/organizacion/sucursales/${id}/`,
   },
   chat: '/chat/',
   reorden: {
