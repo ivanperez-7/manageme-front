@@ -1,6 +1,6 @@
-import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
-import type { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import type { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
 import {
   ArrowDownToDot,
   ArrowLeft,
@@ -12,85 +12,92 @@ import {
   Loader2,
   PackageOpen,
   Trash,
-} from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 // COMPONENTES DEL PROYECTO
-import { ErrorState } from '@/components/error-state';
-import { AddProductDialog } from '@/components/add-product-dialog';
-import { DataTable } from '@/components/data-table';
-import { DateRangePicker } from '@/components/date-range-pickers';
-import { DeleteProductDialog } from '@/components/delete-product-dialog';
-import { RemainingProgress } from '@/components/remaining-progress';
-import { ProductDetailSkeleton } from '@/components/route-skeletons';
-import TipoMovimientoBadge from '@/components/tipo-movimiento-badge';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ErrorState } from "@/components/error-state";
+import { AddProductDialog } from "@/components/add-product-dialog";
+import { DataTable } from "@/components/data-table";
+import { DateRangePicker } from "@/components/date-range-pickers";
+import { DeleteProductDialog } from "@/components/delete-product-dialog";
+import { EquipoProductosDialog } from "@/components/equipo-productos-dialog";
+import { RemainingProgress } from "@/components/remaining-progress";
+import { ProductDetailSkeleton } from "@/components/route-skeletons";
+import TipoMovimientoBadge from "@/components/tipo-movimiento-badge";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // OTRAS UTILIDADES
-import { fetchProductoById } from '@/api/catalogo';
-import { fetchMovimientos } from '@/api/movimientos';
-import type { LoteResponse, MovimientoResponse, ProductoResponse, ProveedorResponse } from '@/lib/types';
+import { fetchProductoById } from "@/api/catalogo";
+import { fetchMovimientos } from "@/api/movimientos";
+import type {
+  EquipoResponse,
+  LoteResponse,
+  MovimientoResponse,
+  ProductoResponse,
+  ProveedorResponse,
+} from "@/lib/types";
 
 type CatalogoLoaderData = Awaited<ReturnType<typeof fetchProductoById>>;
-import { cn, humanDate, humanTime, plural } from '@/lib/utils';
+import { cn, humanDate, humanTime, plural } from "@/lib/utils";
 
 const movementsColumns: ColumnDef<MovimientoResponse & { cantidad: number }>[] = [
   {
-    accessorKey: 'id',
-    header: 'Folio',
+    accessorKey: "id",
+    header: "Folio",
     cell: ({ row }) => (
       <Link to='/movements/$id' params={{ id: String(row.original.id) }} className='font-semibold'>
-        {row.getValue('id')}
+        {row.getValue("id")}
       </Link>
     ),
   },
   {
-    accessorKey: 'creado',
-    header: 'Fecha',
-    cell: ({ row }) => humanDate(row.getValue('creado')),
+    accessorKey: "creado",
+    header: "Fecha",
+    cell: ({ row }) => humanDate(row.getValue("creado")),
   },
   {
-    id: 'hora',
-    accessorKey: 'creado',
-    header: 'Hora',
-    cell: ({ row }) => humanTime(row.getValue('creado')),
+    id: "hora",
+    accessorKey: "creado",
+    header: "Hora",
+    cell: ({ row }) => humanTime(row.getValue("creado")),
   },
   {
-    id: 'tipo',
-    header: 'Tipo',
+    id: "tipo",
+    header: "Tipo",
     cell: ({ row }) => <TipoMovimientoBadge tipo={row.original.tipo} />,
   },
   {
-    accessorKey: 'cantidad',
-    header: 'Cantidad',
+    accessorKey: "cantidad",
+    header: "Cantidad",
     cell: ({ row }) => (
       <span
         className={cn(
-          row.original.tipo === 'entrada'
-            ? 'text-blue-600 dark:text-blue-400'
-            : 'text-red-600 dark:text-red-400',
-          'font-semibold'
+          row.original.tipo === "entrada"
+            ? "text-blue-600 dark:text-blue-400"
+            : "text-red-600 dark:text-red-400",
+          "font-semibold"
         )}
       >
-        {row.original.cantidad.toLocaleString('es-MX')}
+        {row.original.cantidad.toLocaleString("es-MX")}
       </span>
     ),
   },
   {
-    accessorKey: 'aprobado',
-    header: '¿Aprobado?',
+    accessorKey: "aprobado",
+    header: "¿Aprobado?",
     cell: ({ row }) =>
-      row.getValue('aprobado') && (
+      row.getValue("aprobado") && (
         <div className='flex gap-1.5 items-center'>
-          <CheckCircle className='size-4 text-green-700 dark:text-green-400' />{' '}
+          <CheckCircle className='size-4 text-green-700 dark:text-green-400' />{" "}
           <span className='text-muted-foreground'>{row.original.user_aprueba?.full_name}</span>
         </div>
       ),
@@ -98,27 +105,30 @@ const movementsColumns: ColumnDef<MovimientoResponse & { cantidad: number }>[] =
 ];
 
 const lotesColumns: ColumnDef<LoteResponse>[] = [
-  { accessorKey: 'codigo_lote', header: 'Código' },
+  { accessorKey: "codigo_lote", header: "Código" },
   {
-    accessorKey: 'cantidad_restante',
-    header: 'Cantidad restante',
+    accessorKey: "cantidad_restante",
+    header: "Cantidad restante",
     cell: ({ row }) => (
-      <RemainingProgress total={row.original.cantidad_inicial} remaining={row.original.cantidad_restante} />
+      <RemainingProgress
+        total={row.original.cantidad_inicial}
+        remaining={row.original.cantidad_restante}
+      />
     ),
   },
   {
-    accessorKey: 'fecha_entrada',
-    header: 'Fecha de entrada',
-    cell: ({ row }) => humanDate(row.getValue('fecha_entrada')),
+    accessorKey: "fecha_entrada",
+    header: "Fecha de entrada",
+    cell: ({ row }) => humanDate(row.getValue("fecha_entrada")),
   },
   {
-    id: 'hora_entrada',
-    accessorKey: 'fecha_entrada',
-    header: 'Hora de entrada',
-    cell: ({ row }) => humanTime(row.getValue('fecha_entrada')),
+    id: "hora_entrada",
+    accessorKey: "fecha_entrada",
+    header: "Hora de entrada",
+    cell: ({ row }) => humanTime(row.getValue("fecha_entrada")),
   },
   {
-    id: 'actions',
+    id: "actions",
     cell: ({ row }) => (
       <Tooltip>
         <TooltipTrigger asChild>
@@ -127,7 +137,7 @@ const lotesColumns: ColumnDef<LoteResponse>[] = [
               to='/movements/new'
               search={{
                 initialData: {
-                  tipo: 'salida',
+                  tipo: "salida",
                   items: [
                     { producto_id: row.original.producto.id, cantidad: 0, lote_id: row.original.id },
                   ],
@@ -144,15 +154,20 @@ const lotesColumns: ColumnDef<LoteResponse>[] = [
   },
 ];
 
-type MovimientoSearch = { fechaInicio?: string; fechaFin?: string; lotesPage?: number; movPage?: number };
+type MovimientoSearch = {
+  fechaInicio?: string;
+  fechaFin?: string;
+  lotesPage?: number;
+  movPage?: number;
+};
 
-export const Route = createFileRoute('/_app/catalogo/$id')({
+export const Route = createFileRoute("/_app/catalogo/$id")({
   staticData: {
     headerBreadcrumb: (match) => {
       const data = match.loaderData as CatalogoLoaderData | undefined;
       return [
-        { label: 'Productos', to: '/catalogo' },
-        { label: data?.producto?.codigo_interno ?? '...' },
+        { label: "Productos", to: "/catalogo" },
+        { label: data?.producto?.codigo_interno ?? "..." },
       ];
     },
   },
@@ -178,7 +193,13 @@ function ProductDetailPage() {
       {/* Header con título y botones de editar y eliminar */}
       <header className='grid md:flex justify-between'>
         <div className='flex items-center gap-4'>
-          <Button variant='ghost' size='icon' title='Volver' aria-label='Volver' onClick={() => router.history.back()}>
+          <Button
+            variant='ghost'
+            size='icon'
+            title='Volver'
+            aria-label='Volver'
+            onClick={() => router.history.back()}
+          >
             <ArrowLeft className='h-4 w-4' />
           </Button>
           <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>{producto.descripcion}</h1>
@@ -213,73 +234,100 @@ function ProductDetailPage() {
   );
 }
 
-const ProductInfoCard = ({ producto }: { producto: ProductoResponse }) => (
-  <Card className='my-6'>
-    <CardHeader>
-      <CardTitle className='text-lg'>Información General</CardTitle>
-      <Separator />
-    </CardHeader>
-    <CardContent>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
-        <div className='space-y-4'>
-          <div>
-            <p className='text-sm text-muted-foreground'>Código</p>
-            <p className='font-semibold'>{producto.codigo_interno}</p>
+const ProductInfoCard = ({ producto }: { producto: ProductoResponse }) => {
+  const [selectedEquipo, setSelectedEquipo] = useState<EquipoResponse | null>(null);
+
+  return (
+    <Card className='my-6'>
+      <CardHeader>
+        <CardTitle className='text-lg'>Información General</CardTitle>
+        <Separator />
+      </CardHeader>
+      <CardContent>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+          <div className='space-y-4'>
+            <div>
+              <p className='text-sm text-muted-foreground'>Código</p>
+              <p className='font-semibold'>{producto.codigo_interno}</p>
+            </div>
+            <div>
+              <p className='text-sm text-muted-foreground'>Categoría</p>
+              <p>{producto.categoria?.nombre}</p>
+            </div>
+            <div>
+              <p className='text-sm text-muted-foreground'>SKU</p>
+              <p>{producto.sku}</p>
+            </div>
           </div>
-          <div>
-            <p className='text-sm text-muted-foreground'>Categoría</p>
-            <p>{producto.categoria?.nombre}</p>
-          </div>
-          <div>
-            <p className='text-sm text-muted-foreground'>SKU</p>
-            <p>{producto.sku}</p>
+          <div className='space-y-4'>
+            <div>
+              <p className='text-sm text-muted-foreground'>Existencia</p>
+              <p>{plural("unidad", producto.cantidad_disponible)}</p>
+            </div>
+            <div>
+              <p className='text-sm text-muted-foreground'>
+                Vida útil
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className='inline-flex ml-1 cursor-help align-middle'>
+                      <Info className='h-3 w-3 text-muted-foreground/70' />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side='right' className='max-w-56 text-xs'>
+                    Vida útil esperada entre reemplazos, por unidades de uso y/o por días; lo que
+                    ocurra primero.
+                  </TooltipContent>
+                </Tooltip>
+              </p>
+              <p>
+                {producto.vida_util_unidades != null && plural("unidad", producto.vida_util_unidades)}
+                {producto.vida_util_unidades != null && producto.vida_util_dias != null && " · "}
+                {producto.vida_util_dias != null && plural("día", producto.vida_util_dias)}
+              </p>
+            </div>
+            <div>
+              <p className='text-sm text-muted-foreground '>Equipos compatibles</p>
+              {producto.equipos?.length > 0 ? (
+                <div className='flex flex-wrap gap-2 mt-2'>
+                  {producto.equipos.map((eq) => (
+                    <Badge
+                      key={eq.id}
+                      variant='secondary'
+                      className='px-3 py-1 gap-2 cursor-pointer transition-colors hover:bg-secondary/70'
+                      role='button'
+                      tabIndex={0}
+                      title={`Ver productos de ${eq.nombre}`}
+                      onClick={() => setSelectedEquipo(eq)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedEquipo(eq);
+                        }
+                      }}
+                    >
+                      {eq.nombre}{" "}
+                      <span className='text-xs text-muted-foreground'>{eq.marca.nombre}</span>
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p>N/A</p>
+              )}
+
+              {selectedEquipo && (
+                <EquipoProductosDialog
+                  equipo={selectedEquipo}
+                  open={!!selectedEquipo}
+                  onOpenChange={(o) => !o && setSelectedEquipo(null)}
+                />
+              )}
+            </div>
           </div>
         </div>
-        <div className='space-y-4'>
-          <div>
-            <p className='text-sm text-muted-foreground'>Existencia</p>
-            <p>{plural('unidad', producto.cantidad_disponible)}</p>
-          </div>
-          <div>
-            <p className='text-sm text-muted-foreground'>
-              Vida útil
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className='inline-flex ml-1 cursor-help align-middle'>
-                    <Info className='h-3 w-3 text-muted-foreground/70' />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side='right' className='max-w-56 text-xs'>
-                  Vida útil esperada entre reemplazos, por unidades de uso y/o por días; lo que
-                  ocurra primero.
-                </TooltipContent>
-              </Tooltip>
-            </p>
-            <p>
-              {producto.vida_util_unidades != null && plural('unidad', producto.vida_util_unidades)}
-              {producto.vida_util_unidades != null && producto.vida_util_dias != null && ' · '}
-              {producto.vida_util_dias != null && plural('día', producto.vida_util_dias)}
-            </p>
-          </div>
-          <div>
-            <p className='text-sm text-muted-foreground '>Equipos compatibles</p>
-            {producto.equipos?.length > 0 ? (
-              <div className='flex flex-wrap gap-2 mt-2'>
-                {producto.equipos.map((eq) => (
-                  <Badge key={eq.id} variant='secondary' className='px-3 py-1 gap-2'>
-                    {eq.nombre} <span className='text-xs text-muted-foreground'>{eq.marca.nombre}</span>
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p>N/A</p>
-            )}
-          </div>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
+      </CardContent>
+    </Card>
+  );
+};
 
 const ProductProviderCard = ({ proveedor }: { proveedor?: ProveedorResponse }) =>
   proveedor && (
@@ -303,12 +351,12 @@ const ProductProviderCard = ({ proveedor }: { proveedor?: ProveedorResponse }) =
           <div className='space-y-4'>
             <div>
               <p className='text-sm text-muted-foreground'>Teléfono</p>
-              <p className='font-semibold'>{proveedor.telefono || 'N/A'}</p>
+              <p className='font-semibold'>{proveedor.telefono || "N/A"}</p>
             </div>
             <div>
               <p className='text-sm text-muted-foreground'>Correo</p>
-              <a className='font-semibold' href={'mailto:' + proveedor.correo}>
-                {proveedor.correo || 'N/A'}
+              <a className='font-semibold' href={"mailto:" + proveedor.correo}>
+                {proveedor.correo || "N/A"}
               </a>
             </div>
           </div>
@@ -341,7 +389,7 @@ const ProductBatchesCard = ({ lotes }: { lotes: LoteResponse[] }) => {
           data={filteredLotes}
           columns={lotesColumns}
           transparent
-          hiddenColumnIds={['hora_entrada']}
+          hiddenColumnIds={["hora_entrada"]}
           initialPage={lotesPage ?? 0}
           onChangePage={(pageIndex) =>
             navigate({
@@ -357,7 +405,9 @@ const ProductBatchesCard = ({ lotes }: { lotes: LoteResponse[] }) => {
                   <PackageOpen />
                 </EmptyMedia>
                 <EmptyTitle>No se ha registrado ningún lote</EmptyTitle>
-                <EmptyDescription>Comienza registrando un lote por medio de una entrada</EmptyDescription>
+                <EmptyDescription>
+                  Comienza registrando un lote por medio de una entrada
+                </EmptyDescription>
               </EmptyHeader>
             </Empty>
           }
@@ -372,16 +422,16 @@ const ProductMovementsCard = () => {
   const { fechaInicio, fechaFin, movPage } = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const inicio = fechaInicio || format(new Date(), 'yyyy-MM-dd');
-  const fin = fechaFin || format(new Date(), 'yyyy-MM-dd');
+  const inicio = fechaInicio || format(new Date(), "yyyy-MM-dd");
+  const fin = fechaFin || format(new Date(), "yyyy-MM-dd");
 
   const { data, isLoading: loading } = useQuery({
-    queryKey: ['movimientos', { productoId: producto.id, inicio, fin }],
+    queryKey: ["movimientos", { productoId: producto.id, inicio, fin }],
     queryFn: () => fetchMovimientos({ productoId: producto.id, fechaInicio: inicio, fechaFin: fin }),
   });
 
   const movimientos = data?.movimientos ?? [];
-  const oldestDate = data?.oldestDate ?? '';
+  const oldestDate = data?.oldestDate ?? "";
 
   return (
     <Card className='mb-6'>
@@ -392,7 +442,7 @@ const ProductMovementsCard = () => {
             to='/movements/new'
             search={{
               initialData: {
-                tipo: 'entrada',
+                tipo: "entrada",
                 items: [{ producto_id: producto.id, cantidad: 0 }],
               },
             }}
@@ -409,14 +459,14 @@ const ProductMovementsCard = () => {
           defaultEndDate={fechaFin ? new Date(fechaFin) : undefined}
           onStartDateChange={(date) =>
             navigate({
-              search: (prev) => ({ ...prev, fechaInicio: format(date, 'yyyy-MM-dd') }),
+              search: (prev) => ({ ...prev, fechaInicio: format(date, "yyyy-MM-dd") }),
               replace: true,
               resetScroll: false,
             })
           }
           onEndDateChange={(date) =>
             navigate({
-              search: (prev) => ({ ...prev, fechaFin: format(date, 'yyyy-MM-dd') }),
+              search: (prev) => ({ ...prev, fechaFin: format(date, "yyyy-MM-dd") }),
               replace: true,
               resetScroll: false,
             })
@@ -437,7 +487,7 @@ const ProductMovementsCard = () => {
             )}
             columns={movementsColumns}
             transparent
-            hiddenColumnIds={['hora']}
+            hiddenColumnIds={["hora"]}
             initialPage={movPage ?? 0}
             onChangePage={(pageIndex) =>
               navigate({
