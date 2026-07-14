@@ -236,6 +236,12 @@ function ProductDetailPage() {
 
 const ProductInfoCard = ({ producto }: { producto: ProductoResponse }) => {
   const [selectedEquipo, setSelectedEquipo] = useState<EquipoResponse | null>(null);
+  const [equipoDialogOpen, setEquipoDialogOpen] = useState(false);
+
+  const openEquipo = (eq: EquipoResponse) => {
+    setSelectedEquipo(eq);
+    setEquipoDialogOpen(true);
+  };
 
   return (
     <Card className='my-6'>
@@ -297,11 +303,11 @@ const ProductInfoCard = ({ producto }: { producto: ProductoResponse }) => {
                       role='button'
                       tabIndex={0}
                       title={`Ver productos de ${eq.nombre}`}
-                      onClick={() => setSelectedEquipo(eq)}
+                      onClick={() => openEquipo(eq)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
-                          setSelectedEquipo(eq);
+                          openEquipo(eq);
                         }
                       }}
                     >
@@ -317,8 +323,8 @@ const ProductInfoCard = ({ producto }: { producto: ProductoResponse }) => {
               {selectedEquipo && (
                 <EquipoProductosDialog
                   equipo={selectedEquipo}
-                  open={!!selectedEquipo}
-                  onOpenChange={(o) => !o && setSelectedEquipo(null)}
+                  open={equipoDialogOpen}
+                  onOpenChange={setEquipoDialogOpen}
                 />
               )}
             </div>
