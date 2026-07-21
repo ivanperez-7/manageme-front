@@ -247,6 +247,7 @@ function AddMovementPage() {
 
                   const isLoading = cache.initialLoading;
                   const noMatching =
+                    subtipo === 'renta' &&
                     !!clienteId &&
                     !clientEquipos.loadingClientEquipos &&
                     getMatchingEquipos(producto_id).length === 0;

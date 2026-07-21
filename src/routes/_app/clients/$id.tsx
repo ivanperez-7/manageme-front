@@ -1,5 +1,5 @@
 import { useMask } from '@react-input/mask';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
@@ -112,6 +112,12 @@ function ClienteDetailPage() {
   const { cliente, equiposCliente } = Route.useLoaderData();
   const { reloadCatalogs } = useCatalogs();
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const handleEquiposChange = () => {
+    router.invalidate();
+    queryClient.invalidateQueries({ queryKey: ['clientEquipos', cliente.id] });
+  };
 
   return (
     <div className='space-y-4'>
@@ -135,7 +141,7 @@ function ClienteDetailPage() {
           <CardHeader>
             <div className='flex justify-between items-center'>
               <CardTitle>Equipos asignados</CardTitle>
-              <AssignEquipoDialog clienteId={cliente.id} onSuccess={router.invalidate} />
+              <AssignEquipoDialog clienteId={cliente.id} onSuccess={handleEquiposChange} />
             </div>
             <Separator />
           </CardHeader>
@@ -154,7 +160,7 @@ function ClienteDetailPage() {
             ) : (
               <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3'>
                 {equiposCliente.map((eq) => (
-                  <EquipoCard key={eq.id} equipo={eq} onDelete={router.invalidate} />
+                  <EquipoCard key={eq.id} equipo={eq} onDelete={handleEquiposChange} />
                 ))}
               </div>
             )}

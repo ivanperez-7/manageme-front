@@ -5,6 +5,7 @@ import {
   ArrowDownToDot,
   ArrowLeft,
   ArrowLeftRight,
+  ArrowUpFromDot,
   CheckCircle,
   Edit,
   Info,
@@ -332,20 +333,36 @@ const ProductMovementsCard = () => {
     <Card className='mb-6'>
       <CardHeader className='grid items-center md:flex md:justify-between'>
         <CardTitle className='text-lg'>Movimientos</CardTitle>
-        <Button size='sm' asChild>
-          <Link
-            to='/movements/new'
-            search={{
-              initialData: {
-                tipo: "entrada",
-                items: [{ producto_id: producto.id, cantidad: 0 }],
-              },
-            }}
-          >
-            <ArrowDownToDot />
-            Registrar entrada
-          </Link>
-        </Button>
+        <div className='flex items-center gap-2'>
+          <Button size='sm' asChild>
+            <Link
+              to='/movements/new'
+              search={{
+                initialData: {
+                  tipo: "salida",
+                  items: [{ producto_id: producto.id, cantidad: 0 }],
+                },
+              }}
+            >
+              <ArrowUpFromDot />
+              Registrar salida
+            </Link>
+          </Button>
+          <Button size='sm' asChild>
+            <Link
+              to='/movements/new'
+              search={{
+                initialData: {
+                  tipo: "entrada",
+                  items: [{ producto_id: producto.id, cantidad: 0 }],
+                },
+              }}
+            >
+              <ArrowDownToDot />
+              Registrar entrada
+            </Link>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <DateRangePicker
