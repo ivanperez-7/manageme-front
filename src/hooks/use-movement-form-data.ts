@@ -6,7 +6,7 @@ import { ENDPOINTS } from '@/api/endpoints';
 import { withAuth } from '@/lib/auth';
 import type { EquipoClienteResponse, LoteResponse, ProductoResponse } from '@/lib/types';
 
-type ProductoCatalogo = Pick<ProductoResponse, 'id' | 'codigo_interno' | 'descripcion' | 'equipos'>;
+type ProductoCatalogo = ProductoResponse;
 
 export function useMovementScan() {
   const [scanCode, setScanCode] = useState('');
@@ -105,7 +105,7 @@ export function useItemLookup(
   };
 
   const addLote = (lote: LoteResponse) => {
-    setProductosMap((prev) => ({ ...prev, [lote.producto.id]: lote.producto }));
+    setProductosMap((prev) => ({ ...prev, [lote.producto.id]: lote.producto as ProductoCatalogo }));
     setLotesMap((prev) => ({ ...prev, [lote.id]: lote }));
   };
 

@@ -12,7 +12,7 @@ import {
   TrendingUp,
   type LucideIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
@@ -64,6 +64,12 @@ export function NotificationPopup() {
     mutationFn: () => Promise.all(notifications.map((n) => resolverAlerta(n.id))),
     onSuccess: invalidate,
   });
+
+  useEffect(() => {
+    refrescar.mutate();
+    const interval = setInterval(() => refrescar.mutate(), 300_000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

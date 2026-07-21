@@ -50,6 +50,7 @@ function EquiposPage() {
 
   const [selectedMarca, setSelectedMarca] = useState<number | null>(null);
   const [search, setSearch] = useState('');
+  const [equipoSearch, setEquipoSearch] = useState('');
 
   const marcasFiltradas = useMemo(() => {
     return marcas.filter((marca) => marca.nombre.toLowerCase().includes(search.toLowerCase()));
@@ -57,8 +58,11 @@ function EquiposPage() {
 
   const equiposFiltrados = useMemo(() => {
     if (!selectedMarca) return [];
-    return equipos.filter((e) => e.marca.id === selectedMarca);
-  }, [equipos, selectedMarca]);
+    return equipos.filter(
+      (e) => e.marca.id === selectedMarca &&
+        e.nombre.toLowerCase().includes(equipoSearch.toLowerCase())
+    );
+  }, [equipos, selectedMarca, equipoSearch]);
 
   const selectedMarcaData = marcas.find((m) => m.id === selectedMarca);
 
@@ -189,6 +193,15 @@ function EquiposPage() {
                 <CreateEquipoPopover
                   marcaId={selectedMarcaData.id}
                   onSuccess={() => reloadCatalogs(['equipos'])}
+                />
+              </div>
+
+              {/* EQUIPO SEARCH */}
+              <div className='px-6 pt-4'>
+                <Input
+                  placeholder='Buscar equipo...'
+                  value={equipoSearch}
+                  onChange={(e) => setEquipoSearch(e.target.value)}
                 />
               </div>
 

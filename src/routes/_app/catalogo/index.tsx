@@ -11,6 +11,7 @@ import { DataTable } from '@/components/data-table';
 import { DeleteProductDialog } from '@/components/delete-product-dialog';
 import { CatalogoSkeleton } from '@/components/route-skeletons';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -44,7 +45,46 @@ const columns: ColumnDef<ProductoResponse>[] = [
     ),
   },
   { accessorKey: 'codigo_interno', header: 'Código' },
+  { accessorKey: 'sku', header: 'SKU' },
   { accessorKey: 'proveedor.nombre', header: 'Proveedor' },
+  {
+    accessorKey: 'equipos',
+    header: 'Equipos',
+    enableSorting: false,
+    cell: ({ row }) => {
+      const equipos = row.original.equipos;
+      if (!equipos.length) return <span className='text-muted-foreground text-sm'>—</span>;
+      return (
+        <div className='flex flex-wrap gap-1'>
+          {equipos.map((eq) => (
+            <Badge key={eq.id} variant='outline' className='text-xs font-normal gap-1'>
+              {eq.nombre}
+            </Badge>
+          ))}
+        </div>
+      );
+    },
+  },
+  {
+    id: 'marcas',
+    header: 'Marca',
+    enableSorting: false,
+    cell: ({ row }) => {
+      const marcas = Array.from(
+        new Map(row.original.equipos.map((eq) => [eq.marca.id, eq.marca.nombre])).values()
+      );
+      if (!marcas.length) return <span className='text-muted-foreground text-sm'>—</span>;
+      return (
+        <div className='flex flex-wrap gap-1'>
+          {marcas.map((nombre) => (
+            <Badge key={nombre} variant='secondary' className='text-xs font-normal'>
+              {nombre}
+            </Badge>
+          ))}
+        </div>
+      );
+    },
+  },
   {
     accessorKey: 'cantidad_disponible',
     header: 'Existencia',
@@ -148,7 +188,12 @@ function ProductListPage() {
         text &&
         !prod.codigo_interno.toLowerCase().includes(text.toLowerCase()) &&
         !prod.descripcion.toLowerCase().includes(text.toLowerCase()) &&
-        !prod.sku.toLowerCase().includes(text.toLowerCase())
+        !prod.sku.toLowerCase().includes(text.toLowerCase()) &&
+        !prod.equipos.some(
+          (eq) =>
+            eq.nombre.toLowerCase().includes(text.toLowerCase()) ||
+            eq.marca.nombre.toLowerCase().includes(text.toLowerCase())
+        )
       )
         return false;
       if (categoria && prod.categoria.id !== categoria) return false;

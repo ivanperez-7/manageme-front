@@ -3,13 +3,19 @@ import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-form';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowDownToDot, ArrowLeft, ArrowUpFromDot, Loader2, PackageOpen, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { MovementScanInput } from '@/components/movement/movement-scan-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Field, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -23,8 +29,9 @@ import { useAppForm } from '@/hooks/use-app-form';
 import { useCatalogs } from '@/hooks/use-catalogs';
 import { useClientEquipos, useItemLookup, useMovementScan } from '@/hooks/use-movement-form-data';
 import { withAuth } from '@/lib/auth';
-import { movimientoCreateSchema, type MovimientoCreate, type MovimientoResponse } from '@/lib/types';
+import { movimientoCreateSchema, type MovimientoCreate, type MovimientoResponse, type ProductoResponse } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { ProductInfoContent } from '@/components/product-info-content';
 import { userStore } from '@/stores/userStore';
 
 const tipoOptions = [
@@ -54,6 +61,7 @@ function AddMovementPage() {
   const queryClient = useQueryClient();
 
   const currentUserId = userStore.state.id;
+  const [selectedProducto, setSelectedProducto] = useState<ProductoResponse | null>(null);
   const initialTipo = initialData?.tipo ?? 'entrada';
 
   const form = useAppForm({
@@ -277,7 +285,17 @@ function AddMovementPage() {
                           {isLoading ? <Skeleton className='h-5 w-20' /> : producto?.codigo_interno}
                         </TableCell>
                         <TableCell>
-                          {isLoading ? <Skeleton className='h-5 w-48' /> : producto?.descripcion}
+                          {isLoading ? (
+                            <Skeleton className='h-5 w-48' />
+                          ) : (
+                            <button
+                              type='button'
+                              className='text-left font-medium hover:underline cursor-pointer'
+                              onClick={() => setSelectedProducto(producto ?? null)}
+                            >
+                              {producto?.descripcion}
+                            </button>
+                          )}
                         </TableCell>
                         <TableCell hidden={tipo !== 'salida'}>
                           {cache.initialLoading ? (
@@ -568,6 +586,15 @@ function AddMovementPage() {
           />
         </form.AppForm>
       </div>
+
+      <Dialog open={!!selectedProducto} onOpenChange={(open) => !open && setSelectedProducto(null)}>
+        <DialogContent className='sm:max-w-lg'>
+          <DialogHeader>
+            <DialogTitle>{selectedProducto?.descripcion}</DialogTitle>
+          </DialogHeader>
+          {selectedProducto && <ProductInfoContent producto={selectedProducto} />}
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }
