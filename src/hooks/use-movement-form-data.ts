@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { withAuth } from '@/lib/auth';
-import type { EquipoClienteResponse, LoteResponse, ProductoResponse } from '@/lib/types';
+import type { EquipoClienteResponse, ProductoResponse } from '@/lib/types';
 
 type ProductoCatalogo = ProductoResponse;
 
@@ -15,10 +15,9 @@ export function useMovementScan() {
 
   const handleScanSubmit = async (
     e: React.FormEvent,
-    tipo: 'entrada' | 'salida',
+    _tipo: 'entrada' | 'salida',
     callbacks: {
       onProductoScanned: (producto: ProductoResponse) => void;
-      onLoteScanned: (lote: LoteResponse) => void;
     }
   ) => {
     e.preventDefault();
@@ -26,23 +25,10 @@ export function useMovementScan() {
     setSearching(true);
 
     try {
-      if (tipo === 'entrada') {
-        const { data } = await withAuth.get(ENDPOINTS.products.list, { params: { sku: scanCode } });
-        const products = data as ProductoResponse[];
-        if (!products.length) throw new Error('No se encontró ningún producto con este código');
-        callbacks.onProductoScanned(products[0]);
-      } else {
-        const { data } = await withAuth.get(ENDPOINTS.lotes.list, { params: { codigo_lote: scanCode } });
-        const lotes = data as LoteResponse[];
-
-        if (!lotes.length) throw new Error('No se encontró ningún lote con este código');
-
-        const [lote] = lotes;
-        if (lote.cantidad_restante <= 0)
-          throw new Error('Este lote no tiene cantidad disponible para salida');
-
-        callbacks.onLoteScanned(lote);
-      }
+      const { data } = await withAuth.get(ENDPOINTS.products.list, { params: { sku: scanCode } });
+      const products = data as ProductoResponse[];
+      if (!products.length) throw new Error('No se encontró ningún producto con este código');
+      callbacks.onProductoScanned(products[0]);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -56,11 +42,10 @@ export function useMovementScan() {
 }
 
 export function useItemLookup(
-  initialData?: { items?: Array<{ producto_id: number; lote_id?: number }> },
+  initialData?: { items?: Array<{ producto_id: number }> },
   enabled = true
 ) {
   const [productosMap, setProductosMap] = useState<Record<number, ProductoCatalogo>>({});
-  const [lotesMap, setLotesMap] = useState<Record<number, LoteResponse>>({});
   const [initialLoading, setInitialLoading] = useState(() => Boolean(initialData?.items?.length));
 
   useEffect(() => {
@@ -79,22 +64,6 @@ export function useItemLookup(
         toast.error('Error al cargar la información de los productos iniciales');
       }
 
-      const pendingLoteIds = initialData.items
-        .map((item) => (item as { lote_id?: number }).lote_id)
-        .filter((id): id is number => id != null);
-
-      if (pendingLoteIds.length) {
-        try {
-          const responses = await Promise.all(
-            pendingLoteIds.map((loteId) => withAuth.get(ENDPOINTS.lotes.detail(loteId)))
-          );
-          const lotes = responses.map((r) => r.data as LoteResponse);
-          setLotesMap((prev) => ({ ...prev, ...Object.fromEntries(lotes.map((l) => [l.id, l])) }));
-        } catch {
-          toast.error('Error al cargar la información de los lotes iniciales');
-        }
-      }
-
       setInitialLoading(false);
     };
     loadInitialData();
@@ -104,20 +73,10 @@ export function useItemLookup(
     setProductosMap((prev) => ({ ...prev, [producto.id]: producto }));
   };
 
-  const addLote = (lote: LoteResponse) => {
-    setProductosMap((prev) => ({ ...prev, [lote.producto.id]: lote.producto as ProductoCatalogo }));
-    setLotesMap((prev) => ({ ...prev, [lote.id]: lote }));
-  };
-
-  const clearLotes = () => setLotesMap({});
-
   return {
     productosMap,
-    lotesMap,
     initialLoading,
     addProducto,
-    addLote,
-    clearLotes,
   };
 }
 

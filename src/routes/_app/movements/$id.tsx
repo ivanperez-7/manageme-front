@@ -2,8 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { formatDate } from 'date-fns';
-import { ArrowLeft, CheckCircle, Download, Info, PackageOpen, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, CheckCircle, Info, PackageOpen, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ErrorState } from '@/components/error-state';
@@ -19,7 +18,6 @@ import UserTag from '@/components/user-tag';
 
 import { ENDPOINTS } from '@/api/endpoints';
 import { fetchMovimientoById } from '@/api/movimientos';
-import { downloadBlob } from '@/lib/download-blob';
 import { withAuth } from '@/lib/auth';
 import type { MovimientoItemResponse } from '@/lib/types';
 import { firstUpperCase, humanDate, humanTime } from '@/lib/utils';
@@ -40,7 +38,6 @@ const makeColumns = (tipo: 'entrada' | 'salida'): ColumnDef<MovimientoItemRespon
       ),
     },
     { accessorKey: 'producto.descripcion', header: 'Descripción' },
-    { accessorKey: 'lote.codigo_lote', header: 'Código de lote asociado' },
     {
       header: 'Cantidad',
       cell: ({ row }) => row.original.cantidad.toLocaleString('es-MX'),
@@ -95,8 +92,6 @@ export const Route = createFileRoute('/_app/movements/$id')({
 });
 
 function MovementDetailPage() {
-  const [isDownloading, setIsDownloading] = useState(false);
-
   const movimiento = Route.useLoaderData();
   const { itemsPage } = Route.useSearch();
   const router = useRouter();
@@ -119,16 +114,6 @@ function MovementDetailPage() {
         `No se pudo aprobar la ${movimiento.tipo}. ` + (err.response?.data?.detail || err.message)
       ),
   });
-
-  const downloadEtiquetas = async () => {
-    if (isDownloading) return;
-    setIsDownloading(true);
-    await downloadBlob(
-      ENDPOINTS.movimientos.etiquetas(movimiento.id),
-      `etiquetas-entrada-${movimiento.id}.pdf`
-    );
-    setIsDownloading(false);
-  };
 
   return (
     <>
@@ -199,18 +184,6 @@ function MovementDetailPage() {
                       por {movimiento.user_aprueba?.full_name || '—'}
                     </span>
 
-                    {movimiento.tipo === 'entrada' && (
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        className='ml-4'
-                        onClick={downloadEtiquetas}
-                        disabled={isDownloading}
-                      >
-                        {isDownloading ? <Spinner /> : <Download className='h-4 w-4' />}
-                        Etiquetas
-                      </Button>
-                    )}
                   </div>
                 ) : (
                   <span className='flex items-center gap-2 text-red-600 dark:text-red-400'>

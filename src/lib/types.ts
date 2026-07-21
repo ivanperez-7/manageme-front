@@ -90,18 +90,6 @@ export type ProductoResponse = ProductoCreate & {
   actualizado: string;
 };
 
-// ── Lote ──
-export type LoteResponse = {
-  codigo_lote: string;
-  cantidad_inicial: number;
-  cantidad_restante: number;
-  fecha_entrada: string | undefined;
-  id: number;
-  creado: string;
-  actualizado: string;
-  producto: Pick<ProductoResponse, 'id' | 'codigo_interno' | 'descripcion' | 'equipos'>;
-};
-
 // ── Usuario / Perfil ──
 export type UserResponse = {
   id: number;
@@ -122,7 +110,6 @@ export const movimientoItemCreateSchema = z
   .object({
     producto_id: z.number(),
     cantidad: z.number().min(1),
-    lote_id: z.number().optional(),
     equipo_cliente_id: z.number().optional(),
     cambio_anticipado: z.boolean().optional(),
     motivo_cambio: z.string().nullable().optional(),
@@ -210,13 +197,11 @@ export type MovimientoCreate = z.infer<typeof movimientoCreateSchema>;
 export type MovimientoItemResponse = {
   producto_id: number;
   cantidad: number;
-  lote_id?: number | undefined;
   equipo_cliente_id?: number | undefined;
   cambio_anticipado: boolean;
   motivo_cambio: string | null | undefined;
   id: number;
   producto: Pick<ProductoResponse, 'id' | 'codigo_interno' | 'descripcion'>;
-  lote?: { id: number; codigo_lote: string; fecha_entrada: string } | undefined;
 };
 
 type DetalleEntradaResponse = {
@@ -322,7 +307,6 @@ export type ProductoRendimiento = {
 export type DashboardData = {
   stats: {
     productos: number;
-    lotes: number;
     categorias: number;
     proveedores: number;
     clientes: number;

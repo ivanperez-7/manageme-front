@@ -22,7 +22,7 @@ const catalogsDetailMask = createRouteMask({
   routeTree,
   from: '/catalogo/$id',
   to: '/catalogo/$id',
-  search: { fechaInicio: undefined, fechaFin: undefined, lotesPage: undefined, movPage: undefined },
+  search: { fechaInicio: undefined, fechaFin: undefined, movPage: undefined },
 });
 
 const clientDetailMask = createRouteMask({

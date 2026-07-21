@@ -1,5 +1,4 @@
 import { redirect } from '@tanstack/react-router';
-import { toast } from 'sonner';
 
 import { withAuth } from '@/lib/auth';
 import type * as Types from '@/lib/types';
@@ -14,23 +13,14 @@ export const fetchAllProductos = async () =>
     });
 
 export const fetchProductoById = async (id: string | number) => {
-  const [producto, lotes] = await Promise.all([
-    withAuth
-      .get(ENDPOINTS.products.detail(id))
-      .then((res) => res.data as Types.ProductoResponse)
-      .catch(() => {
-        throw redirect({ to: '/catalogo' });
-      }),
-    withAuth
-      .get(ENDPOINTS.lotes.list, { params: { producto: id } })
-      .then((res) => res.data as Types.LoteResponse[])
-      .catch((error) => {
-        toast.error(error.message);
-        return [] as Types.LoteResponse[];
-      }),
-  ]);
+  const producto = await withAuth
+    .get(ENDPOINTS.products.detail(id))
+    .then((res) => res.data as Types.ProductoResponse)
+    .catch(() => {
+      throw redirect({ to: '/catalogo' });
+    });
 
-  return { producto, lotes };
+  return { producto };
 };
 
 export type CatalogsData = {

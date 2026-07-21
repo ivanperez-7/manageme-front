@@ -118,16 +118,6 @@ function AddMovementPage() {
           motivo_cambio: null,
         });
       },
-      onLoteScanned: (lote) => {
-        cache.addLote(lote);
-        form.pushFieldValue('items', {
-          producto_id: lote.producto.id,
-          cantidad: 1,
-          lote_id: lote.id,
-          cambio_anticipado: false,
-          motivo_cambio: null,
-        });
-      },
     });
   };
 
@@ -147,7 +137,6 @@ function AddMovementPage() {
       });
     }
     form.setFieldValue('items', []);
-    cache.clearLotes();
     if (items.length > 0) toast.info('Productos eliminados al cambiar el tipo de movimiento');
   };
 
@@ -218,7 +207,6 @@ function AddMovementPage() {
         <TableRow>
           <TableHead>Código</TableHead>
           <TableHead>Descripción</TableHead>
-          <TableHead hidden={tipo !== 'salida'}>Lote</TableHead>
           <TableHead>Cantidad</TableHead>
           <TableHead className='w-56' hidden={!clienteId || subtipo === 'venta'}>
             Equipo
@@ -234,7 +222,7 @@ function AddMovementPage() {
               return (
                 <TableRow>
                   <TableCell
-                    colSpan={4 + (tipo === 'salida' ? 1 : 0) + (clienteId && subtipo !== 'venta' ? 1 : 0)}
+                    colSpan={3 + (clienteId && subtipo !== 'venta' ? 1 : 0)}
                     className='p-10'
                   >
                     <Empty>
@@ -254,9 +242,8 @@ function AddMovementPage() {
 
             return (
               <AnimatePresence initial={false}>
-                {field.state.value.map(({ producto_id, lote_id, cambio_anticipado }, index) => {
+                {field.state.value.map(({ producto_id, cambio_anticipado }, index) => {
                   const producto = cache.productosMap[producto_id];
-                  const lote = lote_id ? cache.lotesMap[lote_id] : undefined;
 
                   const isLoading = cache.initialLoading;
                   const noMatching =
@@ -295,13 +282,6 @@ function AddMovementPage() {
                             >
                               {producto?.descripcion}
                             </button>
-                          )}
-                        </TableCell>
-                        <TableCell hidden={tipo !== 'salida'}>
-                          {cache.initialLoading ? (
-                            <Skeleton className='h-5 w-28' />
-                          ) : (
-                            <span className='text-sm font-mono'>{lote?.codigo_lote ?? '—'}</span>
                           )}
                         </TableCell>
                         <TableCell>
@@ -356,7 +336,7 @@ function AddMovementPage() {
                           className='border-b bg-muted/20'
                         >
                           <TableCell
-                            colSpan={4 + (tipo === 'salida' ? 1 : 0) + (clienteId ? 1 : 0)}
+                            colSpan={3 + (clienteId ? 1 : 0)}
                             className='py-2'
                           >
                             <div className='flex items-center gap-4 pl-4'>
@@ -541,7 +521,6 @@ function AddMovementPage() {
             </CardHeader>
             <CardContent>
               <MovementScanInput
-                tipo={tipo}
                 scanCode={scan.scanCode}
                 onScanCodeChange={scan.setScanCode}
                 searching={scan.searching}

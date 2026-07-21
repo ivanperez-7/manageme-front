@@ -5,15 +5,13 @@ import {
   ArrowDownToDot,
   ArrowLeft,
   ArrowLeftRight,
-  ArrowUpFromDot,
   CheckCircle,
   Edit,
   Info,
   Loader2,
-  PackageOpen,
   Trash,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 // COMPONENTES DEL PROYECTO
@@ -23,15 +21,12 @@ import { DataTable } from "@/components/data-table";
 import { DateRangePicker } from "@/components/date-range-pickers";
 import { DeleteProductDialog } from "@/components/delete-product-dialog";
 import { EquipoProductosDialog } from "@/components/equipo-productos-dialog";
-import { RemainingProgress } from "@/components/remaining-progress";
 import { ProductDetailSkeleton } from "@/components/route-skeletons";
 import TipoMovimientoBadge from "@/components/tipo-movimiento-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -40,7 +35,6 @@ import { fetchProductoById } from "@/api/catalogo";
 import { fetchMovimientos } from "@/api/movimientos";
 import type {
   EquipoResponse,
-  LoteResponse,
   MovimientoResponse,
   ProductoResponse,
   ProveedorResponse,
@@ -104,60 +98,9 @@ const movementsColumns: ColumnDef<MovimientoResponse & { cantidad: number }>[] =
   },
 ];
 
-const lotesColumns: ColumnDef<LoteResponse>[] = [
-  { accessorKey: "codigo_lote", header: "Código" },
-  {
-    accessorKey: "cantidad_restante",
-    header: "Cantidad restante",
-    cell: ({ row }) => (
-      <RemainingProgress
-        total={row.original.cantidad_inicial}
-        remaining={row.original.cantidad_restante}
-      />
-    ),
-  },
-  {
-    accessorKey: "fecha_entrada",
-    header: "Fecha de entrada",
-    cell: ({ row }) => humanDate(row.getValue("fecha_entrada")),
-  },
-  {
-    id: "hora_entrada",
-    accessorKey: "fecha_entrada",
-    header: "Hora de entrada",
-    cell: ({ row }) => humanTime(row.getValue("fecha_entrada")),
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant='secondary' size='sm' asChild>
-            <Link
-              to='/movements/new'
-              search={{
-                initialData: {
-                  tipo: "salida",
-                  items: [
-                    { producto_id: row.original.producto.id, cantidad: 0, lote_id: row.original.id },
-                  ],
-                },
-              }}
-            >
-              <ArrowUpFromDot />
-            </Link>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Registrar salida</TooltipContent>
-      </Tooltip>
-    ),
-  },
-];
-
 type MovimientoSearch = {
   fechaInicio?: string;
   fechaFin?: string;
-  lotesPage?: number;
   movPage?: number;
 };
 
@@ -171,10 +114,9 @@ export const Route = createFileRoute("/_app/catalogo/$id")({
       ];
     },
   },
-  validateSearch: ({ fechaInicio, fechaFin, lotesPage, movPage }): MovimientoSearch => ({
+  validateSearch: ({ fechaInicio, fechaFin, movPage }): MovimientoSearch => ({
     fechaInicio: (fechaInicio as string) || undefined,
     fechaFin: (fechaFin as string) || undefined,
-    lotesPage: lotesPage != null ? Number(lotesPage) : undefined,
     movPage: movPage != null ? Number(movPage) : undefined,
   }),
   loader: async ({ params }) => await fetchProductoById(params.id),
@@ -185,7 +127,7 @@ export const Route = createFileRoute("/_app/catalogo/$id")({
 });
 
 function ProductDetailPage() {
-  const { producto, lotes } = Route.useLoaderData();
+  const { producto } = Route.useLoaderData();
   const router = useRouter();
 
   return (
@@ -228,7 +170,6 @@ function ProductDetailPage() {
 
       <ProductInfoCard producto={producto} />
       <ProductProviderCard proveedor={producto.proveedor} />
-      <ProductBatchesCard lotes={lotes} />
       <ProductMovementsCard />
     </>
   );
@@ -370,58 +311,6 @@ const ProductProviderCard = ({ proveedor }: { proveedor?: ProveedorResponse }) =
       </CardContent>
     </Card>
   );
-
-const ProductBatchesCard = ({ lotes }: { lotes: LoteResponse[] }) => {
-  const [showEmpty, setShowEmpty] = useState(false);
-  const { lotesPage } = Route.useSearch();
-  const navigate = Route.useNavigate();
-
-  const filteredLotes = useMemo(
-    () => (showEmpty ? lotes : lotes.filter((lote) => lote.cantidad_restante > 0)),
-    [showEmpty, lotes]
-  );
-
-  return (
-    <Card className='mb-6'>
-      <CardHeader className='grid items-center md:flex md:justify-between'>
-        <CardTitle className='text-lg'>Lotes en el almacén</CardTitle>
-        <div className='flex items-center gap-3'>
-          <Checkbox id='checkbox' checked={showEmpty} onCheckedChange={(val) => setShowEmpty(!!val)} />
-          <Label htmlFor='checkbox'>Mostrar lotes agotados</Label>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <DataTable
-          data={filteredLotes}
-          columns={lotesColumns}
-          transparent
-          hiddenColumnIds={["hora_entrada"]}
-          initialPage={lotesPage ?? 0}
-          onChangePage={(pageIndex) =>
-            navigate({
-              search: (prev) => ({ ...prev, lotesPage: pageIndex }),
-              replace: true,
-              resetScroll: false,
-            })
-          }
-          emptyComponent={
-            <Empty className='my-0 py-0'>
-              <EmptyHeader>
-                <EmptyMedia variant='decorative'>
-                  <PackageOpen />
-                </EmptyMedia>
-                <EmptyTitle>No se ha registrado ningún lote</EmptyTitle>
-                <EmptyDescription>
-                  Comienza registrando un lote por medio de una entrada
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          }
-        />
-      </CardContent>
-    </Card>
-  );
-};
 
 const ProductMovementsCard = () => {
   const { producto } = Route.useLoaderData();

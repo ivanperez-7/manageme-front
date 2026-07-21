@@ -23,10 +23,6 @@ export const ENDPOINTS = {
     exportExistencias: '/productos/exportar/existencias/',
     exportRendimiento: '/productos/exportar/rendimiento/',
   },
-  lotes: {
-    list: '/productos/lotes/',
-    detail: (id: IdLike) => `/productos/lotes/${id}/`,
-  },
   categorias: {
     list: '/productos/categorias/',
   },
@@ -47,7 +43,6 @@ export const ENDPOINTS = {
   movimientos: {
     list: '/movimientos/movimientos/',
     detail: (id: IdLike) => `/movimientos/movimientos/${id}/`,
-    etiquetas: (id: IdLike) => `/movimientos/movimientos/${id}/etiquetas/`,
     exportMovimientos: '/movimientos/movimientos/exportar/',
   },
   sysvars: {

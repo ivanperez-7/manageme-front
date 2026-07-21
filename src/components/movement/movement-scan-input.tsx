@@ -6,14 +6,12 @@ import { Field, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
 export function MovementScanInput({
-  tipo,
   scanCode,
   onScanCodeChange,
   searching,
   onSubmit,
   scanInputRef,
 }: {
-  tipo: 'entrada' | 'salida';
   scanCode: string;
   onScanCodeChange: (value: string) => void;
   searching: boolean;
@@ -24,9 +22,7 @@ export function MovementScanInput({
     <FieldSet>
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor='scan-input'>
-            {tipo === 'entrada' ? 'SKU del producto' : 'Código de lote'}
-          </FieldLabel>
+          <FieldLabel htmlFor='scan-input'>SKU del producto</FieldLabel>
           <div className='flex gap-2'>
             <Input
               id='scan-input'
@@ -41,11 +37,7 @@ export function MovementScanInput({
                 }
               }}
               onChange={(e) => onScanCodeChange(e.target.value)}
-              placeholder={
-                tipo === 'entrada'
-                  ? 'Escanee o escriba el SKU...'
-                  : 'Escanee o escriba el código de lote...'
-              }
+              placeholder='Escanee o escriba el SKU...'
             />
             <Button type='button' disabled={searching || !scanCode.trim()} onClick={onSubmit}>
               {searching ? (
