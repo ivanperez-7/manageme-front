@@ -35,7 +35,7 @@ const columns: ColumnDef<ReordenProducto>[] = [
         params={{ id: row.original.producto_id.toString() }}
         className='font-bold'
       >
-        {row.original.descripcion}
+        {row.original.codigo_interno}
       </Link>
     ),
   },
