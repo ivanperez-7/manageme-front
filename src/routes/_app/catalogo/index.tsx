@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Download, EllipsisVertical, FunnelX, Package2, Plus, Search } from 'lucide-react';
+import { Download, EllipsisVertical, FunnelX, Package2, Plus, Printer, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -55,13 +55,25 @@ const columns: ColumnDef<ProductoResponse>[] = [
       const equipos = row.original.equipos;
       if (!equipos.length) return <span className='text-muted-foreground text-sm'>—</span>;
       return (
-        <div className='flex flex-wrap gap-1'>
-          {equipos.map((eq) => (
-            <Badge key={eq.id} variant='outline' className='text-xs font-normal gap-1'>
-              {eq.nombre}
-            </Badge>
-          ))}
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type='button' className='inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer'>
+              <Search className='h-4 w-4' />
+              <span>{equipos.length} {equipos.length === 1 ? 'equipo' : 'equipos'}</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side='right' className='p-2'>
+            <div className='space-y-1'>
+              {equipos.map((eq) => (
+                <div key={eq.id} className='flex items-center gap-2 text-sm'>
+                  <Printer className='h-3 w-3 text-muted-foreground shrink-0' />
+                  <span>{eq.nombre}</span>
+                  <span className='text-muted-foreground text-xs'>{eq.marca.nombre}</span>
+                </div>
+              ))}
+            </div>
+          </TooltipContent>
+        </Tooltip>
       );
     },
   },
