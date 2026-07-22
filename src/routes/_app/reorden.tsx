@@ -314,7 +314,6 @@ function ProveedorSection({ proveedor }: { proveedor: ReordenProveedor }) {
           columns={columns}
           data={proveedor.productos}
           transparent
-          hidePagination
           getRowClassName={(row) =>
             cn(
               row.cantidad_disponible < row.min_stock &&
