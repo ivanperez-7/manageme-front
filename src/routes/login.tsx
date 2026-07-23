@@ -105,7 +105,7 @@ function LoginForm() {
       onChange: loginSchema,
     },
     onSubmit: async ({ value }) => {
-      Cookies.set('branch', value.branch.toString(), { path: '/' });
+      Cookies.set('branch', value.branch.toString(), { path: '/', expires: 365 });
       try {
         await axios
           .post(ENDPOINTS.auth.login, value, { baseURL: API_BASE, withCredentials: true })

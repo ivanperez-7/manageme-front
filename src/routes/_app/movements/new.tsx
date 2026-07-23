@@ -467,6 +467,9 @@ function AddMovementPage() {
         e.preventDefault();
         form.handleSubmit();
       }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.preventDefault();
+      }}
       className='flex min-h-0 flex-1 flex-col'
     >
       {/* HEADER */}
