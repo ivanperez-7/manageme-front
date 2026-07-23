@@ -241,7 +241,7 @@ const ProductInfoCard = ({ producto }: { producto: ProductoResponse }) => {
                     <Badge
                       key={eq.id}
                       variant='secondary'
-                      className='px-3 py-1 gap-2 cursor-pointer transition-colors hover:bg-secondary/70'
+                      className='px-3 py-1 gap-2 cursor-pointer transition-colors hover:bg-secondary/70 max-w-[280px] truncate'
                       role='button'
                       tabIndex={0}
                       title={`Ver productos de ${eq.nombre}`}

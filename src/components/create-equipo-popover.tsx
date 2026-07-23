@@ -107,7 +107,7 @@ export function CreateEquipoPopover({
               <p><strong>{nombre.trim()}</strong> posiblemente ya existe:</p>
               <ul className='list-disc pl-5 space-y-1'>
                 {similares.map((s) => (
-                  <li key={s.id}>{s.nombre}</li>
+                  <li key={s.id} className='break-words'>{s.nombre}</li>
                 ))}
               </ul>
             </AlertDialogDescription>

@@ -48,7 +48,7 @@ export function ProductInfoContent({ producto }: { producto: ProductoResponse })
           <p className='text-sm text-muted-foreground'>Equipos compatibles</p>
           <div className='flex flex-wrap gap-2 mt-1'>
             {producto.equipos.map((eq) => (
-              <Badge key={eq.id} variant='secondary' className='text-xs'>
+              <Badge key={eq.id} variant='secondary' className='text-xs max-w-[250px] truncate'>
                 {eq.nombre} <span className='text-muted-foreground ml-0.5'>{eq.marca.nombre}</span>
               </Badge>
             ))}

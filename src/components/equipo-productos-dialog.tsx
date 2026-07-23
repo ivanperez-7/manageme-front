@@ -125,7 +125,7 @@ export function EquipoProductosDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-h-[80vh] flex-col md:max-w-4xl lg:max-w-6xl'>
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className='truncate'>
             {equipo.nombre}{' '}
             <span className='text-muted-foreground ml-2 text-sm'>{equipo.marca.nombre}</span>
           </DialogTitle>

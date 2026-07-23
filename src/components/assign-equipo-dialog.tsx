@@ -152,7 +152,7 @@ export function AssignEquipoDialog({ clienteId, onSuccess }: { clienteId: number
                     selectedEquipo !== eq.id && 'hover:bg-muted'
                   )}
                 >
-                  <span>{eq.nombre}</span>
+                  <span className='truncate min-w-0'>{eq.nombre}</span>
                   {!selectedMarca && (
                     <span className='text-xs text-muted-foreground'>{eq.marca.nombre}</span>
                   )}

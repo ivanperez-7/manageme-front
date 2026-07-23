@@ -54,13 +54,20 @@ export function AddProductDialog({
       status: producto?.status ?? 'activo',
       vida_util_unidades: producto?.vida_util_unidades ?? null,
       vida_util_dias: producto?.vida_util_dias ?? null,
+      unidades_iniciales: undefined as number | undefined,
     },
     validators: { onSubmit: productoCreateSchema },
     onSubmit: async ({ value }) => {
       try {
+        const { unidades_iniciales, ...rest } = value;
+        const payload = producto
+          ? rest
+          : unidades_iniciales
+            ? value
+            : rest;
         const res = producto
-          ? await withAuth.patch(ENDPOINTS.products.detail(producto.id), value)
-          : await withAuth.post(ENDPOINTS.products.list, value);
+          ? await withAuth.patch(ENDPOINTS.products.detail(producto.id), payload)
+          : await withAuth.post(ENDPOINTS.products.list, payload);
 
         if (res.status === 200 || res.status === 201) {
           toast.success(`¡Producto ${producto ? 'editado' : 'registrado'} correctamente!`);
@@ -175,6 +182,32 @@ export function AddProductDialog({
                 </Field>
               )}
             </form.Field>
+
+            {!producto && (
+              <form.Field name='unidades_iniciales'>
+                {(field) => (
+                  <Field className='space-y-1'>
+                    <FieldLabel htmlFor={field.name}>Stock inicial</FieldLabel>
+                    <InputGroup>
+                      <InputGroupInput
+                        id={field.name}
+                        type='number'
+                        min={1}
+                        value={field.state.value ?? ''}
+                        onChange={(e) =>
+                          field.handleChange(e.target.value === '' ? undefined : Number(e.target.value))
+                        }
+                      />
+                      <InputGroupAddon align='inline-end'>unidades</InputGroupAddon>
+                    </InputGroup>
+                    <FieldError errors={field.state.meta.errors} />
+                  </Field>
+                )}
+              </form.Field>
+            )}
+
+            {/* empty cell to fill 3-col grid */}
+            <div />
           </div>
 
           {/* Cantidad / Stock */}
@@ -306,8 +339,8 @@ function EquipoSelector({
                   else onEquiposChange(selectedEquipos.filter((eqId) => eqId !== eq.id));
                 }}
               />
-              {eq.nombre}{' '}
-              {!selectedMarca && <span className='text-xs text-muted-foreground'>{eq.marca.nombre}</span>}
+              <span className='truncate min-w-0'>{eq.nombre}</span>{' '}
+              {!selectedMarca && <span className='text-xs text-muted-foreground shrink-0'>{eq.marca.nombre}</span>}
             </label>
           ))}
         </div>

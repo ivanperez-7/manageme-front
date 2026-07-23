@@ -349,8 +349,8 @@ function EquipoCard({ equipo, onDeleted }: { equipo: EquipoResponse; onDeleted: 
             <Printer className='h-5 w-5 text-primary' />
           </div>
 
-          <div>
-            <p className='font-medium'>{equipo.nombre}</p>
+          <div className='min-w-0 flex-1'>
+            <p className='font-medium truncate'>{equipo.nombre}</p>
             <p className='text-sm text-muted-foreground'>Ver detalle del equipo</p>
           </div>
         </button>
@@ -392,7 +392,7 @@ function EquipoCard({ equipo, onDeleted }: { equipo: EquipoResponse; onDeleted: 
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar equipo</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estás seguro de eliminar <strong>{equipo.nombre}</strong>? Esta acción no se puede deshacer.
+              ¿Estás seguro de eliminar <strong className='break-words'>{equipo.nombre}</strong>? Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

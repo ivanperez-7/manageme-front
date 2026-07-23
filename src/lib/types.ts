@@ -70,6 +70,7 @@ export const productoCreateSchema = z
     proveedor_id: z.number().nullable(),
     sku: z.string().min(1, 'El SKU es obligatorio'),
     status: z.enum(['activo', 'inactivo']),
+    unidades_iniciales: z.number().int('Debe ser un número entero').min(1, 'Debe ser al menos 1').or(z.undefined()),
     // Vida útil por unidades y/o por días; lo que ocurra primero. Al menos una.
     vida_util_unidades: z.number().int('Debe ser un número entero').nullable(),
     vida_util_dias: z.number().int('Debe ser un número entero').nullable(),

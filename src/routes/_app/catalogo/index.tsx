@@ -67,7 +67,7 @@ const columns: ColumnDef<ProductoResponse>[] = [
               {equipos.map((eq) => (
                 <div key={eq.id} className='flex items-center gap-2 text-sm'>
                   <Printer className='h-3 w-3 text-muted-foreground shrink-0' />
-                  <span>{eq.nombre}</span>
+                  <span className='break-words'>{eq.nombre}</span>
                   <span className='text-muted-foreground text-xs'>{eq.marca.nombre}</span>
                 </div>
               ))}
