@@ -439,7 +439,7 @@ function AddMovementPage() {
 
           <form.AppField name='detalle_salida.cliente_id'>
             {(field) => (
-              <field.NumberSelectField
+              <field.SearchableSelectField
                 label='Cliente'
                 placeholder='Seleccione un cliente'
                 loading={isLoading('clientes')}

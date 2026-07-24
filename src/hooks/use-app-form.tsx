@@ -1,18 +1,22 @@
 import { createFormHook, createFormHookContexts } from '@tanstack/react-form';
-import type { Key } from 'react';
+import { useMemo, useState, type Key } from 'react';
+import { ChevronsUpDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 const { fieldContext, formContext, useFormContext, useFieldContext } = createFormHookContexts();
 
 export const { useAppForm, withForm } = createFormHook({
   fieldContext,
   formContext,
-  fieldComponents: { InputField, NumberSelectField },
+  fieldComponents: { InputField, NumberSelectField, SearchableSelectField },
   formComponents: { SaveButton },
 });
 
@@ -90,6 +94,81 @@ export function NumberSelectField({
         </SelectContent>
       </Select>
       <FieldError hidden={hideErrors} errors={field.state.meta.errors} />
+    </Field>
+  );
+}
+
+type Option = { key: Key; value: number; label: string };
+
+export function SearchableSelectField({
+  label,
+  placeholder,
+  options,
+  onValueChange,
+  disabled,
+  loading,
+}: {
+  label?: string;
+  placeholder: string;
+  options: Option[];
+  onValueChange?: (v: string) => void;
+  disabled?: boolean;
+  loading?: boolean;
+}) {
+  const field = useFieldContext<number>();
+  const [open, setOpen] = useState(false);
+  const selected = useMemo(
+    () => options.find((o) => o.value === field.state.value),
+    [field.state.value, options]
+  );
+
+  return (
+    <Field className='space-y-1'>
+      {label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            id={field.name}
+            role='combobox'
+            aria-expanded={open}
+            disabled={disabled || loading}
+            className={cn(
+              'border-input data-placeholder:text-muted-foreground [&_svg:not([class*="text-"])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4',
+              !selected && 'text-muted-foreground'
+            )}
+          >
+            {loading && <Spinner className='mr-1' />}
+            {selected ? selected.label : placeholder}
+            <ChevronsUpDown className='opacity-50' />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className='w-(--radix-popover-trigger-width) p-0' align='start'>
+          <Command>
+            <CommandInput placeholder={`Buscar ${placeholder.toLowerCase()}...`} />
+            <CommandEmpty className='py-6 text-center text-sm'>No encontrado.</CommandEmpty>
+            <CommandGroup className='max-h-64 overflow-auto'>
+              {options.map((opt) => (
+                <CommandItem
+                  key={opt.key}
+                  value={opt.label}
+                  disabled={opt.value === 0}
+                  onSelect={() => {
+                    field.handleChange(opt.value);
+                    if (onValueChange) onValueChange(String(opt.value));
+                    setOpen(false);
+                  }}
+                >
+                  {opt.label}
+                  {opt.value === field.state.value && (
+                    <span className='ml-auto text-xs text-muted-foreground'>Seleccionado</span>
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      <FieldError errors={field.state.meta.errors} />
     </Field>
   );
 }
