@@ -150,10 +150,9 @@ function AddMovementPage() {
 
   const hasClientWarnings = useMemo(
     () =>
-      subtipo === 'renta' &&
       !!clienteId &&
       items.some(({ producto_id }) => getMatchingEquipos(producto_id).length === 0),
-    [subtipo, clienteId, items, getMatchingEquipos]
+    [clienteId, items, getMatchingEquipos]
   );
 
   const renderTipoSelector = () => (
@@ -208,7 +207,7 @@ function AddMovementPage() {
           <TableHead>Código</TableHead>
           <TableHead>Descripción</TableHead>
           <TableHead>Cantidad</TableHead>
-          <TableHead className='w-56' hidden={!clienteId || subtipo === 'venta'}>
+          <TableHead className='w-56' hidden={!clienteId}>
             Equipo
           </TableHead>
           <TableHead className='w-10' />
@@ -222,7 +221,7 @@ function AddMovementPage() {
               return (
                 <TableRow>
                   <TableCell
-                    colSpan={3 + (clienteId && subtipo !== 'venta' ? 1 : 0)}
+                    colSpan={3 + (clienteId ? 1 : 0)}
                     className='p-10'
                   >
                     <Empty>
@@ -247,7 +246,6 @@ function AddMovementPage() {
 
                   const isLoading = cache.initialLoading;
                   const noMatching =
-                    subtipo === 'renta' &&
                     !!clienteId &&
                     !clientEquipos.loadingClientEquipos &&
                     getMatchingEquipos(producto_id).length === 0;
@@ -299,7 +297,7 @@ function AddMovementPage() {
                         </TableCell>
                         <TableCell
                           className='w-56 max-w-56 [&_button]:w-full [&_button]:min-w-0'
-                          hidden={!clienteId || subtipo === 'venta'}
+                          hidden={!clienteId}
                         >
                           {clientEquipos.loadingClientEquipos ? (
                             <Skeleton className='h-5 w-24' />
