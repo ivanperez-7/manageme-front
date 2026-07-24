@@ -36,9 +36,9 @@ export function CreateClienteDialog({
     defaultValues: {
       nombre: '',
       tipo: 'fisica',
-      rfc: '',
+      rfc: null,
       telefono: '',
-      email: '',
+      email: null,
       direccion: '',
     } as z.input<typeof clienteCreateSchema>,
     validators: { onSubmit: clienteCreateSchema },
@@ -58,13 +58,7 @@ export function CreateClienteDialog({
   });
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        setOpen(v);
-        if (!v) form.reset();
-      }}
-    >
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
           <Button>
