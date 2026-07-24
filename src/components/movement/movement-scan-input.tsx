@@ -36,7 +36,7 @@ export function MovementScanInput({
                   onSubmit(e);
                 }
               }}
-              onChange={(e) => onScanCodeChange(e.target.value)}
+              onChange={(e) => onScanCodeChange(e.target.value.toLocaleUpperCase())}
               placeholder='Escanee o escriba el SKU...'
             />
             <Button type='button' disabled={searching || !scanCode.trim()} onClick={onSubmit}>
