@@ -2,7 +2,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-form';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowDownToDot, ArrowLeft, ArrowUpFromDot, Loader2, PackageOpen, X } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowDownToDot,
+  ArrowLeft,
+  ArrowUpFromDot,
+  Loader2,
+  PackageOpen,
+  X,
+} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -10,12 +18,7 @@ import { z } from 'zod';
 import { MovementScanInput } from '@/components/movement/movement-scan-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Field, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -29,7 +32,12 @@ import { useAppForm } from '@/hooks/use-app-form';
 import { useCatalogs } from '@/hooks/use-catalogs';
 import { useClientEquipos, useItemLookup, useMovementScan } from '@/hooks/use-movement-form-data';
 import { withAuth } from '@/lib/auth';
-import { movimientoCreateSchema, type MovimientoCreate, type MovimientoResponse, type ProductoResponse } from '@/lib/types';
+import {
+  movimientoCreateSchema,
+  type MovimientoCreate,
+  type MovimientoResponse,
+  type ProductoResponse,
+} from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { ProductInfoContent } from '@/components/product-info-content';
 import { userStore } from '@/stores/userStore';
@@ -62,6 +70,7 @@ function AddMovementPage() {
 
   const currentUserId = userStore.state.id;
   const [selectedProducto, setSelectedProducto] = useState<ProductoResponse | null>(null);
+  const [itemErrors, setItemErrors] = useState<Record<number, string>>({});
   const initialTipo = initialData?.tipo ?? 'entrada';
 
   const form = useAppForm({
@@ -86,26 +95,44 @@ function AddMovementPage() {
           queryClient.invalidateQueries({ queryKey: ['movimientos'] });
           router.navigate({ to: '/movements/$id', params: { id: mov.id.toString() } });
         })
-        .catch((error) => toast.error(error.response?.data?.non_field_errors?.[0] || error.message)),
+        .catch((error) => {
+          const msg = error.response?.data?.non_field_errors?.[0] || error.message;
+          setItemErrors({});
+          if (msg) {
+            const match = msg.match(/^(\S+) aún no alcanza/);
+            if (match) {
+              const code = match[1];
+              const idx = form.store.state.values.items.findIndex(
+                (item) => cache.productosMap[item.producto_id]?.codigo_interno === code,
+              );
+              if (idx !== -1) setItemErrors({ [idx]: msg });
+            }
+          }
+          toast.error(msg);
+        }),
   });
 
   const tipo = useStore(form.store, ({ values }) => values.tipo);
   const items = useStore(form.store, ({ values }) => values.items);
   const clienteId = useStore(form.store, ({ values }) =>
-    tipo === 'salida' ? values.detalle_salida?.cliente_id : undefined
+    tipo === 'salida' ? values.detalle_salida?.cliente_id : undefined,
   );
   const subtipo = useStore(form.store, ({ values }) =>
-    tipo === 'salida' ? values.detalle_salida?.subtipo : undefined
+    tipo === 'salida' ? values.detalle_salida?.subtipo : undefined,
   );
 
   const clientEquipos = useClientEquipos(
     clienteId,
-    items.map((item) => item.producto_id)
+    items.map((item) => item.producto_id),
   );
 
   useEffect(() => {
     scan.scanInputRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    setItemErrors({});
+  }, [items.length]);
 
   const handleScanSubmit = (e: React.FormEvent) => {
     scan.handleScanSubmit(e, tipo, {
@@ -143,16 +170,14 @@ function AddMovementPage() {
   const getMatchingEquipos = useCallback(
     (productoId: number) =>
       clientEquipos.clientEquipos.filter(({ equipo_id }) =>
-        (cache.productosMap[productoId]?.equipos ?? []).some((eq) => eq.id === equipo_id)
+        (cache.productosMap[productoId]?.equipos ?? []).some((eq) => eq.id === equipo_id),
       ),
-    [clientEquipos.clientEquipos, cache.productosMap]
+    [clientEquipos.clientEquipos, cache.productosMap],
   );
 
   const hasClientWarnings = useMemo(
-    () =>
-      !!clienteId &&
-      items.some(({ producto_id }) => getMatchingEquipos(producto_id).length === 0),
-    [clienteId, items, getMatchingEquipos]
+    () => !!clienteId && items.some(({ producto_id }) => getMatchingEquipos(producto_id).length === 0),
+    [clienteId, items, getMatchingEquipos],
   );
 
   const renderTipoSelector = () => (
@@ -169,9 +194,9 @@ function AddMovementPage() {
                     type='button'
                     className={cn(
                       'relative z-10 flex flex-1 items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors',
-                      tipo === value
-                        ? 'text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground'
+                      tipo === value ? 'text-primary-foreground' : (
+                        'text-muted-foreground hover:text-foreground'
+                      ),
                     )}
                     onClick={() => {
                       field.handleChange(value);
@@ -220,10 +245,7 @@ function AddMovementPage() {
             if (field.state.value.length <= 0)
               return (
                 <TableRow>
-                  <TableCell
-                    colSpan={3 + (clienteId ? 1 : 0)}
-                    className='p-10'
-                  >
+                  <TableCell colSpan={3 + (clienteId ? 1 : 0)} className='p-10'>
                     <Empty>
                       <EmptyHeader>
                         <EmptyMedia variant='icon'>
@@ -243,6 +265,7 @@ function AddMovementPage() {
               <AnimatePresence initial={false}>
                 {field.state.value.map(({ producto_id, cambio_anticipado }, index) => {
                   const producto = cache.productosMap[producto_id];
+                  const itemError = itemErrors[index];
 
                   const isLoading = cache.initialLoading;
                   const noMatching =
@@ -264,24 +287,26 @@ function AddMovementPage() {
                         }}
                         className={cn(
                           'border-b transition-colors hover:bg-muted/50',
-                          noMatching && 'bg-destructive/10 hover:bg-destructive/15'
+                          noMatching && 'bg-destructive/10 hover:bg-destructive/15',
+                          itemError && 'bg-destructive/10 border-destructive',
                         )}
                       >
                         <TableCell>
-                          {isLoading ? <Skeleton className='h-5 w-20' /> : producto?.codigo_interno}
+                          {isLoading ?
+                            <Skeleton className='h-5 w-20' />
+                          : producto?.codigo_interno}
                         </TableCell>
                         <TableCell>
-                          {isLoading ? (
+                          {isLoading ?
                             <Skeleton className='h-5 w-48' />
-                          ) : (
-                            <button
+                          : <button
                               type='button'
                               className='text-left font-medium hover:underline cursor-pointer'
                               onClick={() => setSelectedProducto(producto ?? null)}
                             >
                               {producto?.descripcion}
                             </button>
-                          )}
+                          }
                         </TableCell>
                         <TableCell>
                           <form.Field name={`items[${index}].cantidad`}>
@@ -299,10 +324,9 @@ function AddMovementPage() {
                           className='w-56 max-w-56 [&_button]:w-full [&_button]:min-w-0'
                           hidden={!clienteId}
                         >
-                          {clientEquipos.loadingClientEquipos ? (
+                          {clientEquipos.loadingClientEquipos ?
                             <Skeleton className='h-5 w-24' />
-                          ) : (
-                            <form.AppField name={`items[${index}].equipo_cliente_id`}>
+                          : <form.AppField name={`items[${index}].equipo_cliente_id`}>
                               {(subfield) => (
                                 <UsoEquipoDisplay
                                   matchingEquipos={getMatchingEquipos(producto_id)}
@@ -311,7 +335,7 @@ function AddMovementPage() {
                                 />
                               )}
                             </form.AppField>
-                          )}
+                          }
                         </TableCell>
                         <TableCell>
                           <Button
@@ -334,10 +358,7 @@ function AddMovementPage() {
                           transition={{ duration: 0.2 }}
                           className='border-b bg-muted/20'
                         >
-                          <TableCell
-                            colSpan={3 + (clienteId ? 1 : 0)}
-                            className='py-2'
-                          >
+                          <TableCell colSpan={3 + (clienteId ? 1 : 0)} className='py-2'>
                             <div className='flex items-center gap-4 pl-4'>
                               <form.Field name={`items[${index}].cambio_anticipado`}>
                                 {(subfield) => (
@@ -345,7 +366,15 @@ function AddMovementPage() {
                                     <input
                                       type='checkbox'
                                       checked={subfield.state.value}
-                                      onChange={(e) => subfield.handleChange(e.target.checked)}
+                                      onChange={(e) => {
+                                        subfield.handleChange(e.target.checked);
+                                        if (e.target.checked)
+                                          setItemErrors((prev) => {
+                                            const n = { ...prev };
+                                            delete n[index];
+                                            return n;
+                                          });
+                                      }}
                                       className='size-4 accent-primary'
                                     />
                                     Cambio anticipado
@@ -363,6 +392,26 @@ function AddMovementPage() {
                                   />
                                 )}
                               </form.Field>
+                            </div>
+                          </TableCell>
+                        </motion.tr>
+                      )}
+                      {itemError && (
+                        <motion.tr
+                          key={`${producto_id}-${index}-error`}
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className='border-b bg-destructive/5'
+                        >
+                          <TableCell
+                            colSpan={4 + (clienteId ? 1 : 0)}
+                            className='py-2 text-sm text-destructive'
+                          >
+                            <div className='flex items-center gap-2 pl-4'>
+                              <AlertCircle className='size-4 shrink-0' />
+                              <span>{itemError}</span>
                             </div>
                           </TableCell>
                         </motion.tr>
@@ -421,9 +470,9 @@ function AddMovementPage() {
                       type='button'
                       className={cn(
                         'flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
-                        field.state.value === value
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
+                        field.state.value === value ?
+                          'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground',
                       )}
                       onClick={() => field.handleChange(value)}
                     >
@@ -473,7 +522,14 @@ function AddMovementPage() {
       {/* HEADER */}
       <header className='flex items-center justify-between gap-4'>
         <div className='flex items-center gap-4'>
-          <Button type='button' variant='ghost' size='icon' title='Volver' aria-label='Volver' onClick={() => router.history.back()}>
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
+            title='Volver'
+            aria-label='Volver'
+            onClick={() => router.history.back()}
+          >
             <ArrowLeft className='h-4 w-4' />
           </Button>
           <div>
@@ -549,9 +605,7 @@ function AddMovementPage() {
             </div>
           )}
 
-          <div className='min-h-0 flex-1 overflow-auto rounded-lg border'>
-            {renderProductItemsTable()}
-          </div>
+          <div className='min-h-0 flex-1 overflow-auto rounded-lg border'>{renderProductItemsTable()}</div>
         </div>
       </div>
 
