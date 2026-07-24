@@ -187,7 +187,7 @@ export function AddProductDialog({
               <form.Field name='unidades_iniciales'>
                 {(field) => (
                   <Field className='space-y-1'>
-                    <FieldLabel htmlFor={field.name}>Stock inicial</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Existencia inicial</FieldLabel>
                     <InputGroup>
                       <InputGroupInput
                         id={field.name}
