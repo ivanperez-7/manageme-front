@@ -47,6 +47,15 @@ const makeColumns = (tipo: 'entrada' | 'salida'): ColumnDef<MovimientoItemRespon
   if (tipo === 'salida') {
     base.push(
       {
+        header: 'Equipo',
+        accessorKey: 'equipo_cliente.alias',
+      },
+      {
+        header: 'Contador del equipo',
+        accessorKey: 'contador_uso_snapshot',
+        cell: ({ row }) => row.original.contador_uso_snapshot && row.original.contador_uso_snapshot.toLocaleString('es-MX'),
+      },
+      {
         header: 'Ant.',
         cell: ({ row }) =>
           row.original.cambio_anticipado ? (

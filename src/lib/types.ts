@@ -201,6 +201,7 @@ export type MovimientoItemResponse = {
   equipo_cliente_id?: number | undefined;
   cambio_anticipado: boolean;
   motivo_cambio: string | null | undefined;
+  contador_uso_snapshot: number | null | undefined;
   id: number;
   producto: Pick<ProductoResponse, 'id' | 'codigo_interno' | 'descripcion'>;
 };
