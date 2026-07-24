@@ -199,6 +199,7 @@ export type MovimientoItemResponse = {
   producto_id: number;
   cantidad: number;
   equipo_cliente_id?: number | undefined;
+  equipo_cliente?: { id: number; alias: string; contador_uso: number } | null;
   cambio_anticipado: boolean;
   motivo_cambio: string | null | undefined;
   contador_uso_snapshot: number | null | undefined;

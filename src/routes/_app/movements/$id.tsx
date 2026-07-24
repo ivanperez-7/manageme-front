@@ -53,7 +53,10 @@ const makeColumns = (tipo: 'entrada' | 'salida'): ColumnDef<MovimientoItemRespon
       {
         header: 'Contador del equipo',
         accessorKey: 'contador_uso_snapshot',
-        cell: ({ row }) => row.original.contador_uso_snapshot && row.original.contador_uso_snapshot.toLocaleString('es-MX'),
+        cell: ({ row }) => {
+          const n = row.original.contador_uso_snapshot ?? row.original.equipo_cliente?.contador_uso;
+          return n?.toLocaleString('es-MX') ?? '—';
+        },
       },
       {
         header: 'Ant.',
