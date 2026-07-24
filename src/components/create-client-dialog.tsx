@@ -52,7 +52,7 @@ export function CreateClienteDialog({
           onSuccess();
         })
         .catch((error) => {
-          toast.error(error.message || 'Error al crear cliente');
+          toast.error(error.response?.data?.rfc || error.message || 'Error al crear cliente');
         });
     },
   });

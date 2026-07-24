@@ -76,7 +76,7 @@ export function AddProductDialog({
           await router.invalidate({ sync: true });
         }
       } catch (error: any) {
-        toast.error(error.response?.data?.codigo_interno || error.message);
+        toast.error(error.response?.data?.sku || error.response?.data?.codigo_interno || error.message);
       }
     },
   });
