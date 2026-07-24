@@ -49,6 +49,7 @@ const clientesColumns: ColumnDef<ClienteResponse>[] = [
     accessorKey: 'tipo',
     cell: ({ row }) => <span>{prettierTypes[row.original.tipo]}</span>,
   },
+  { header: 'RFC', accessorKey: 'rfc' },
   { header: 'Teléfono', accessorKey: 'telefono' },
   { header: 'Correo', accessorKey: 'email' },
   { header: 'Dirección', accessorKey: 'direccion' },
