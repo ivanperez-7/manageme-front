@@ -51,7 +51,7 @@ export default function UsoEquipoDisplay({
           options={matchingEquipos.map((eq) => ({
             key: eq.id,
             value: eq.id,
-            label: eq.equipo_nombre,
+            label: `${eq.alias} — ${eq.equipo_nombre}`,
           }))}
         />
 
@@ -70,8 +70,8 @@ export default function UsoEquipoDisplay({
         transition={{ duration: 0.15 }}
         className='space-y-1 text-sm'
       >
-        <span className='block truncate' title={onlyEquipo.equipo_nombre}>
-          {onlyEquipo.equipo_nombre}
+        <span className='block truncate' title={`${onlyEquipo.alias} — ${onlyEquipo.equipo_nombre}`}>
+          {onlyEquipo.alias} — {onlyEquipo.equipo_nombre}
         </span>
         <div className='text-xs text-muted-foreground'>Uso: {onlyEquipo.contador_uso}</div>
       </motion.div>

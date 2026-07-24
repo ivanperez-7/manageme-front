@@ -3,7 +3,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { ArrowLeft, ArrowUpFromDot, CheckCircle, Gauge, Loader2, Printer, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowUpFromDot,
+  CheckCircle,
+  Gauge,
+  Loader2,
+  Pencil,
+  Printer,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -122,7 +131,13 @@ function ClienteDetailPage() {
   return (
     <div className='space-y-4'>
       <div className='flex items-center gap-4'>
-        <Button variant='ghost' size='icon' title='Volver' aria-label='Volver' onClick={() => router.history.back()}>
+        <Button
+          variant='ghost'
+          size='icon'
+          title='Volver'
+          aria-label='Volver'
+          onClick={() => router.history.back()}
+        >
           <ArrowLeft className='h-4 w-4' />
         </Button>
         <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>{cliente.nombre}</h1>
@@ -147,7 +162,7 @@ function ClienteDetailPage() {
           </CardHeader>
 
           <CardContent>
-            {equiposCliente.length === 0 ? (
+            {equiposCliente.length === 0 ?
               <Empty className='my-0 py-0'>
                 <EmptyHeader>
                   <EmptyMedia variant='decorative'>
@@ -157,13 +172,12 @@ function ClienteDetailPage() {
                   <EmptyDescription>Comienza registrando un equipo de este cliente</EmptyDescription>
                 </EmptyHeader>
               </Empty>
-            ) : (
-              <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3'>
+            : <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3'>
                 {equiposCliente.map((eq) => (
                   <EquipoCard key={eq.id} equipo={eq} onDelete={handleEquiposChange} />
                 ))}
               </div>
-            )}
+            }
           </CardContent>
         </Card>
       </div>
@@ -230,12 +244,11 @@ const ClientMovementsCard = () => {
           className='mb-3'
         />
 
-        {loading ? (
+        {loading ?
           <div className='flex items-center justify-center py-12'>
             <Loader2 className='size-6 animate-spin text-muted-foreground' />
           </div>
-        ) : (
-          <DataTable
+        : <DataTable
             data={movimientos}
             columns={movementsColumns}
             transparent
@@ -259,7 +272,7 @@ const ClientMovementsCard = () => {
               </Empty>
             }
           />
-        )}
+        }
       </CardContent>
     </Card>
   );
@@ -277,7 +290,7 @@ function ClienteForm({ cliente, onSuccess }: { cliente: ClienteResponse; onSucce
           setIsEditing(false);
           onSuccess();
         }),
-        { loading: 'Guardando cliente...' }
+        { loading: 'Guardando cliente...' },
       ),
   });
 
@@ -294,12 +307,11 @@ function ClienteForm({ cliente, onSuccess }: { cliente: ClienteResponse; onSucce
           <header className='flex flex-row items-center justify-between'>
             <CardTitle>Datos del cliente</CardTitle>
 
-            {!isEditing ? (
+            {!isEditing ?
               <Button type='button' variant='ghost' size='sm' onClick={() => setIsEditing(true)}>
                 Editar
               </Button>
-            ) : (
-              <div className='flex gap-2'>
+            : <div className='flex gap-2'>
                 <Button
                   type='button'
                   variant='ghost'
@@ -315,7 +327,7 @@ function ClienteForm({ cliente, onSuccess }: { cliente: ClienteResponse; onSucce
                   Guardar
                 </Button>
               </div>
-            )}
+            }
           </header>
           <Separator />
         </CardHeader>
@@ -346,6 +358,10 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
 
   const [modalOpen, setModalOpen] = useState(false);
 
+  const [editOpen, setEditOpen] = useState(false);
+  const [editAlias, setEditAlias] = useState(equipo.alias);
+  const [editContador, setEditContador] = useState(equipo.contador_uso);
+
   const handleUpdateContador = () =>
     toast.promise(
       withAuth
@@ -358,7 +374,7 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
           setIncremento(0);
           onDelete();
         }),
-      { loading: 'Actualizando contador...', error: (data) => 'Error: ' + data.message }
+      { loading: 'Actualizando contador...', error: (data) => 'Error: ' + data.message },
     );
 
   const handleDelete = () =>
@@ -371,7 +387,22 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
           setConfirmOpen(false);
           onDelete();
         }),
-      { loading: 'Eliminando equipo...', error: (data) => 'Error: ' + data.message }
+      { loading: 'Eliminando equipo...', error: (data) => 'Error: ' + data.message },
+    );
+
+  const handleEdit = () =>
+    toast.promise(
+      withAuth
+        .patch(ENDPOINTS.clientes.detail(equipo.cliente_id) + 'equipos/', {
+          equipoId: equipo.equipo_id,
+          alias: editAlias,
+          contador_uso: editContador,
+        })
+        .then(() => {
+          setEditOpen(false);
+          onDelete();
+        }),
+      { loading: 'Guardando cambios...', error: (data) => 'Error: ' + data.message },
     );
 
   return (
@@ -392,80 +423,133 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
           </div>
         </div>
 
-        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-          <DialogTrigger asChild>
-            <Button variant='ghost' size='icon' className='size-7 shrink-0 -mr-1 -mt-1' title='Eliminar equipo' aria-label='Eliminar equipo'>
-              <Trash2 className='size-3.5 text-muted-foreground hover:text-destructive transition-colors' />
-            </Button>
-          </DialogTrigger>
+        <div className='flex items-center gap-0.5 shrink-0'>
+          <Button
+            variant='ghost'
+            size='icon'
+            className='size-7 -mr-1 -mt-1'
+            title='Editar equipo'
+            aria-label='Editar equipo'
+            onClick={() => {
+              setEditAlias(equipo.alias);
+              setEditContador(equipo.contador_uso);
+              setEditOpen(true);
+            }}
+          >
+            <Pencil className='size-3.5 text-muted-foreground hover:text-foreground transition-colors' />
+          </Button>
+
+          <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='size-7 -mr-1 -mt-1'
+                title='Eliminar equipo'
+                aria-label='Eliminar equipo'
+              >
+                <Trash2 className='size-3.5 text-muted-foreground hover:text-destructive transition-colors' />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='sm:max-w-sm'>
+              <DialogHeader>
+                <DialogTitle>¿Eliminar equipo asignado?</DialogTitle>
+                <DialogDescription>
+                  Se eliminará la asignación del equipo <strong>{equipo.equipo_nombre}</strong> con alias{' '}
+                  <strong>{equipo.alias}</strong>.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant='ghost'>Cancelar</Button>
+                </DialogClose>
+                <Button variant='destructive' onClick={handleDelete}>
+                  Eliminar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
           <DialogContent className='sm:max-w-sm'>
             <DialogHeader>
-              <DialogTitle>¿Eliminar equipo asignado?</DialogTitle>
+              <DialogTitle>Editar equipo asignado</DialogTitle>
               <DialogDescription>
-                Se eliminará la asignación del equipo <strong>{equipo.equipo_nombre}</strong> con alias{' '}
-                <strong>{equipo.alias}</strong>.
+                Actualiza el alias o contador de uso del equipo <strong>{equipo.equipo_nombre}</strong>.
               </DialogDescription>
             </DialogHeader>
+            <div className='space-y-4 py-2'>
+              <div className='space-y-1'>
+                <label className='text-sm font-medium'>Alias</label>
+                <Input value={editAlias} onChange={(e) => setEditAlias(e.target.value)} />
+              </div>
+              <div className='space-y-1'>
+                <label className='text-sm font-medium'>Contador de uso</label>
+                <Input
+                  type='number'
+                  min={0}
+                  value={editContador}
+                  onChange={(e) => setEditContador(Number(e.target.value))}
+                />
+              </div>
+            </div>
             <DialogFooter>
               <DialogClose asChild>
                 <Button variant='ghost'>Cancelar</Button>
               </DialogClose>
-              <Button variant='destructive' onClick={handleDelete}>
-                Eliminar
-              </Button>
+              <Button onClick={handleEdit}>Guardar</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
 
-      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-        <PopoverTrigger asChild>
-          <div className='flex items-center gap-2 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors'>
-            <Gauge className='size-3.5' />
-            <span>
-              Contador de uso:{' '}
-              <strong className='text-foreground'>
-                {equipo.contador_uso.toLocaleString('es-MX')}
-              </strong>
-            </span>
-          </div>
-        </PopoverTrigger>
-        <PopoverContent className='w-64' side='bottom' align='start'>
-          <div className='space-y-3'>
-            <p className='text-sm font-medium'>Incrementar contador</p>
-            <div className='space-y-1'>
-              <label className='text-xs text-muted-foreground'>Cantidad a incrementar</label>
-              <Input
-                type='number'
-                min={0}
-                value={incremento}
-                onChange={(e) => setIncremento(Number(e.target.value))}
-              />
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <PopoverTrigger asChild>
+            <div className='flex items-center gap-2 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors'>
+              <Gauge className='size-3.5' />
+              <span>
+                Contador de uso:{' '}
+                <strong className='text-foreground'>{equipo.contador_uso.toLocaleString('es-MX')}</strong>
+              </span>
             </div>
-            <p className='text-xs text-muted-foreground'>
-              Nuevo contador:{' '}
-              <strong className='text-foreground'>
-                {(equipo.contador_uso + incremento).toLocaleString('es-MX')}
-              </strong>
-            </p>
-            <Button size='sm' className='w-full' onClick={handleUpdateContador}>
-              Guardar
-            </Button>
-          </div>
-        </PopoverContent>
-      </Popover>
+          </PopoverTrigger>
+          <PopoverContent className='w-64' side='bottom' align='start'>
+            <div className='space-y-3'>
+              <p className='text-sm font-medium'>Incrementar contador</p>
+              <div className='space-y-1'>
+                <label className='text-xs text-muted-foreground'>Cantidad a incrementar</label>
+                <Input
+                  type='number'
+                  min={0}
+                  value={incremento}
+                  onChange={(e) => setIncremento(Number(e.target.value))}
+                />
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                Nuevo contador:{' '}
+                <strong className='text-foreground'>
+                  {(equipo.contador_uso + incremento).toLocaleString('es-MX')}
+                </strong>
+              </p>
+              <Button size='sm' className='w-full' onClick={handleUpdateContador}>
+                Guardar
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
 
-      <EquipoProductosDialog
-        equipo={
-          {
-            id: equipo.equipo_id,
-            nombre: equipo.equipo_nombre,
-            marca: { nombre: equipo.marca_nombre },
-          } as EquipoResponse
-        }
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-      />
-    </div>
+        <EquipoProductosDialog
+          equipo={
+            {
+              id: equipo.equipo_id,
+              nombre: equipo.equipo_nombre,
+              marca: { nombre: equipo.marca_nombre },
+            } as EquipoResponse
+          }
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+        />
+      </div>
   );
 }
