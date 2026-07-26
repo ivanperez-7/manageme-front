@@ -317,7 +317,7 @@ function EquipoSelector({
       />
 
       {/* Selector de equipos */}
-      <ScrollArea className='h-48 rounded-md border p-3'>
+      <ScrollArea className='h-48 rounded-md border p-3 overflow-hidden'>
         <div className='space-y-2'>
           {isLoading('equipos') && !equipos.length ? (
             <div className='flex items-center justify-center gap-2 py-12 text-muted-foreground'>
