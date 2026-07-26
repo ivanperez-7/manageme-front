@@ -213,7 +213,7 @@ export function AddProductDialog({
           {/* Cantidad / Stock */}
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <form.AppField name='sku'>
-              {(field) => <field.InputField label='SKU' placeholder='17850346891' />}
+              {(field) => <field.InputField label='SKU' placeholder='17850346891' autoComplete='off' />}
             </form.AppField>
 
             <form.Field name='proveedor_id'>
