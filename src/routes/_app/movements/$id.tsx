@@ -13,6 +13,7 @@ import TipoMovimientoBadge from '@/components/tipo-movimiento-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import UserTag from '@/components/user-tag';
@@ -49,7 +50,32 @@ const makeColumns = (tipo: 'entrada' | 'salida'): ColumnDef<MovimientoItemRespon
     base.push(
       {
         header: 'Equipo',
-        accessorKey: 'equipo_cliente.alias',
+        cell: ({ row }) => {
+          const ec = row.original.equipo_cliente;
+          return (
+            <div className='flex items-center gap-1'>
+              <div>
+                <p className='text-sm'>{ec?.alias ?? '—'}</p>
+                {ec?.numero_serie && (
+                  <p className='text-xs text-muted-foreground'>SN: {ec.numero_serie}</p>
+                )}
+              </div>
+              {ec?.comentarios && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant='ghost' size='icon' className='size-5'>
+                      <Info className='size-3 text-muted-foreground' />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent side='right' className='text-sm max-w-xs'>
+                    <p className='font-medium mb-1'>Comentarios</p>
+                    <p className='text-muted-foreground'>{ec.comentarios}</p>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+          );
+        },
       },
       {
         header: 'Contador del equipo',

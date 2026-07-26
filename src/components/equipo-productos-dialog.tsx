@@ -74,6 +74,14 @@ const clienteColumns: ColumnDef<EquipoClienteResponse>[] = [
     header: 'Alias',
   },
   {
+    accessorKey: 'numero_serie',
+    header: 'No. Serie',
+  },
+  {
+    accessorKey: 'comentarios',
+    header: 'Comentarios',
+  },
+  {
     accessorKey: 'contador_uso',
     header: 'Contador del equipo',
   },

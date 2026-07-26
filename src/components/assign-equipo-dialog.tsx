@@ -45,6 +45,8 @@ export function AssignEquipoDialog({ clienteId, onSuccess }: { clienteId: number
   const form = useAppForm({
     defaultValues: {
       alias: '',
+      numeroSerie: '',
+      comentarios: '',
       contadorUso: 0,
     },
     validators: {
@@ -172,6 +174,14 @@ export function AssignEquipoDialog({ clienteId, onSuccess }: { clienteId: number
               }}
             >
               {(field) => <field.InputField label='Alias' placeholder='Alias del equipo' />}
+            </form.AppField>
+
+            <form.AppField name='numeroSerie'>
+              {(field) => <field.InputField label='Número de serie' placeholder='SN-12345' />}
+            </form.AppField>
+
+            <form.AppField name='comentarios'>
+              {(field) => <field.InputField label='Comentarios' placeholder='Notas adicionales' />}
             </form.AppField>
 
             <form.AppField

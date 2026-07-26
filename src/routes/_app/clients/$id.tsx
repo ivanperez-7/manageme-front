@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   ArrowUpFromDot,
   CheckCircle,
-  Gauge,
   Loader2,
   Pencil,
   Printer,
@@ -37,7 +36,6 @@ import {
 } from '@/components/ui/dialog';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import UserTag from '@/components/user-tag';
 
@@ -353,29 +351,13 @@ function ClienteForm({ cliente, onSuccess }: { cliente: ClienteResponse; onSucce
 
 function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDelete: () => void }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [incremento, setIncremento] = useState(0);
-
   const [modalOpen, setModalOpen] = useState(false);
 
   const [editOpen, setEditOpen] = useState(false);
   const [editAlias, setEditAlias] = useState(equipo.alias);
+  const [editNumeroSerie, setEditNumeroSerie] = useState(equipo.numero_serie);
+  const [editComentarios, setEditComentarios] = useState(equipo.comentarios);
   const [editContador, setEditContador] = useState(equipo.contador_uso);
-
-  const handleUpdateContador = () =>
-    toast.promise(
-      withAuth
-        .post(`${ENDPOINTS.clientes.detail(equipo.cliente_id)}incrementar_contador/`, {
-          equipoId: equipo.equipo_id,
-          cantidad: incremento,
-        })
-        .then(() => {
-          setPopoverOpen(false);
-          setIncremento(0);
-          onDelete();
-        }),
-      { loading: 'Actualizando contador...', error: (data) => 'Error: ' + data.message },
-    );
 
   const handleDelete = () =>
     toast.promise(
@@ -396,6 +378,8 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
         .patch(ENDPOINTS.clientes.detail(equipo.cliente_id) + 'equipos/', {
           equipoId: equipo.equipo_id,
           alias: editAlias,
+          numero_serie: editNumeroSerie,
+          comentarios: editComentarios,
           contador_uso: editContador,
         })
         .then(() => {
@@ -406,7 +390,8 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
     );
 
   return (
-    <div className='relative rounded-lg border bg-card p-4 space-y-3 shadow-sm hover:shadow-md transition-shadow'>
+    <div className='relative rounded-lg border bg-card p-4 space-y-2 shadow-sm hover:shadow-md transition-shadow'>
+      {/* Header */}
       <div className='flex items-start justify-between gap-2'>
         <div className='flex items-center gap-2 min-w-0'>
           <div className='flex items-center justify-center size-9 rounded-lg bg-primary/10 text-primary shrink-0'>
@@ -418,7 +403,7 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
               className='text-xs text-muted-foreground truncate hover:underline cursor-pointer'
               onClick={() => setModalOpen(true)}
             >
-              {equipo.equipo_nombre}
+              {equipo.equipo_nombre} | {equipo.marca_nombre}
             </span>
           </div>
         </div>
@@ -432,6 +417,8 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
             aria-label='Editar equipo'
             onClick={() => {
               setEditAlias(equipo.alias);
+              setEditNumeroSerie(equipo.numero_serie);
+              setEditComentarios(equipo.comentarios);
               setEditContador(equipo.contador_uso);
               setEditOpen(true);
             }}
@@ -468,88 +455,83 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
                 </Button>
               </DialogFooter>
             </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
-    </div>
 
+      <Separator className='my-2' />
+
+      {/* Detail rows */}
+      <div className='space-y-1'>
+        {equipo.numero_serie && (
+          <div className='flex items-center gap-2 text-xs'>
+            <span className='text-muted-foreground'>No. serie:</span>
+            <span className='font-medium'>{equipo.numero_serie}</span>
+          </div>
+        )}
+
+        <div className='text-xs'>
+          <div className='flex items-center gap-2'>
+            <span className='text-muted-foreground'>Contador:</span>
+            <span className='font-medium'>{equipo.contador_uso.toLocaleString('es-MX')}</span>
+          </div>
+        </div>
+
+        {equipo.comentarios && (
+          <div className='flex items-start gap-2 text-xs'>
+            <span className='text-muted-foreground shrink-0 mt-0.5'>Comentarios:</span>
+            <span className='text-muted-foreground'>{equipo.comentarios}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Edit dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-          <DialogContent className='sm:max-w-sm'>
-            <DialogHeader>
-              <DialogTitle>Editar equipo asignado</DialogTitle>
-              <DialogDescription>
-                Actualiza el alias o contador de uso del equipo <strong>{equipo.equipo_nombre}</strong>.
-              </DialogDescription>
-            </DialogHeader>
-            <div className='space-y-4 py-2'>
-              <div className='space-y-1'>
-                <label className='text-sm font-medium'>Alias</label>
-                <Input value={editAlias} onChange={(e) => setEditAlias(e.target.value)} />
-              </div>
-              <div className='space-y-1'>
-                <label className='text-sm font-medium'>Contador de uso</label>
-                <Input
-                  type='number'
-                  min={0}
-                  value={editContador}
-                  onChange={(e) => setEditContador(Number(e.target.value))}
-                />
-              </div>
+        <DialogContent className='sm:max-w-sm'>
+          <DialogHeader>
+            <DialogTitle>Editar equipo asignado</DialogTitle>
+            <DialogDescription>
+              Actualiza los datos del equipo <strong>{equipo.equipo_nombre}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4 py-2'>
+            <div className='space-y-1'>
+              <label className='text-sm font-medium'>Alias</label>
+              <Input value={editAlias} onChange={(e) => setEditAlias(e.target.value)} />
             </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant='ghost'>Cancelar</Button>
-              </DialogClose>
-              <Button onClick={handleEdit}>Guardar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            <div className='space-y-1'>
+              <label className='text-sm font-medium'>Número de serie</label>
+              <Input value={editNumeroSerie} onChange={(e) => setEditNumeroSerie(e.target.value)} />
+            </div>
+            <div className='space-y-1'>
+              <label className='text-sm font-medium'>Contador de uso</label>
+              <Input type='number' min={0} value={editContador} onChange={(e) => setEditContador(Number(e.target.value))} />
+            </div>
+            <div className='space-y-1'>
+              <label className='text-sm font-medium'>Comentarios</label>
+              <Input value={editComentarios} onChange={(e) => setEditComentarios(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant='ghost'>Cancelar</Button>
+            </DialogClose>
+            <Button onClick={handleEdit}>Guardar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-          <PopoverTrigger asChild>
-            <div className='flex items-center gap-2 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors'>
-              <Gauge className='size-3.5' />
-              <span>
-                Contador de uso:{' '}
-                <strong className='text-foreground'>{equipo.contador_uso.toLocaleString('es-MX')}</strong>
-              </span>
-            </div>
-          </PopoverTrigger>
-          <PopoverContent className='w-64' side='bottom' align='start'>
-            <div className='space-y-3'>
-              <p className='text-sm font-medium'>Incrementar contador</p>
-              <div className='space-y-1'>
-                <label className='text-xs text-muted-foreground'>Cantidad a incrementar</label>
-                <Input
-                  type='number'
-                  min={0}
-                  value={incremento}
-                  onChange={(e) => setIncremento(Number(e.target.value))}
-                />
-              </div>
-              <p className='text-xs text-muted-foreground'>
-                Nuevo contador:{' '}
-                <strong className='text-foreground'>
-                  {(equipo.contador_uso + incremento).toLocaleString('es-MX')}
-                </strong>
-              </p>
-              <Button size='sm' className='w-full' onClick={handleUpdateContador}>
-                Guardar
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        <EquipoProductosDialog
-          equipo={
-            {
-              id: equipo.equipo_id,
-              nombre: equipo.equipo_nombre,
-              marca: { nombre: equipo.marca_nombre },
-            } as EquipoResponse
-          }
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-        />
-      </div>
+      <EquipoProductosDialog
+        equipo={
+          {
+            id: equipo.equipo_id,
+            nombre: equipo.equipo_nombre,
+            marca: { nombre: equipo.marca_nombre },
+          } as EquipoResponse
+        }
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
+    </div>
   );
 }
