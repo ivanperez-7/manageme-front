@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { formatDate } from 'date-fns';
-import { ArrowLeft, CheckCircle, Info, PackageOpen, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Download, Info, PackageOpen, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ErrorState } from '@/components/error-state';
@@ -127,6 +128,29 @@ function MovementDetailPage() {
       ),
   });
 
+  const [downloading, setDownloading] = useState(false);
+
+  const descargarPdf = async () => {
+    setDownloading(true);
+    try {
+      const res = await withAuth.get(ENDPOINTS.movimientos.descargarSalida(movimiento.id), {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `salida-almacen-${movimiento.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Error al descargar el PDF');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <>
       {/* HEADER */}
@@ -140,6 +164,12 @@ function MovementDetailPage() {
             {movimiento.tipo === 'entrada' ? 'Entrada' : 'Salida'} #{movimiento.id}
           </h1>
         </div>
+
+        {movimiento.aprobado && movimiento.tipo === 'salida' && (
+          <Button variant='outline' size='sm' onClick={descargarPdf} disabled={downloading}>
+            {downloading ? <Spinner /> : <Download />} Formato de salida
+          </Button>
+        )}
       </header>
 
       {hasAnticipado && (

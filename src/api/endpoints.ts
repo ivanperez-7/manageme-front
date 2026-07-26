@@ -44,6 +44,7 @@ export const ENDPOINTS = {
   movimientos: {
     list: '/movimientos/movimientos/',
     detail: (id: IdLike) => `/movimientos/movimientos/${id}/`,
+    descargarSalida: (id: IdLike) => `/movimientos/movimientos/${id}/descargar_salida/`,
     exportMovimientos: '/movimientos/movimientos/exportar/',
   },
   sysvars: {
