@@ -57,7 +57,7 @@ const clientsMask = createRouteMask({
   routeTree,
   from: '/clients',
   to: '/clients',
-  search: { page: undefined },
+  search: { text: undefined, page: undefined },
 });
 
 // Create a new router instance

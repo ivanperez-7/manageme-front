@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { EllipsisVertical, PackageOpen, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { EllipsisVertical, PackageOpen, Plus, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useDebounce } from 'use-debounce';
 import { toast } from 'sonner';
 import { DataTable } from '@/components/data-table';
 import {
@@ -23,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Spinner } from '@/components/ui/spinner';
 
 import { ENDPOINTS } from '@/api/endpoints';
@@ -59,11 +61,12 @@ const clientesColumns: ColumnDef<ClienteResponse>[] = [
   },
 ];
 
-type ClientsSearch = { page?: number };
+type ClientsSearch = { text?: string; page?: number };
 
 export const Route = createFileRoute('/_app/clients/')({
   staticData: { headerBreadcrumb: [{ label: 'Clientes' }] },
-  validateSearch: ({ page }): ClientsSearch => ({
+  validateSearch: ({ text, page }): ClientsSearch => ({
+    text: text as string,
     page: page != null ? Number(page) : undefined,
   }),
   component: ClientesPage,
@@ -73,14 +76,44 @@ export const Route = createFileRoute('/_app/clients/')({
 
 function ClientesPage() {
   const { clientes, reloadCatalogs, isLoading } = useCatalogs();
-  const { page } = Route.useSearch();
+  const { text, page } = Route.useSearch();
   const navigate = Route.useNavigate();
+
+  const [_localText, setLocalText] = useState(text);
+  const [localText] = useDebounce(_localText, 800);
+
+  useEffect(() => {
+    navigate({ search: (prev) => ({ ...prev, text: localText }), replace: true });
+  }, [localText]);
+
+  // ponytail: client-side filter mirrors backend search_fields (nombre, rfc,
+  // telefono, email); switch to ?search= when the endpoint gains pagination.
+  const filtered = useMemo(() => {
+    const q = text?.trim().toLowerCase() ?? '';
+    if (!q) return clientes;
+    return clientes.filter((c) =>
+      [c.nombre, c.rfc, c.telefono, c.email].some((v) => v?.toLowerCase().includes(q))
+    );
+  }, [clientes, text]);
 
   return (
     <div className='space-y-4'>
       <div className='space-y-1'>
         <h1 className='text-2xl md:text-3xl font-semibold tracking-tight'>Clientes registrados</h1>
         <p className='text-muted-foreground'>Administra los clientes registrados en el sistema.</p>
+      </div>
+
+      <div className='max-w-sm'>
+        <InputGroup>
+          <InputGroupInput
+            placeholder='Buscar por nombre, RFC, teléfono o correo...'
+            defaultValue={text}
+            onChange={(e) => setLocalText(e.target.value)}
+          />
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+        </InputGroup>
       </div>
 
       {isLoading('clientes') && !clientes.length ? (
@@ -90,7 +123,7 @@ function ClientesPage() {
         </div>
       ) : (
         <DataTable
-          data={clientes}
+          data={filtered}
           columns={clientesColumns}
           hiddenColumnIds={['direccion']}
           initialPage={page ?? 0}
