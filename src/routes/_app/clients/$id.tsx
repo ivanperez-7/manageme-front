@@ -154,7 +154,11 @@ function ClienteDetailPage() {
           <CardHeader>
             <div className='flex justify-between items-center'>
               <CardTitle>Equipos asignados</CardTitle>
-              <AssignEquipoDialog clienteId={cliente.id} onSuccess={handleEquiposChange} />
+              <AssignEquipoDialog
+                clienteId={cliente.id}
+                equiposAsignados={equiposCliente.map((e) => e.equipo_id)}
+                onSuccess={handleEquiposChange}
+              />
             </div>
             <Separator />
           </CardHeader>
@@ -172,7 +176,14 @@ function ClienteDetailPage() {
               </Empty>
             : <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3'>
                 {equiposCliente.map((eq) => (
-                  <EquipoCard key={eq.id} equipo={eq} onDelete={handleEquiposChange} />
+                  <EquipoCard
+                    key={eq.id}
+                    equipo={eq}
+                    hasMismoEquipo={equiposCliente.some(
+                      (otro) => otro.equipo_id === eq.equipo_id && otro.id !== eq.id
+                    )}
+                    onDelete={handleEquiposChange}
+                  />
                 ))}
               </div>
             }
@@ -349,7 +360,15 @@ function ClienteForm({ cliente, onSuccess }: { cliente: ClienteResponse; onSucce
   );
 }
 
-function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDelete: () => void }) {
+function EquipoCard({
+  equipo,
+  hasMismoEquipo,
+  onDelete,
+}: {
+  equipo: EquipoClienteResponse;
+  hasMismoEquipo: boolean;
+  onDelete: () => void;
+}) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -363,7 +382,7 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
     toast.promise(
       withAuth
         .delete(ENDPOINTS.clientes.detail(equipo.cliente_id) + 'equipos/', {
-          data: { equipoId: equipo.equipo_id },
+          data: { equipoClienteId: equipo.id },
         })
         .then(() => {
           setConfirmOpen(false);
@@ -372,13 +391,17 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
       { loading: 'Eliminando equipo...', error: (data) => 'Error: ' + data.message },
     );
 
-  const handleEdit = () =>
+  const handleEdit = () => {
+    if (hasMismoEquipo && !editNumeroSerie.trim()) {
+      toast.error('Indique un número de serie: ya hay otra unidad de este equipo.');
+      return;
+    }
     toast.promise(
       withAuth
         .patch(ENDPOINTS.clientes.detail(equipo.cliente_id) + 'equipos/', {
-          equipoId: equipo.equipo_id,
+          equipoClienteId: equipo.id,
           alias: editAlias,
-          numero_serie: editNumeroSerie,
+          numero_serie: editNumeroSerie.trim(),
           comentarios: editComentarios,
           contador_uso: editContador,
         })
@@ -388,6 +411,7 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
         }),
       { loading: 'Guardando cambios...', error: (data) => 'Error: ' + data.message },
     );
+  };
 
   return (
     <div className='relative rounded-lg border bg-card p-4 space-y-2 shadow-sm hover:shadow-md transition-shadow'>
@@ -502,6 +526,11 @@ function EquipoCard({ equipo, onDelete }: { equipo: EquipoClienteResponse; onDel
             <div className='space-y-1'>
               <label className='text-sm font-medium'>Número de serie</label>
               <Input value={editNumeroSerie} onChange={(e) => setEditNumeroSerie(e.target.value)} />
+              {hasMismoEquipo && (
+                <p className='text-xs text-muted-foreground'>
+                  Otra unidad de este modelo ya está asignada; la serie es obligatoria.
+                </p>
+              )}
             </div>
             <div className='space-y-1'>
               <label className='text-sm font-medium'>Contador de uso</label>

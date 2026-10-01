@@ -24,7 +24,15 @@ import { useCatalogs } from '@/hooks/use-catalogs';
 import { withAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
-export function AssignEquipoDialog({ clienteId, onSuccess }: { clienteId: number; onSuccess: () => void }) {
+export function AssignEquipoDialog({
+  clienteId,
+  equiposAsignados = [],
+  onSuccess,
+}: {
+  clienteId: number;
+  equiposAsignados?: number[];
+  onSuccess: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const { equipos, marcas, isLoading } = useCatalogs();
 
@@ -54,6 +62,8 @@ export function AssignEquipoDialog({ clienteId, onSuccess }: { clienteId: number
         if (!selectedEquipo) return 'Seleccione un equipo';
         if (!value.alias?.trim()) return 'El alias es obligatorio';
         if (value.contadorUso <= 0) return 'Contador no válido';
+        if (equiposAsignados.includes(selectedEquipo) && !value.numeroSerie?.trim())
+          return 'Este equipo ya está asignado. Indique un número de serie para registrar otra unidad.';
       },
     },
     onSubmit: async ({ value }) =>
@@ -179,6 +189,12 @@ export function AssignEquipoDialog({ clienteId, onSuccess }: { clienteId: number
             <form.AppField name='numeroSerie'>
               {(field) => <field.InputField label='Número de serie' placeholder='SN-12345' />}
             </form.AppField>
+
+            {selectedEquipo !== undefined && equiposAsignados.includes(selectedEquipo) && (
+              <p className='text-xs text-muted-foreground'>
+                Ya hay otra unidad de este equipo asignada: la serie es obligatoria.
+              </p>
+            )}
 
             <form.AppField name='comentarios'>
               {(field) => <field.InputField label='Comentarios' placeholder='Notas adicionales' />}
